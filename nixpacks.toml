@@ -1,11 +1,19 @@
 [phases.setup]
 nixPkgs = [
-  "php81",
-  "php81Extensions.gd",
-  "php81Extensions.zip",
-  "php81Extensions.mbstring",
-  "php81Extensions.pdo",
-  "php81Extensions.pdo_mysql",
-  "php81Extensions.bcmath",
-  "php81Extensions.fileinfo"
+  "php82",
+  "php82Extensions.gd",
+  "php82Extensions.zip",
+  "php82Extensions.mbstring",
+  "php82Extensions.pdo",
+  "php82Extensions.pdo_mysql",
+  "php82Extensions.bcmath",
+  "php82Extensions.fileinfo"
 ]
+
+[phases.build]
+cmds = [
+  "composer install --optimize-autoloader --no-dev"
+]
+
+[start]
+cmd = "php -S 0.0.0.0:$PORT -t public"
