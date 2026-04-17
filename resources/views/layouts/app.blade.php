@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,15 +14,18 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="{{ asset('css/custom.css') }}" rel="stylesheet">
+    <!-- Logo  -->
+    <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
 
     <!-- Prevent flash: apply theme before render -->
     <script>
-        (function() {
+        (function () {
             const theme = localStorage.getItem('inventrack-theme') || 'light';
             document.documentElement.setAttribute('data-theme', theme);
         })();
     </script>
 </head>
+
 <body>
     <!-- Sidebar Overlay (Mobile) -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
@@ -43,88 +47,96 @@
 
             {{-- Dashboard: Admin & Manager only --}}
             @if(auth()->user()->isAdmin() || auth()->user()->isManager())
-            <a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                <i class="bi bi-grid-1x2-fill"></i>
-                <span>Dashboard</span>
-                @if(auth()->user()->isAdmin())
-                    @php $pendingTxCount = \App\Models\Transaction::pending()->count(); @endphp
-                    @if($pendingTxCount > 0)
-                        <span class="badge bg-warning text-dark">{{ $pendingTxCount }}</span>
+                <a href="{{ route('dashboard') }}"
+                    class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                    <i class="bi bi-grid-1x2-fill"></i>
+                    <span>Dashboard</span>
+                    @if(auth()->user()->isAdmin())
+                        @php $pendingTxCount = \App\Models\Transaction::pending()->count(); @endphp
+                        @if($pendingTxCount > 0)
+                            <span class="badge bg-warning text-dark">{{ $pendingTxCount }}</span>
+                        @endif
                     @endif
-                @endif
-            </a>
+                </a>
             @endif
 
             {{-- Master Barang: Admin only --}}
             @if(auth()->user()->isAdmin())
-            <a href="{{ route('items.index') }}" class="sidebar-link {{ request()->routeIs('items.*') ? 'active' : '' }}">
-                <i class="bi bi-box-fill"></i>
-                <span>Master Barang</span>
-            </a>
+                <a href="{{ route('items.index') }}"
+                    class="sidebar-link {{ request()->routeIs('items.*') ? 'active' : '' }}">
+                    <i class="bi bi-box-fill"></i>
+                    <span>Master Barang</span>
+                </a>
             @endif
 
             {{-- Transaksi: Admin & Staff only --}}
             @if(auth()->user()->isAdmin() || auth()->user()->isStaff())
-            <a href="{{ route('transactions.index') }}" class="sidebar-link {{ request()->routeIs('transactions.*') ? 'active' : '' }}">
-                <i class="bi bi-arrow-left-right"></i>
-                <span>Transaksi</span>
-            </a>
+                <a href="{{ route('transactions.index') }}"
+                    class="sidebar-link {{ request()->routeIs('transactions.*') ? 'active' : '' }}">
+                    <i class="bi bi-arrow-left-right"></i>
+                    <span>Transaksi</span>
+                </a>
             @endif
 
             {{-- Rekap Stok: Admin & Manager only --}}
             @if(auth()->user()->isAdmin() || auth()->user()->isManager())
-            <a href="{{ route('stock.index') }}" class="sidebar-link {{ request()->routeIs('stock.*') ? 'active' : '' }}">
-                <i class="bi bi-clipboard-data-fill"></i>
-                <span>Rekap Stok</span>
-            </a>
+                <a href="{{ route('stock.index') }}"
+                    class="sidebar-link {{ request()->routeIs('stock.*') ? 'active' : '' }}">
+                    <i class="bi bi-clipboard-data-fill"></i>
+                    <span>Rekap Stok</span>
+                </a>
             @endif
 
             {{-- Laporan: Admin & Manager --}}
             @if(auth()->user()->isAdmin() || auth()->user()->isManager())
-            <div class="sidebar-label" style="margin-top: 8px;">Laporan</div>
+                <div class="sidebar-label" style="margin-top: 8px;">Laporan</div>
 
-            <a href="{{ route('reports.index') }}" class="sidebar-link {{ request()->routeIs('reports.*') ? 'active' : '' }}">
-                <i class="bi bi-file-earmark-bar-graph-fill"></i>
-                <span>Laporan</span>
-            </a>
+                <a href="{{ route('reports.index') }}"
+                    class="sidebar-link {{ request()->routeIs('reports.*') ? 'active' : '' }}">
+                    <i class="bi bi-file-earmark-bar-graph-fill"></i>
+                    <span>Laporan</span>
+                </a>
             @endif
 
             {{-- Pengaturan: Admin only --}}
             @if(auth()->user()->isAdmin())
-            <div class="sidebar-label" style="margin-top: 8px;">Pengaturan</div>
+                <div class="sidebar-label" style="margin-top: 8px;">Pengaturan</div>
 
-            <a href="{{ route('users.index') }}" class="sidebar-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
-                <i class="bi bi-people-fill"></i>
-                <span>Manajemen User</span>
-            </a>
+                <a href="{{ route('users.index') }}"
+                    class="sidebar-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
+                    <i class="bi bi-people-fill"></i>
+                    <span>Manajemen User</span>
+                </a>
 
-            <a href="{{ route('import.index') }}" class="sidebar-link {{ request()->routeIs('import.*') ? 'active' : '' }}">
-                <i class="bi bi-cloud-arrow-up-fill"></i>
-                <span>Import Data</span>
-            </a>
+                <a href="{{ route('import.index') }}"
+                    class="sidebar-link {{ request()->routeIs('import.*') ? 'active' : '' }}">
+                    <i class="bi bi-cloud-arrow-up-fill"></i>
+                    <span>Import Data</span>
+                </a>
             @endif
 
             {{-- Approval User: Manager only --}}
             @if(auth()->user()->isManager())
-            <div class="sidebar-label" style="margin-top: 8px;">Pengaturan</div>
+                <div class="sidebar-label" style="margin-top: 8px;">Pengaturan</div>
 
-            <a href="{{ route('pendingUsers.index', ['account_status' => 'pending']) }}" class="sidebar-link {{ request()->routeIs('pendingUsers.*') ? 'active' : '' }}">
-                <i class="bi bi-person-check-fill"></i>
-                <span>Approval User</span>
-                @php
-                    $pendingUsersCount = 0;
-                    try {
-                        if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'account_status')) {
-                            $pendingUsersCount = \App\Models\User::where('account_status', 'pending')->count();
-                        }
-                    } catch (\Throwable $e) {
+                <a href="{{ route('pendingUsers.index', ['account_status' => 'pending']) }}"
+                    class="sidebar-link {{ request()->routeIs('pendingUsers.*') ? 'active' : '' }}">
+                    <i class="bi bi-person-check-fill"></i>
+                    <span>Approval User</span>
+                    @php
                         $pendingUsersCount = 0;
-                    }
-                @endphp
-                @if($pendingUsersCount > 0)
-                    <span class="badge bg-warning text-dark">{{ $pendingUsersCount }}</span>
-                @endif
-            </a>
+                        try {
+                            if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'account_status')) {
+                                $pendingUsersCount = \App\Models\User::where('account_status', 'pending')->count();
+                            }
+                        } catch (\Throwable $e) {
+                            $pendingUsersCount = 0;
+                        }
+                    @endphp
+                    @if($pendingUsersCount > 0)
+                        <span class="badge bg-warning text-dark">{{ $pendingUsersCount }}</span>
+                    @endif
+                </a>
             @endif
         </nav>
 
@@ -139,7 +151,9 @@
                 </div>
                 <form action="{{ route('logout') }}" method="POST" style="margin:0;">
                     @csrf
-                    <button type="submit" class="btn-icon" style="background:rgba(255,255,255,0.08);border:none;color:rgba(255,255,255,0.5);width:34px;height:34px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;" title="Logout">
+                    <button type="submit" class="btn-icon"
+                        style="background:rgba(255,255,255,0.08);border:none;color:rgba(255,255,255,0.5);width:34px;height:34px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;"
+                        title="Logout">
                         <i class="bi bi-box-arrow-right"></i>
                     </button>
                 </form>
@@ -162,15 +176,16 @@
             </div>
             <div class="topbar-right">
                 @if(!auth()->user()->isStaff())
-                @php
-                    $lowStockCount = \App\Models\Item::all()->filter(fn($i) => $i->is_low_stock)->count();
-                @endphp
-                @if($lowStockCount > 0)
-                <a href="{{ route('stock.index', ['stock_status' => 'low']) }}" class="btn-icon" title="{{ $lowStockCount }} barang stok rendah">
-                    <i class="bi bi-bell-fill"></i>
-                    <span class="notification-dot"></span>
-                </a>
-                @endif
+                    @php
+                        $lowStockCount = \App\Models\Item::all()->filter(fn($i) => $i->is_low_stock)->count();
+                    @endphp
+                    @if($lowStockCount > 0)
+                        <a href="{{ route('stock.index', ['stock_status' => 'low']) }}" class="btn-icon"
+                            title="{{ $lowStockCount }} barang stok rendah">
+                            <i class="bi bi-bell-fill"></i>
+                            <span class="notification-dot"></span>
+                        </a>
+                    @endif
                 @endif
 
                 <!-- Dark/Light Mode Toggle -->
@@ -193,17 +208,17 @@
 
     <!-- Toast Notifications -->
     @if(session('success'))
-    <div class="alert-float alert-success" id="alertToast">
-        <i class="bi bi-check-circle-fill"></i>
-        <span>{{ session('success') }}</span>
-    </div>
+        <div class="alert-float alert-success" id="alertToast">
+            <i class="bi bi-check-circle-fill"></i>
+            <span>{{ session('success') }}</span>
+        </div>
     @endif
 
     @if(session('error'))
-    <div class="alert-float alert-danger" id="alertToast">
-        <i class="bi bi-exclamation-circle-fill"></i>
-        <span>{{ session('error') }}</span>
-    </div>
+        <div class="alert-float alert-danger" id="alertToast">
+            <i class="bi bi-exclamation-circle-fill"></i>
+            <span>{{ session('error') }}</span>
+        </div>
     @endif
 
     <!-- Bootstrap JS -->
@@ -239,7 +254,7 @@
         }
 
         // Restore sidebar state on load (desktop only)
-        (function() {
+        (function () {
             if (window.innerWidth >= 992) {
                 const sidebarState = localStorage.getItem('inventrack-sidebar');
                 if (sidebarState === 'collapsed') {
@@ -279,4 +294,5 @@
 
     @stack('scripts')
 </body>
+
 </html>
