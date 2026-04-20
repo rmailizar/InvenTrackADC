@@ -1,19 +1,23 @@
 [phases.setup]
 nixPkgs = [
   "php84",
+  "php84Packages.composer", # WAJIB ADA agar perintah 'composer' dikenali
   "php84Extensions.gd",
   "php84Extensions.zip",
   "php84Extensions.mbstring",
   "php84Extensions.pdo",
   "php84Extensions.pdo_mysql",
-  "php82Extensions.bcmath",
-  "php82Extensions.fileinfo"
+  "php84Extensions.bcmath", # Ubah ke 84 agar seragam
+  "php84Extensions.fileinfo" # Ubah ke 84 agar seragam
 ]
 
 [phases.build]
+# Tambahkan mkdir agar composer tidak komplain soal home directory
 cmds = [
-  "composer install --optimize-autoloader --no-dev"
+  "mkdir -p .composer",
+  "composer install --optimize-autoloader --no-dev --ignore-platform-reqs"
 ]
 
 [start]
 cmd = "php -S 0.0.0.0:$PORT -t public"
+
