@@ -37,4 +37,8 @@ RUN chown -R www-data:www-data /var/www/html \
 EXPOSE 80
 
 # Start services
-CMD service nginx start && php-fpm
+CMD php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan migrate --force && \
+    php artisan db:seed --force && \
+    service nginx start && php-fpm
