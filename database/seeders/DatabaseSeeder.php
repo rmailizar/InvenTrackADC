@@ -7,59 +7,73 @@ use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Create Users (admin, manager are auto-approved)
-        $admin = User::create([
-            'name' => 'Administrator',
-            'email' => 'admin@inventory.com',
-            'password' => 'password',
-            'role' => 'admin',
-            'no_hp' => '081234567890',
-            'account_status' => 'approved',
-        ]);
+        // ======================
+        // USERS (ANTI DUPLIKAT)
+        // ======================
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@inventory.com'],
+            [
+                'name' => 'Administrator',
+                'password' => Hash::make('password'),
+                'role' => 'admin',
+                'no_hp' => '081234567890',
+                'account_status' => 'approved',
+            ]
+        );
 
-        $manager = User::create([
-            'name' => 'Manager Gudang',
-            'email' => 'manager@inventory.com',
-            'password' => 'password',
-            'role' => 'manager',
-            'no_hp' => '081234567891',
-            'account_status' => 'approved',
-        ]);
+        $manager = User::firstOrCreate(
+            ['email' => 'manager@inventory.com'],
+            [
+                'name' => 'Manager Gudang',
+                'password' => Hash::make('password'),
+                'role' => 'manager',
+                'no_hp' => '081234567891',
+                'account_status' => 'approved',
+            ]
+        );
 
-        $staff1 = User::create([
-            'name' => 'Budi Santoso',
-            'email' => 'budi@inventory.com',
-            'password' => 'password',
-            'role' => 'staff',
-            'no_hp' => '081234567892',
-            'account_status' => 'approved',
-        ]);
+        $staff1 = User::firstOrCreate(
+            ['email' => 'budi@inventory.com'],
+            [
+                'name' => 'Budi Santoso',
+                'password' => Hash::make('password'),
+                'role' => 'staff',
+                'no_hp' => '081234567892',
+                'account_status' => 'approved',
+            ]
+        );
 
-        $staff2 = User::create([
-            'name' => 'Siti Nurhaliza',
-            'email' => 'siti@inventory.com',
-            'password' => 'password',
-            'role' => 'staff',
-            'no_hp' => '081234567893',
-            'account_status' => 'approved',
-        ]);
+        $staff2 = User::firstOrCreate(
+            ['email' => 'siti@inventory.com'],
+            [
+                'name' => 'Siti Nurhaliza',
+                'password' => Hash::make('password'),
+                'role' => 'staff',
+                'no_hp' => '081234567893',
+                'account_status' => 'approved',
+            ]
+        );
 
-        // Create a pending user for testing
-        User::create([
-            'name' => 'Andi Prasetyo',
-            'email' => 'andi@inventory.com',
-            'password' => 'password',
-            'role' => 'staff',
-            'no_hp' => '081234567894',
-            'account_status' => 'pending',
-        ]);
+        User::firstOrCreate(
+            ['email' => 'andi@inventory.com'],
+            [
+                'name' => 'Andi Prasetyo',
+                'password' => Hash::make('password'),
+                'role' => 'staff',
+                'no_hp' => '081234567894',
+                'account_status' => 'pending',
+            ]
+        );
 
-        // Create Items
+        // ======================
+        // ITEMS (ANTI DUPLIKAT)
+        // ======================
         $items = [
             ['name' => 'Kertas HVS A4 70gr', 'category' => 'ATK', 'unit' => 'Rim', 'min_stock' => 10],
             ['name' => 'Tinta Printer HP Black', 'category' => 'ATK', 'unit' => 'Botol', 'min_stock' => 5],
@@ -79,10 +93,15 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($items as $itemData) {
-            Item::create($itemData);
+            Item::firstOrCreate(
+                ['name' => $itemData['name']],
+                $itemData
+            );
         }
 
-        // Create Sample Transactions (last 6 months)
+        // ======================
+        // TRANSAKSI (OPSIONAL ANTI DUPLIKAT)
+        // ======================
         $allItems = Item::all();
         $staffUsers = [$staff1, $staff2];
         $now = Carbon::now();
@@ -91,61 +110,34 @@ class DatabaseSeeder extends Seeder
             $date = $now->copy()->subMonths($month);
 
             foreach ($allItems->random(rand(5, 10)) as $item) {
-                // Masuk transaction
-                Transaction::create([
+                Transaction::firstOrCreate([
                     'item_id' => $item->id,
-                    'user_id' => $staffUsers[array_rand($staffUsers)]->id,
-                    'date' => $date->copy()->addDays(rand(1, 15)),
+                    'date' => $date->format('Y-m'),
                     'type' => 'masuk',
+                ], [
+                    'user_id' => $staffUsers[array_rand($staffUsers)]->id,
                     'quantity' => rand(10, 100),
                     'description' => 'Pengadaan rutin bulan ' . $date->translatedFormat('F Y'),
                     'status' => 'approved',
                     'approved_by' => $admin->id,
-                    'approved_at' => $date->copy()->addDays(rand(16, 20)),
+                    'approved_at' => now(),
                 ]);
             }
 
             foreach ($allItems->random(rand(3, 7)) as $item) {
-                // Keluar transaction
-                Transaction::create([
+                Transaction::firstOrCreate([
                     'item_id' => $item->id,
-                    'user_id' => $staffUsers[array_rand($staffUsers)]->id,
-                    'date' => $date->copy()->addDays(rand(10, 25)),
+                    'date' => $date->format('Y-m'),
                     'type' => 'keluar',
+                ], [
+                    'user_id' => $staffUsers[array_rand($staffUsers)]->id,
                     'quantity' => rand(2, 30),
                     'description' => 'Pemakaian operasional bulan ' . $date->translatedFormat('F Y'),
                     'status' => 'approved',
                     'approved_by' => $admin->id,
-                    'approved_at' => $date->copy()->addDays(rand(20, 28)),
+                    'approved_at' => now(),
                 ]);
             }
-        }
-
-        // Add pending transactions (same date for daily approval testing)
-        $pendingDate = $now->copy()->subDays(1);
-        for ($i = 0; $i < 4; $i++) {
-            Transaction::create([
-                'item_id' => $allItems->random()->id,
-                'user_id' => $staffUsers[array_rand($staffUsers)]->id,
-                'date' => $pendingDate,
-                'type' => ['masuk', 'keluar'][rand(0, 1)],
-                'quantity' => rand(5, 50),
-                'description' => 'Menunggu persetujuan admin',
-                'status' => 'pending',
-            ]);
-        }
-
-        // Add pending transactions for today
-        for ($i = 0; $i < 3; $i++) {
-            Transaction::create([
-                'item_id' => $allItems->random()->id,
-                'user_id' => $staffUsers[array_rand($staffUsers)]->id,
-                'date' => $now->copy(),
-                'type' => ['masuk', 'keluar'][rand(0, 1)],
-                'quantity' => rand(5, 30),
-                'description' => 'Menunggu persetujuan admin hari ini',
-                'status' => 'pending',
-            ]);
         }
     }
 }
