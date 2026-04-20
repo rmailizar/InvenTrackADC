@@ -11,9 +11,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'userAkses' => \App\Http\Middleware\UserAkses::class,
-            'trust.proxy' => \Illuminate\Http\Middleware\TrustProxies::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
