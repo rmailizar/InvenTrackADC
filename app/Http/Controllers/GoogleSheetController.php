@@ -55,16 +55,23 @@ class GoogleSheetController extends Controller
     {
         $this->ensureGoogleServicesAutoloaded();
 
-        $client = new Client();
+        $client = new \Google\Client();
         $client->setApplicationName('InvenTrack');
-        $client->setScopes([Sheets::SPREADSHEETS]);
+        $client->setScopes([\Google\Service\Sheets::SPREADSHEETS]);
 
-        $credPath = storage_path('app/google/service-account.json');
-        if (!file_exists($credPath)) {
-            throw new \Exception('Google service account file not found.');
+        $json = config('services.google_sheets.credentials_json');
+
+        if (!$json) {
+            throw new \Exception('Google credentials JSON not found in config.');
         }
 
-        $client->setAuthConfig($credPath);
+        $decoded = json_decode($json, true);
+
+        if (!$decoded) {
+            throw new \Exception('Invalid Google credentials JSON format.');
+        }
+
+        $client->setAuthConfig($decoded);
 
         return $client;
     }
@@ -81,7 +88,8 @@ class GoogleSheetController extends Controller
     public function syncTransactions($transactions = null)
     {
         $service = $this->getSheetsService();
-        $spreadsheetId = env('GOOGLE_SHEETS_SPREADSHEET_ID');
+        $spreadsheetId = config('services.google_sheets.spreadsheet_id');
+        $sheetName = config('services.google_sheets.sheet_name');
 
         if (!$spreadsheetId) {
             throw new \Exception('Spreadsheet ID not configured.');
@@ -143,7 +151,8 @@ class GoogleSheetController extends Controller
     public function syncAllApprovedToSheet(): int
     {
         $service = $this->getSheetsService();
-        $spreadsheetId = env('GOOGLE_SHEETS_SPREADSHEET_ID');
+        $spreadsheetId = config('services.google_sheets.spreadsheet_id');
+        $sheetName = config('services.google_sheets.sheet_name');
 
         if (!$spreadsheetId) {
             throw new \Exception('Spreadsheet ID not configured.');
@@ -158,12 +167,22 @@ class GoogleSheetController extends Controller
 
         // Add headers (include internal Transaction ID for easier tracking)
         $headers = new ValueRange([
-            'values' => [[
-                'ID',
-                'Tanggal', 'Nama Barang', 'Kategori', 'Jenis',
-                'Jumlah', 'Satuan', 'User', 'Keterangan',
-                'Status', 'Disetujui Oleh', 'Tanggal Approval',
-            ]],
+            'values' => [
+                [
+                    'ID',
+                    'Tanggal',
+                    'Nama Barang',
+                    'Kategori',
+                    'Jenis',
+                    'Jumlah',
+                    'Satuan',
+                    'User',
+                    'Keterangan',
+                    'Status',
+                    'Disetujui Oleh',
+                    'Tanggal Approval',
+                ]
+            ],
         ]);
 
         $service->spreadsheets_values->update(

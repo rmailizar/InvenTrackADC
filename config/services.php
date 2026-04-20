@@ -18,6 +18,12 @@ return [
         'key' => env('POSTMARK_API_KEY'),
     ],
 
+    'google_sheets' => [
+        'spreadsheet_id' => env('GOOGLE_SHEETS_SPREADSHEET_ID'),
+        'sheet_name' => env('GOOGLE_SHEETS_SHEET_NAME', 'Sheet1'),
+        'credentials_json' => env('GOOGLE_SERVICE_ACCOUNT_JSON'),
+    ],
+
     'resend' => [
         'key' => env('RESEND_API_KEY'),
     ],
