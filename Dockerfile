@@ -36,6 +36,9 @@ COPY . .
 # Instal dependensi PHP (tanpa dev untuk produksi)
 RUN composer install --no-dev --optimize-autoloader --ignore-platform-reqs
 
+# Tambahkan baris ini di atas RUN npm install atau sebelum CMD
+RUN a2dismod mpm_event mpm_worker || true && a2enmod mpm_prefork
+
 # Instal dependensi Node dan build assets (Vite)
 RUN npm install && npm run build
 
