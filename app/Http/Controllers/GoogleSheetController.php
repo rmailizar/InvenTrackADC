@@ -55,23 +55,38 @@ class GoogleSheetController extends Controller
     {
         $this->ensureGoogleServicesAutoloaded();
 
-        $client = new \Google\Client();
+        $client = new Client();
         $client->setApplicationName('InvenTrack');
-        $client->setScopes([\Google\Service\Sheets::SPREADSHEETS]);
+        $client->setScopes([Sheets::SPREADSHEETS]);
 
-        $json = config('services.google_sheets.credentials_json');
+        $json = env('GOOGLE_SERVICE_ACCOUNT_JSON');
 
         if (!$json) {
-            throw new \Exception('Google credentials JSON not found in config.');
+            throw new \Exception('Google credentials JSON not found in ENV.');
         }
 
-        $decoded = json_decode($json, true);
+        // Decode JSON
+        $credentials = json_decode($json, true);
 
-        if (!$decoded) {
+        if (!$credentials) {
             throw new \Exception('Invalid Google credentials JSON format.');
         }
 
-        $client->setAuthConfig($decoded);
+        // 🔥 FIX PENTING: normalize private key (atasi error OpenSSL)
+        if (isset($credentials['private_key'])) {
+            $credentials['private_key'] = str_replace(
+                ["\\n", "\n", "\r"],
+                "\n",
+                $credentials['private_key']
+            );
+        }
+
+        // Debug opsional
+        if (!openssl_pkey_get_private($credentials['private_key'])) {
+            throw new \Exception('Private key invalid (OpenSSL failed).');
+        }
+
+        $client->setAuthConfig($credentials);
 
         return $client;
     }
@@ -88,8 +103,7 @@ class GoogleSheetController extends Controller
     public function syncTransactions($transactions = null)
     {
         $service = $this->getSheetsService();
-        $spreadsheetId = config('services.google_sheets.spreadsheet_id');
-        $sheetName = config('services.google_sheets.sheet_name');
+        $spreadsheetId = env('GOOGLE_SHEETS_SPREADSHEET_ID');
 
         if (!$spreadsheetId) {
             throw new \Exception('Spreadsheet ID not configured.');
@@ -151,8 +165,7 @@ class GoogleSheetController extends Controller
     public function syncAllApprovedToSheet(): int
     {
         $service = $this->getSheetsService();
-        $spreadsheetId = config('services.google_sheets.spreadsheet_id');
-        $sheetName = config('services.google_sheets.sheet_name');
+        $spreadsheetId = env('GOOGLE_SHEETS_SPREADSHEET_ID');
 
         if (!$spreadsheetId) {
             throw new \Exception('Spreadsheet ID not configured.');
