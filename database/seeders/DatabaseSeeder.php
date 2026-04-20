@@ -110,9 +110,11 @@ class DatabaseSeeder extends Seeder
             $date = $now->copy()->subMonths($month);
 
             foreach ($allItems->random(rand(5, 10)) as $item) {
+                $trxDate = $date->copy()->addDays(rand(1, 28));
+
                 Transaction::firstOrCreate([
                     'item_id' => $item->id,
-                    'date' => $date->format('Y-m'),
+                    'date' => $trxDate->format('Y-m-d'), // ✅ FIX
                     'type' => 'masuk',
                 ], [
                     'user_id' => $staffUsers[array_rand($staffUsers)]->id,
@@ -120,14 +122,16 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Pengadaan rutin bulan ' . $date->translatedFormat('F Y'),
                     'status' => 'approved',
                     'approved_by' => $admin->id,
-                    'approved_at' => now(),
+                    'approved_at' => $trxDate->copy()->addDays(rand(1, 5)),
                 ]);
             }
 
             foreach ($allItems->random(rand(3, 7)) as $item) {
+                $trxDate = $date->copy()->addDays(rand(1, 28));
+
                 Transaction::firstOrCreate([
                     'item_id' => $item->id,
-                    'date' => $date->format('Y-m'),
+                    'date' => $trxDate->format('Y-m-d'), // ✅ FIX
                     'type' => 'keluar',
                 ], [
                     'user_id' => $staffUsers[array_rand($staffUsers)]->id,
@@ -135,7 +139,7 @@ class DatabaseSeeder extends Seeder
                     'description' => 'Pemakaian operasional bulan ' . $date->translatedFormat('F Y'),
                     'status' => 'approved',
                     'approved_by' => $admin->id,
-                    'approved_at' => now(),
+                    'approved_at' => $trxDate->copy()->addDays(rand(1, 5)),
                 ]);
             }
         }
