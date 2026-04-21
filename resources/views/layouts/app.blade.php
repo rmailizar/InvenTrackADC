@@ -87,6 +87,19 @@
                 </a>
             @endif
 
+            {{-- Request Stok: Admin & Staff --}}
+            @if(auth()->user()->isAdmin() || auth()->user()->isStaff())
+                <a href="{{ route('stock-requests.index') }}"
+                    class="sidebar-link {{ request()->routeIs('stock-requests.*') ? 'active' : '' }}">
+                    <i class="bi bi-inbox-fill"></i>
+                    <span>Request Stok</span>
+                    @php $pendingReqCount = \App\Models\StockRequest::pending()->count(); @endphp
+                    @if($pendingReqCount > 0)
+                        <span class="badge bg-warning text-dark">{{ $pendingReqCount }}</span>
+                    @endif
+                </a>
+            @endif
+
             {{-- Laporan: Admin & Manager --}}
             @if(auth()->user()->isAdmin() || auth()->user()->isManager())
                 <div class="sidebar-label" style="margin-top: 8px;">Laporan</div>

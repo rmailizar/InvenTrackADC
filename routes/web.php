@@ -11,9 +11,13 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\GoogleSheetController;
 use App\Http\Controllers\ItemLookupController;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\StockRequestController;
+
+// Public Routes (no auth)
+Route::get('/', [StockRequestController::class, 'publicIndex'])->name('public.stock-request');
+Route::post('/request-stock', [StockRequestController::class, 'store'])->name('public.stock-request.store');
 
 // Auth Routes
-Route::get('/', [AuthController::class, 'showLogin']);
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -55,6 +59,11 @@ Route::middleware('auth')->group(function () {
 
     // Stock recap - admin & manager
     Route::get('/stock', [StockController::class, 'index'])->name('stock.index')->middleware('userAkses:admin,manager');
+
+    // Stock requests - admin & staff
+    Route::get('/stock-requests', [StockRequestController::class, 'adminIndex'])->name('stock-requests.index')->middleware('userAkses:admin,staff');
+    Route::post('/stock-requests/{stockRequest}/approve', [StockRequestController::class, 'approve'])->name('stock-requests.approve')->middleware('userAkses:admin');
+    Route::post('/stock-requests/{stockRequest}/reject', [StockRequestController::class, 'reject'])->name('stock-requests.reject')->middleware('userAkses:admin');
 
     // Reports - admin & manager
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index')->middleware('userAkses:admin,manager');
