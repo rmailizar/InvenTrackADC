@@ -41,11 +41,13 @@ Route::middleware('auth')->group(function () {
     // Lookups routes must come BEFORE resource to avoid matching items/{item}
     Route::get('/items/lookups', [ItemLookupController::class, 'index'])->name('items.lookups.index')->middleware('userAkses:admin');
     Route::post('/items/lookup/replace', [ItemLookupController::class, 'replace'])->name('items.lookup.replace')->middleware('userAkses:admin');
-    Route::resource('items', ItemController::class)->except(['show'])->middleware('userAkses:admin');
+    Route::resource('items', ItemController::class)->middleware('userAkses:admin');
+    Route::get('/items/{item}/edit-data', [ItemController::class, 'edit'])->name('items.editData')->middleware('userAkses:admin');
 
     // Transactions - admin & staff
     Route::resource('transactions', TransactionController::class)->only(['index', 'create', 'store'])->middleware('userAkses:admin,staff');
     Route::get('/transactions/{transaction}/edit', [TransactionController::class, 'edit'])->name('transactions.edit')->middleware('userAkses:admin');
+    Route::get('/transactions/{transaction}/edit-data', [TransactionController::class, 'edit'])->name('transactions.editData')->middleware('userAkses:admin');
     Route::put('/transactions/{transaction}', [TransactionController::class, 'update'])->name('transactions.update')->middleware('userAkses:admin');
     Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy')->middleware('userAkses:admin');
 
@@ -54,6 +56,7 @@ Route::middleware('auth')->group(function () {
 
     // Users - admin can CRUD
     Route::resource('users', UserController::class)->middleware('userAkses:admin');
+    Route::get('/users/{user}/edit-data', [UserController::class, 'edit'])->name('users.editData')->middleware('userAkses:admin');
 
     // User approval - manager only
     Route::post('users/{id}/approve-account', [UserController::class, 'approveUser'])->name('users.approveAccount')->middleware('userAkses:manager');

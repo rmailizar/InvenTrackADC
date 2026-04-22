@@ -47,16 +47,15 @@ class TransactionController extends Controller
 
         $transactions = $query->latest()->paginate(15)->withQueryString();
 
-        return view('transactions.index', compact('transactions'));
+        // Pass items for modal dropdown
+        $items = Item::orderBy('name')->get();
+
+        return view('transactions.index', compact('transactions', 'items'));
     }
 
     public function create()
     {
-        $items = Item::orderBy('name')->get();
-        $categories = Item::select('category')->distinct()->pluck('category');
-        $units = Item::select('unit')->distinct()->pluck('unit');
-
-        return view('transactions.create', compact('items', 'categories', 'units'));
+        return redirect()->route('transactions.index');
     }
 
     public function store(Request $request)
@@ -77,7 +76,11 @@ class TransactionController extends Controller
         // Check stock for keluar
         if ($validated['type'] === 'keluar') {
             if ($item->current_stock < $validated['quantity']) {
-                return back()->withInput()->with('error', 'Stok tidak mencukupi. Stok saat ini: ' . $item->current_stock . ' ' . $item->unit);
+                $errorMsg = 'Stok tidak mencukupi. Stok saat ini: ' . $item->current_stock . ' ' . $item->unit;
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $errorMsg], 422);
+                }
+                return back()->withInput()->with('error', $errorMsg);
             }
         }
 
@@ -86,24 +89,53 @@ class TransactionController extends Controller
 
         $transaction = Transaction::create($validated);
 
-        return redirect()->route('transactions.index')->with('success', 'Transaksi berhasil ditambahkan dan menunggu approval dari Admin.');
+        $successMsg = 'Transaksi berhasil ditambahkan dan menunggu approval dari Admin.';
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => $successMsg]);
+        }
+
+        return redirect()->route('transactions.index')->with('success', $successMsg);
     }
 
-    public function edit(Transaction $transaction)
+    public function edit(Transaction $transaction, Request $request)
     {
         if ($transaction->status !== 'pending') {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Hanya transaksi berstatus pending yang bisa diubah.'], 422);
+            }
             return redirect()->route('dashboard')->with('error', 'Hanya transaksi berstatus pending yang bisa diubah.');
         }
 
-        $items = Item::orderBy('name')->get();
+        // AJAX request returns JSON data for modal pre-fill
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'id' => $transaction->id,
+                'item_id' => $transaction->item_id,
+                'date' => $transaction->date->format('Y-m-d'),
+                'type' => $transaction->type,
+                'quantity' => $transaction->quantity,
+                'price' => $transaction->price,
+                'description' => $transaction->description,
+                'item' => [
+                    'category' => $transaction->item->category ?? '',
+                    'unit' => $transaction->item->unit ?? '',
+                    'current_stock' => $transaction->item->current_stock ?? 0,
+                ],
+            ]);
+        }
 
-        return view('transactions.edit', compact('transaction', 'items'));
+        return redirect()->route('transactions.index');
     }
 
     public function update(Request $request, Transaction $transaction)
     {
         if ($transaction->status !== 'pending') {
-            return redirect()->route('dashboard')->with('error', 'Hanya transaksi berstatus pending yang bisa diubah.');
+            $errorMsg = 'Hanya transaksi berstatus pending yang bisa diubah.';
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $errorMsg], 422);
+            }
+            return redirect()->route('dashboard')->with('error', $errorMsg);
         }
 
         $validated = $request->validate([
@@ -121,13 +153,23 @@ class TransactionController extends Controller
 
         if ($validated['type'] === 'keluar') {
             if ($item->current_stock < $validated['quantity']) {
-                return back()->withInput()->with('error', 'Stok tidak mencukupi. Stok saat ini: ' . $item->current_stock . ' ' . $item->unit);
+                $errorMsg = 'Stok tidak mencukupi. Stok saat ini: ' . $item->current_stock . ' ' . $item->unit;
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $errorMsg], 422);
+                }
+                return back()->withInput()->with('error', $errorMsg);
             }
         }
 
         $transaction->update($validated);
 
-        return redirect()->route('dashboard')->with('success', 'Transaksi pending berhasil diperbarui.');
+        $successMsg = 'Transaksi pending berhasil diperbarui.';
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => $successMsg]);
+        }
+
+        return redirect()->route('dashboard')->with('success', $successMsg);
     }
 
     public function destroy(Transaction $transaction)

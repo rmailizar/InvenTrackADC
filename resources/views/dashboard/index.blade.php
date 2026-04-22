@@ -121,10 +121,10 @@
                                                 </td>
                                                 <td class="text-end">
                                                     <div class="d-flex gap-1 justify-content-end flex-wrap">
-                                                        <a href="{{ route('transactions.edit', $tx) }}"
-                                                            class="btn btn-sm btn-outline-primary py-0 px-2" title="Edit transaksi">
+                                                        <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2"
+                                                            title="Edit transaksi" onclick="openTxEditModal({{ $tx->id }})">
                                                             <i class="bi bi-pencil"></i> Edit
-                                                        </a>
+                                                        </button>
                                                         <form action="{{ route('transactions.destroy', $tx) }}" method="POST"
                                                             class="d-inline" id="deleteTx-{{ $tx->id }}">
                                                             @csrf
@@ -399,6 +399,103 @@
             font-size: 13px;
         }
     </style>
+
+    {{-- Transaction Edit Modal --}}
+    @if(auth()->user()->isAdmin())
+    <div class="modal fade inventrack-modal" id="dashTxModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content" style="position:relative;">
+                <div class="modal-loading-overlay" id="dashTxLoading">
+                    <div class="modal-spinner"></div>
+                </div>
+                <div class="modal-header">
+                    <h5 class="modal-title" id="dashTxModalTitle">
+                        <i class="bi bi-pencil-fill"></i> <span>Edit Transaksi</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-error-alert" id="dashTxError">
+                        <i class="bi bi-exclamation-circle me-1"></i>
+                        <span id="dashTxErrorMsg"></span>
+                    </div>
+                    <form id="dashTxForm" novalidate>
+                        <input type="hidden" id="dashTxId" value="">
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Tanggal <span class="text-danger">*</span></label>
+                                <input type="date" name="date" class="form-control" required id="dashTxDate">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Jenis Transaksi <span class="text-danger">*</span></label>
+                                <select name="type" class="form-select" required id="dashTxType">
+                                    <option value="">-- Pilih Jenis --</option>
+                                    <option value="masuk">📥 Barang Masuk</option>
+                                    <option value="keluar">📤 Barang Keluar</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Nama Barang <span class="text-danger">*</span></label>
+                            <select name="item_id" class="form-select" required id="dashTxItemSelect">
+                                <option value="">-- Pilih Barang --</option>
+                                @foreach($items as $item)
+                                    <option value="{{ $item->id }}"
+                                            data-category="{{ $item->category }}"
+                                            data-unit="{{ $item->unit }}"
+                                            data-stock="{{ $item->current_stock }}">
+                                        {{ $item->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Kategori</label>
+                                <input type="text" class="form-control" id="dashTxItemCategory" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Satuan</label>
+                                <input type="text" class="form-control" id="dashTxItemUnit" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Stok Saat Ini</label>
+                                <input type="text" class="form-control" id="dashTxItemStock" readonly>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Jumlah <span class="text-danger">*</span></label>
+                            <input type="number" name="quantity" class="form-control" min="1" placeholder="Masukkan jumlah" required id="dashTxQuantity">
+                            <div id="dashTxStockWarning" class="text-danger mt-1" style="font-size:12px;display:none;">
+                                <i class="bi bi-exclamation-triangle-fill"></i> Jumlah melebihi stok yang tersedia!
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Harga Satuan</label>
+                            <input type="number" name="price" class="form-control" min="0" step="1" placeholder="Kosongkan jika tidak ada" id="dashTxPrice">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Keterangan</label>
+                            <textarea name="description" class="form-control" rows="3" placeholder="Keterangan tambahan (opsional)" id="dashTxDescription"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-primary" id="dashTxSubmitBtn" onclick="submitDashTxForm()">
+                        <i class="bi bi-check-lg"></i> Update
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 @endsection
 
 @push('scripts')
@@ -600,14 +697,14 @@
                             suggestionsBox.innerHTML = '<div class="autocomplete-no-result"><i class="bi bi-search me-1"></i>Tidak ada barang ditemukan</div>';
                         } else {
                             suggestionsBox.innerHTML = items.map((item, idx) => `
-                                            <div class="autocomplete-item" data-id="${item.id}" data-name="${item.name}" data-index="${idx}">
-                                                <div class="item-icon"><i class="bi bi-box-seam"></i></div>
-                                                <div>
-                                                    <div class="item-name">${highlightMatch(item.name, q)}</div>
-                                                    <div class="item-category">${item.category || ''}</div>
+                                                <div class="autocomplete-item" data-id="${item.id}" data-name="${item.name}" data-index="${idx}">
+                                                    <div class="item-icon"><i class="bi bi-box-seam"></i></div>
+                                                    <div>
+                                                        <div class="item-name">${highlightMatch(item.name, q)}</div>
+                                                        <div class="item-category">${item.category || ''}</div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        `).join('');
+                                            `).join('');
 
                             // Click event on suggestion items
                             suggestionsBox.querySelectorAll('.autocomplete-item').forEach(el => {
@@ -731,5 +828,160 @@
                     categoryChartInstance.update('active');
                 });
         });
+
+        // ===== Transaction Edit Modal (Dashboard) =====
+        @if(auth()->user()->isAdmin())
+        const dashTxModalEl = document.getElementById('dashTxModal');
+        const dashTxModal = dashTxModalEl ? new bootstrap.Modal(dashTxModalEl) : null;
+
+        // Item select -> auto-fill
+        const dashTxItemSelect = document.getElementById('dashTxItemSelect');
+        const dashTxCategoryInput = document.getElementById('dashTxItemCategory');
+        const dashTxUnitInput = document.getElementById('dashTxItemUnit');
+        const dashTxStockInput = document.getElementById('dashTxItemStock');
+        const dashTxQuantityInput = document.getElementById('dashTxQuantity');
+        const dashTxTypeSelect = document.getElementById('dashTxType');
+        const dashTxStockWarning = document.getElementById('dashTxStockWarning');
+
+        if (dashTxItemSelect) {
+            dashTxItemSelect.addEventListener('change', function() {
+                const selected = this.options[this.selectedIndex];
+                if (this.value) {
+                    dashTxCategoryInput.value = selected.dataset.category || '';
+                    dashTxUnitInput.value = selected.dataset.unit || '';
+                    dashTxStockInput.value = selected.dataset.stock || '0';
+                } else {
+                    dashTxCategoryInput.value = '';
+                    dashTxUnitInput.value = '';
+                    dashTxStockInput.value = '';
+                }
+                checkDashTxStock();
+            });
+
+            dashTxQuantityInput.addEventListener('input', checkDashTxStock);
+            dashTxTypeSelect.addEventListener('change', checkDashTxStock);
+        }
+
+        function checkDashTxStock() {
+            if (dashTxTypeSelect.value === 'keluar' && dashTxItemSelect.value) {
+                const stock = parseInt(dashTxStockInput.value) || 0;
+                const qty = parseInt(dashTxQuantityInput.value) || 0;
+                dashTxStockWarning.style.display = qty > stock ? 'block' : 'none';
+            } else {
+                dashTxStockWarning.style.display = 'none';
+            }
+        }
+
+        function openTxEditModal(id) {
+            // Reset form
+            document.getElementById('dashTxForm').reset();
+            document.getElementById('dashTxError').style.display = 'none';
+            document.querySelectorAll('#dashTxForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            dashTxCategoryInput.value = '';
+            dashTxUnitInput.value = '';
+            dashTxStockInput.value = '';
+            dashTxStockWarning.style.display = 'none';
+
+            document.getElementById('dashTxId').value = id;
+
+            const loading = document.getElementById('dashTxLoading');
+            loading.classList.add('show');
+            dashTxModal.show();
+
+            fetch(`/transactions/${id}/edit-data`, {
+                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                loading.classList.remove('show');
+                document.getElementById('dashTxDate').value = data.date;
+                document.getElementById('dashTxType').value = data.type;
+                document.getElementById('dashTxItemSelect').value = data.item_id;
+                document.getElementById('dashTxQuantity').value = data.quantity;
+                document.getElementById('dashTxPrice').value = data.price || '';
+                document.getElementById('dashTxDescription').value = data.description || '';
+
+                // Fill item info
+                dashTxCategoryInput.value = data.item?.category || '';
+                dashTxUnitInput.value = data.item?.unit || '';
+                dashTxStockInput.value = data.item?.current_stock || '0';
+            })
+            .catch(() => {
+                loading.classList.remove('show');
+                document.getElementById('dashTxErrorMsg').textContent = 'Gagal memuat data transaksi.';
+                document.getElementById('dashTxError').style.display = 'block';
+            });
+        }
+
+        function submitDashTxForm() {
+            const form = document.getElementById('dashTxForm');
+            const errorDiv = document.getElementById('dashTxError');
+            const errorMsg = document.getElementById('dashTxErrorMsg');
+            const loading = document.getElementById('dashTxLoading');
+            const submitBtn = document.getElementById('dashTxSubmitBtn');
+            const txId = document.getElementById('dashTxId').value;
+
+            errorDiv.style.display = 'none';
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+            loading.classList.add('show');
+            submitBtn.disabled = true;
+
+            const formData = new FormData(form);
+            formData.append('_method', 'PUT');
+
+            fetch(`/transactions/${txId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(res => res.json().then(data => ({ status: res.status, data })))
+            .then(({ status, data }) => {
+                loading.classList.remove('show');
+                submitBtn.disabled = false;
+
+                if (data.success) {
+                    dashTxModal.hide();
+                    Toast.fire({ icon: 'success', title: data.message });
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    let messages = [];
+                    if (data.errors) {
+                        Object.keys(data.errors).forEach(key => {
+                            messages.push(data.errors[key][0]);
+                            const input = form.querySelector(`[name="${key}"]`);
+                            if (input) input.classList.add('is-invalid');
+                        });
+                    }
+                    if (data.message && !data.errors) messages.push(data.message);
+                    errorMsg.innerHTML = messages.join('<br>');
+                    errorDiv.style.display = 'block';
+                }
+            })
+            .catch(() => {
+                loading.classList.remove('show');
+                submitBtn.disabled = false;
+                errorMsg.textContent = 'Terjadi kesalahan. Silakan coba lagi.';
+                errorDiv.style.display = 'block';
+            });
+        }
+
+        // Reset on close
+        if (dashTxModalEl) {
+            dashTxModalEl.addEventListener('hidden.bs.modal', function() {
+                document.getElementById('dashTxForm').reset();
+                document.getElementById('dashTxError').style.display = 'none';
+                document.querySelectorAll('#dashTxForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                dashTxCategoryInput.value = '';
+                dashTxUnitInput.value = '';
+                dashTxStockInput.value = '';
+                dashTxStockWarning.style.display = 'none';
+            });
+        }
+        @endif
     </script>
 @endpush

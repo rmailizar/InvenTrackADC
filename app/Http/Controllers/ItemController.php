@@ -25,15 +25,22 @@ class ItemController extends Controller
 
         $items = $query->latest()->paginate(15)->withQueryString();
         $categories = Item::select('category')->distinct()->pluck('category');
+        $units = Item::select('unit')->distinct()->pluck('unit');
 
-        return view('items.index', compact('items', 'categories'));
+        return view('items.index', compact('items', 'categories', 'units'));
     }
 
     public function create()
     {
-        $categories = Item::select('category')->distinct()->pluck('category');
-        $units = Item::select('unit')->distinct()->pluck('unit');
-        return view('items.create', compact('categories', 'units'));
+        return redirect()->route('items.index');
+    }
+
+    /**
+     * Return item data as JSON for modal edit pre-fill
+     */
+    public function show(Item $item)
+    {
+        return response()->json($item);
     }
 
     public function store(Request $request)
@@ -47,14 +54,21 @@ class ItemController extends Controller
 
         Item::create($validated);
 
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Barang berhasil ditambahkan.']);
+        }
+
         return redirect()->route('items.index')->with('success', 'Barang berhasil ditambahkan.');
     }
 
-    public function edit(Item $item)
+    public function edit(Item $item, Request $request)
     {
-        $categories = Item::select('category')->distinct()->pluck('category');
-        $units = Item::select('unit')->distinct()->pluck('unit');
-        return view('items.edit', compact('item', 'categories', 'units'));
+        // AJAX request returns JSON data for modal pre-fill
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json($item);
+        }
+
+        return redirect()->route('items.index');
     }
 
     public function update(Request $request, Item $item)
@@ -67,6 +81,10 @@ class ItemController extends Controller
         ]);
 
         $item->update($validated);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Barang berhasil diupdate.']);
+        }
 
         return redirect()->route('items.index')->with('success', 'Barang berhasil diupdate.');
     }

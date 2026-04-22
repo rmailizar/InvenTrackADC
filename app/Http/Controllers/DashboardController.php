@@ -124,6 +124,9 @@ class DashboardController extends Controller
                 });
         }
 
+        // Items for transaction edit modal dropdown
+        $items = Item::orderBy('name')->get();
+
         return view('dashboard.index', compact(
             'totalItems',
             'masukBulanIni',
@@ -136,7 +139,8 @@ class DashboardController extends Controller
             'availableYears',
             'topKeluar',
             'recentTransactions',
-            'pendingByDate'
+            'pendingByDate',
+            'items'
         ));
     }
 

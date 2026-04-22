@@ -91,9 +91,9 @@
                             <i class="bi bi-sun-fill icon-sun"></i>
                             <i class="bi bi-moon-fill icon-moon"></i>
                         </button>
-                        <a href="{{ route('login') }}" class="btn btn-sm btn-primary" style="border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;">
+                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#loginModal" style="border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;">
                             <i class="bi bi-box-arrow-in-right me-1"></i> Login
-                        </a>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -296,6 +296,51 @@
             </div>
         </div>
 
+        {{-- Login Modal --}}
+        <div class="modal fade inventrack-modal" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" style="max-width:440px;">
+                <div class="modal-content" style="position:relative;">
+                    <div class="modal-loading-overlay" id="loginLoading">
+                        <div class="modal-spinner"></div>
+                    </div>
+                    <div class="login-modal-brand">
+                        <div class="brand-icon"><i class="bi bi-box-seam-fill"></i></div>
+                        <h5>InvenTrack</h5>
+                        <p>Sistem Manajemen Inventory</p>
+                    </div>
+                    <div class="modal-body" style="max-height:none;">
+                        <div class="modal-error-alert" id="loginError">
+                            <i class="bi bi-exclamation-circle me-1"></i>
+                            <span id="loginErrorMsg"></span>
+                        </div>
+                        <form id="loginForm" novalidate>
+                            @csrf
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email" class="form-control" placeholder="nama@email.com" required autofocus id="loginEmail">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Password</label>
+                                <input type="password" name="password" class="form-control" placeholder="Masukkan password" required id="loginPassword">
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" name="remember" id="loginRemember">
+                                    <label class="form-check-label" for="loginRemember" style="font-size:13px;color:var(--text-secondary);">Ingat Saya</label>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100" id="loginSubmitBtn">
+                                <i class="bi bi-box-arrow-in-right"></i> Masuk
+                            </button>
+                        </form>
+                    </div>
+                    <div class="modal-footer justify-content-center" style="border-top:none;background:transparent;padding-top:0;">
+                        <span style="font-size:12px;color:var(--text-muted);">&copy; {{ date('Y') }} InvenTrack. All rights reserved.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {{-- Footer --}}
         <footer style="background:var(--card-bg);border-top:1px solid var(--border-color);padding:20px 0;text-align:center;">
             <div class="container">
@@ -362,6 +407,77 @@
                 icon: 'error',
                 title: {!! json_encode(session('error')) !!}
             });
+        @endif
+
+        // Login Modal AJAX
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const form = this;
+            const errorDiv = document.getElementById('loginError');
+            const errorMsg = document.getElementById('loginErrorMsg');
+            const loading = document.getElementById('loginLoading');
+            const submitBtn = document.getElementById('loginSubmitBtn');
+
+            // Clear previous errors
+            errorDiv.style.display = 'none';
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+            // Show loading
+            loading.classList.add('show');
+            submitBtn.disabled = true;
+
+            const formData = new FormData(form);
+
+            fetch('{{ url("/login") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(res => res.json().then(data => ({ status: res.status, data })))
+            .then(({ status, data }) => {
+                loading.classList.remove('show');
+                submitBtn.disabled = false;
+
+                if (data.success) {
+                    // Success — redirect
+                    window.location.href = data.redirect || '/dashboard';
+                } else {
+                    // Show errors
+                    let messages = [];
+                    if (data.errors) {
+                        Object.keys(data.errors).forEach(key => {
+                            messages.push(data.errors[key][0]);
+                            const input = form.querySelector(`[name="${key}"]`);
+                            if (input) input.classList.add('is-invalid');
+                        });
+                    }
+                    if (data.message) messages.push(data.message);
+                    errorMsg.innerHTML = messages.join('<br>');
+                    errorDiv.style.display = 'block';
+                }
+            })
+            .catch(err => {
+                loading.classList.remove('show');
+                submitBtn.disabled = false;
+                errorMsg.textContent = 'Terjadi kesalahan. Silakan coba lagi.';
+                errorDiv.style.display = 'block';
+            });
+        });
+
+        // Reset login form when modal closes
+        document.getElementById('loginModal').addEventListener('hidden.bs.modal', function() {
+            document.getElementById('loginForm').reset();
+            document.getElementById('loginError').style.display = 'none';
+            document.querySelectorAll('#loginForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        });
+
+        // Auto-open login modal if redirected from /login
+        @if(session('openLogin'))
+            new bootstrap.Modal(document.getElementById('loginModal')).show();
         @endif
     </script>
 </body>

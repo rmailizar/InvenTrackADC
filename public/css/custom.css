@@ -1812,6 +1812,210 @@ a:hover {
     transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease;
 }
 
+/* ---------- InvenTrack Modal System ---------- */
+.inventrack-modal .modal-content {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    animation: modalSlideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(40px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.inventrack-modal .modal-backdrop,
+.inventrack-modal.modal {
+    backdrop-filter: blur(6px);
+}
+
+.inventrack-modal .modal-header {
+    background: var(--primary);
+    padding: 20px 24px;
+    border-bottom: none;
+    color: white;
+}
+
+.inventrack-modal .modal-header .modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+}
+
+.inventrack-modal .modal-header .modal-title i {
+    font-size: 18px;
+    opacity: 0.85;
+}
+
+.inventrack-modal .modal-header .btn-close {
+    filter: invert(1) brightness(200%);
+    opacity: 0.6;
+    transition: var(--transition);
+}
+
+.inventrack-modal .modal-header .btn-close:hover {
+    opacity: 1;
+}
+
+.inventrack-modal .modal-body {
+    padding: 24px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.inventrack-modal .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-color);
+    background: var(--body-bg);
+    gap: 8px;
+}
+
+/* Modal AJAX error alert */
+.modal-error-alert {
+    background: var(--danger-bg);
+    color: var(--danger-dark);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+    animation: fadeInUp 0.3s ease;
+}
+
+.modal-error-alert ul {
+    margin: 4px 0 0;
+    padding-left: 18px;
+}
+
+.modal-error-alert ul li {
+    margin-bottom: 2px;
+}
+
+[data-theme="dark"] .modal-error-alert {
+    background: rgba(239, 68, 68, 0.12);
+    color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.25);
+}
+
+/* Modal loading overlay */
+.modal-loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(2px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    border-radius: var(--radius-lg);
+}
+
+[data-theme="dark"] .modal-loading-overlay {
+    background: rgba(15, 23, 42, 0.8);
+}
+
+.modal-loading-overlay.show {
+    display: flex;
+}
+
+.modal-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: modalSpin 0.7s linear infinite;
+}
+
+@keyframes modalSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Modal form field validation */
+.inventrack-modal .form-control.is-invalid,
+.inventrack-modal .form-select.is-invalid {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.inventrack-modal .invalid-feedback {
+    font-size: 12px;
+    color: var(--danger);
+}
+
+/* Login modal special header */
+.login-modal-brand {
+    text-align: center;
+    padding: 28px 24px 0;
+}
+
+.login-modal-brand .brand-icon {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: white;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-primary);
+}
+
+.login-modal-brand h5 {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.login-modal-brand p {
+    color: var(--text-secondary);
+    font-size: 12px;
+    margin-bottom: 0;
+}
+
+/* Responsive: fullscreen modal on small screens */
+@media (max-width: 575.98px) {
+    .inventrack-modal .modal-dialog {
+        margin: 0;
+        max-width: 100%;
+        min-height: 100vh;
+    }
+
+    .inventrack-modal .modal-content {
+        border-radius: 0;
+        min-height: 100vh;
+    }
+
+    .inventrack-modal .modal-body {
+        max-height: calc(100vh - 140px);
+    }
+}
+
+/* Theme transition for modals */
+.inventrack-modal .modal-content,
+.inventrack-modal .modal-footer {
+    transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease;
+}
+
 /* ---------- SweetAlert2 Custom Styles ---------- */
 .swal2-popup {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
@@ -1940,25 +2144,38 @@ a:hover {
 
 /* SweetAlert2 Toast */
 .swal2-popup.swal2-toast {
-    border-radius: var(--radius) !important;
-    box-shadow: var(--shadow-lg) !important;
-    padding: 12px 16px !important;
-    font-size: 13px !important;
+    border-radius: var(--radius, 12px) !important;
+    box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1)) !important;
+    padding: 1rem !important;
+    /* Menggunakan padding yang lebih lega */
+    display: flex !important;
+    align-items: center !important;
+    /* Menjaga semua elemen di tengah secara vertikal */
+    gap: 10px !important;
 }
 
 .swal2-popup.swal2-toast .swal2-title {
-    font-size: 13px !important;
+    font-size: 0.875rem !important;
+    /* Sekitar 14px agar lebih terbaca */
     font-weight: 500 !important;
-    margin: 0 !important;
+    margin: 0 0 0 8px !important;
+    /* Memberi jarak antara ikon dan teks */
+    padding: 0 !important;
+    line-height: 1.4 !important;
+    color: inherit;
 }
 
 /* SweetAlert2 Timer Progress Bar */
 .swal2-timer-progress-bar {
     background: var(--primary) !important;
+    height: 3px !important;
+    /* Membuat bar sedikit lebih halus */
 }
 
 /* SweetAlert2 Actions alignment */
 .swal2-actions {
     gap: 8px !important;
     margin-top: 20px !important;
+    justify-content: flex-end !important;
+    /* Merapikan posisi tombol ke kanan */
 }

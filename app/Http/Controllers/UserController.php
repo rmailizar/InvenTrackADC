@@ -20,7 +20,7 @@ class UserController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -42,7 +42,15 @@ class UserController extends Controller
 
     public function create()
     {
-        return view('users.create');
+        return redirect()->route('users.index');
+    }
+
+    /**
+     * Return user data as JSON for modal edit pre-fill
+     */
+    public function show(User $user)
+    {
+        return response()->json($user->only(['id', 'name', 'email', 'role', 'no_hp']));
     }
 
     public function store(Request $request)
@@ -51,7 +59,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|in:admin,manager,staff',
+            'role' => 'required|in:admin,manajer,staf',
             'no_hp' => 'nullable|string|max:20',
         ]);
 
@@ -60,12 +68,23 @@ class UserController extends Controller
 
         User::create($validated);
 
-        return redirect()->route('users.index')->with('success', 'User berhasil ditambahkan. Menunggu approval dari Manager.');
+        $successMsg = 'User berhasil ditambahkan. Menunggu approval dari Manager.';
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => $successMsg]);
+        }
+
+        return redirect()->route('users.index')->with('success', $successMsg);
     }
 
-    public function edit(User $user)
+    public function edit(User $user, Request $request)
     {
-        return view('users.edit', compact('user'));
+        // AJAX request returns JSON data for modal pre-fill
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json($user->only(['id', 'name', 'email', 'role', 'no_hp']));
+        }
+
+        return redirect()->route('users.index');
     }
 
     public function update(Request $request, User $user)
@@ -73,7 +92,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
-            'role' => 'required|in:admin,manager,staff',
+            'role' => 'required|in:admin,manajer,staf',
             'no_hp' => 'nullable|string|max:20',
         ]);
 
@@ -84,7 +103,13 @@ class UserController extends Controller
 
         $user->update($validated);
 
-        return redirect()->route('users.index')->with('success', 'User berhasil diupdate.');
+        $successMsg = 'User berhasil diupdate.';
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json(['success' => true, 'message' => $successMsg]);
+        }
+
+        return redirect()->route('users.index')->with('success', $successMsg);
     }
 
     public function destroy(User $user)

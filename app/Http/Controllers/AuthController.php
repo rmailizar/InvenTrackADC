@@ -12,7 +12,7 @@ class AuthController extends Controller
         if (Auth::check()) {
             return redirect('/dashboard');
         }
-        return view('auth.login');
+        return redirect('/')->with('openLogin', true);
     }
 
     public function login(Request $request)
@@ -21,6 +21,8 @@ class AuthController extends Controller
             'email' => 'required|email',
             'password' => 'required',
         ]);
+
+        $isAjax = $request->ajax() || $request->wantsJson();
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $user = Auth::user();
@@ -35,17 +37,32 @@ class AuthController extends Controller
                     ? 'Akun Anda masih menunggu persetujuan dari Manager.'
                     : 'Akun Anda ditolak. Silakan hubungi Administrator.';
 
+                if ($isAjax) {
+                    return response()->json(['success' => false, 'message' => $statusMsg], 422);
+                }
+
                 return back()->withErrors(['email' => $statusMsg])->onlyInput('email');
             }
 
             $request->session()->regenerate();
 
-            // Redirect based on role
-            if ($user->isStaff()) {
-                return redirect()->route('transactions.index')->with('success', 'Selamat datang, ' . $user->name . '!');
+            // Determine redirect
+            $redirect = $user->isStaff()
+                ? route('transactions.index')
+                : '/dashboard';
+
+            if ($isAjax) {
+                return response()->json(['success' => true, 'redirect' => $redirect]);
             }
 
-            return redirect()->intended('/dashboard')->with('success', 'Selamat datang, ' . $user->name . '!');
+            return redirect()->intended($redirect)->with('success', 'Selamat datang, ' . $user->name . '!');
+        }
+
+        if ($isAjax) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Email atau password salah.',
+            ], 422);
         }
 
         return back()->withErrors([
@@ -58,6 +75,6 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/login')->with('success', 'Berhasil logout.');
+        return redirect('/')->with('success', 'Berhasil logout.');
     }
 }
