@@ -1128,6 +1128,30 @@ a:hover {
 }
 
 /* ---------- Login Page ---------- */
+/* ---------- Theme Toggle Button ---------- */
+.btn-house {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: var(--body-bg);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 18px;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-house:hover {
+    background: var(--danger-bg);
+    color: var(--danger);
+    transform: rotate(30deg);
+}
+
 .login-page {
     min-height: 100vh;
     background: linear-gradient(135deg, var(--dark) 0%, var(--dark-2) 40%, var(--dark-3) 100%);

@@ -59,14 +59,14 @@ class GoogleSheetController extends Controller
         $client->setApplicationName('InvenTrack');
         $client->setScopes([Sheets::SPREADSHEETS]);
 
-        $json = env('GOOGLE_SERVICE_ACCOUNT_JSON');
+        $path = storage_path('app/google/service-account.json');
 
-        if (!$json) {
-            throw new \Exception('Google credentials JSON not found in ENV.');
+        if (!$path) {
+            throw new \Exception('Google credentials JSON not found in storage.');
         }
 
         // Decode JSON
-        $credentials = json_decode($json, true);
+        $credentials = json_decode(file_get_contents($path), true);
 
         if (!$credentials) {
             throw new \Exception('Invalid Google credentials JSON format.');

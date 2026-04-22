@@ -21,9 +21,9 @@
                             <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
                             <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
                             <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
-                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Selesai
+                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Done
                             </option>
-                            <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Dibatalkan
+                            <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled
                             </option>
                         </select>
                     </div>
@@ -112,7 +112,7 @@
                                             @endif
                                         @elseif($req->status === 'completed')
                                             <span class="badge-status" style="background:#d1fae5;color:#065f46;">
-                                                <i class="bi bi-check-lg"></i> Selesai
+                                                <i class="bi bi-check-lg"></i> Done
                                             </span>
                                             @if($req->completer)
                                                 <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">
@@ -121,7 +121,7 @@
                                             @endif
                                         @elseif($req->status === 'cancelled')
                                             <span class="badge-status" style="background:#fef2f2;color:#991b1b;">
-                                                <i class="bi bi-slash-circle-fill"></i> Dibatalkan
+                                                <i class="bi bi-slash-circle-fill"></i> Cancelled
                                             </span>
                                             @if($req->completer)
                                                 <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">
@@ -165,16 +165,16 @@
                                                 <form method="POST" action="{{ route('stock-requests.complete', $req) }}"
                                                     class="d-inline" id="completeReq-{{ $req->id }}">
                                                     @csrf
-                                                    <button type="button" class="btn btn-sm btn-success" title="Selesai"
-                                                        onclick="swalConfirm('Selesaikan Request', 'Tandai request ini sebagai selesai?', 'question', 'Ya, Selesai', '#completeReq-{{ $req->id }}')">
+                                                    <button type="button" class="btn btn-sm btn-success" title="Done"
+                                                        onclick="swalConfirm('Selesaikan Request', 'Tandai request ini sebagai Done?', 'question', 'Ya, Done', '#completeReq-{{ $req->id }}')">
                                                         <i class="bi bi-check-lg"></i>
                                                     </button>
                                                 </form>
                                                 <form method="POST" action="{{ route('stock-requests.cancel', $req) }}"
                                                     class="d-inline" id="cancelReq-{{ $req->id }}">
                                                     @csrf
-                                                    <button type="button" class="btn btn-sm btn-danger" title="Batalkan"
-                                                        onclick="swalConfirm('Batalkan Request', 'Batalkan request ini?', 'warning', 'Ya, Batalkan', '#cancelReq-{{ $req->id }}')">
+                                                    <button type="button" class="btn btn-sm btn-danger" title="Cancelled"
+                                                        onclick="swalConfirm('Batalkan Request', 'Batalkan request ini?', 'warning', 'Ya, Cancelled', '#cancelReq-{{ $req->id }}')">
                                                         <i class="bi bi-x-lg"></i>
                                                     </button>
                                                 </form>

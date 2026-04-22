@@ -81,10 +81,13 @@
                     Masuk
                 </button>
             </form>
-            <a class="btn btn-danger mt-4" id="login-submit" href="{{ route('public.stock-request') }}">
-                <i class="bi bi-box-arrow-in-left"></i>
-                Kembali
-            </a>
+
+            <div class="d-flex justify-content-center">
+                <a class="btn btn-house mt-4" href="{{ route('public.stock-request') }}"
+                    title="Kembali ke halaman utama" id="kembali">
+                    <i class="bi bi-house-fill"></i>
+                </a>
+            </div>
 
             <div class="text-center mt-4" style="font-size:12px; color:var(--text-muted);">
                 &copy; {{ date('Y') }} InvenTrack. All rights reserved.
