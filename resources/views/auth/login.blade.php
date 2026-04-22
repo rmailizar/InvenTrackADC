@@ -8,7 +8,8 @@
     <meta name="description" content="Login ke InvenTrack - Sistem Manajemen Inventory">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="{{ asset('css/custom.css') }}" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <link href="{{ asset('css/custom.css') }}?v={{ filemtime(public_path('css/custom.css')) }}" rel="stylesheet">
 
     <!-- Prevent flash: apply theme before render -->
     <script>
@@ -46,13 +47,7 @@
                 </div>
             @endif
 
-            @if(session('success'))
-                <div class="alert alert-success py-2 px-3 rounded-3 mb-3"
-                    style="font-size:13px; border:none; background:var(--success-bg); color:var(--success-dark);">
-                    <i class="bi bi-check-circle me-1"></i>
-                    {{ session('success') }}
-                </div>
-            @endif
+
 
             <form method="POST" action="{{ url('/login') }}">
                 @csrf
@@ -97,6 +92,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         function toggleTheme() {
             const html = document.documentElement;
@@ -105,6 +101,20 @@
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('inventrack-theme', newTheme);
         }
+
+        @if(session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: {!! json_encode(session('success')) !!},
+                confirmButtonText: 'OK',
+                customClass: {
+                    popup: document.documentElement.getAttribute('data-theme') === 'dark' ? 'swal-dark' : '',
+                    confirmButton: 'swal-btn-confirm'
+                },
+                buttonsStyling: false,
+            });
+        @endif
     </script>
 </body>
 

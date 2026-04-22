@@ -100,9 +100,10 @@
                                                 <i class="bi bi-pencil-fill"></i>
                                             </a>
                                             <form action="{{ route('items.destroy', $item) }}" method="POST"
-                                                onsubmit="return confirm('Yakin hapus barang ini?')">
+                                                id="deleteItem-{{ $item->id }}">
                                                 @csrf @method('DELETE')
-                                                <button type="submit" class="btn-action delete" title="Hapus">
+                                                <button type="button" class="btn-action delete" title="Hapus"
+                                                    onclick="swalConfirm('Hapus Barang', 'Yakin hapus barang ini? Data yang sudah dihapus tidak bisa dikembalikan.', 'warning', 'Ya, Hapus', '#deleteItem-{{ $item->id }}')">
                                                     <i class="bi bi-trash-fill"></i>
                                                 </button>
                                             </form>

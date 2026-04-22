@@ -12,8 +12,10 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <!-- Custom CSS -->
-    <link href="{{ asset('css/custom.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/custom.css') }}?v={{ filemtime(public_path('css/custom.css')) }}" rel="stylesheet">
     <!-- Logo  -->
     <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
 
@@ -162,9 +164,10 @@
                     <div class="user-name">{{ auth()->user()->name }}</div>
                     <div class="user-role">{{ ucfirst(auth()->user()->role) }}</div>
                 </div>
-                <form action="{{ route('logout') }}" method="POST" style="margin:0;">
+                <form action="{{ route('logout') }}" method="POST" style="margin:0;" id="logoutForm">
                     @csrf
-                    <button type="submit" class="btn-icon"
+                    <button type="button" class="btn-icon"
+                        onclick="swalConfirm('Logout', 'Apakah Anda yakin ingin keluar?', 'warning', 'Ya, Logout', '#logoutForm')"
                         style="background:rgba(255,255,255,0.08);border:none;color:rgba(255,255,255,0.5);width:34px;height:34px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;"
                         title="Logout">
                         <i class="bi bi-box-arrow-right"></i>
@@ -219,25 +222,12 @@
         </div>
     </main>
 
-    <!-- Toast Notifications -->
-    @if(session('success'))
-        <div class="alert-float alert-success" id="alertToast">
-            <i class="bi bi-check-circle-fill"></i>
-            <span>{{ session('success') }}</span>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert-float alert-danger" id="alertToast">
-            <i class="bi bi-exclamation-circle-fill"></i>
-            <span>{{ session('error') }}</span>
-        </div>
-    @endif
-
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         // Theme toggle
@@ -247,6 +237,7 @@
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('inventrack-theme', newTheme);
+            updateChartTheme();
         }
 
         // Sidebar toggle (desktop: collapse, mobile: slide)
@@ -277,13 +268,64 @@
             }
         })();
 
-        // Auto-dismiss toast
-        const alertToast = document.getElementById('alertToast');
-        if (alertToast) {
-            setTimeout(() => {
-                alertToast.style.animation = 'slideInRight 0.4s reverse forwards';
-                setTimeout(() => alertToast.remove(), 400);
-            }, 4000);
+        // SweetAlert2 Toast Configuration
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3500,
+            timerProgressBar: true,
+            customClass: {
+                popup: document.documentElement.getAttribute('data-theme') === 'dark'
+                    ? 'swal-toast-custom swal-dark'
+                    : 'swal-toast-custom'
+            }
+        });
+
+        // Show session flash messages via SweetAlert2
+        @if(session('success'))
+            Toast.fire({
+                icon: 'success',
+                title: {!! json_encode(session('success')) !!}
+            });
+        @endif
+
+        @if(session('error'))
+            Toast.fire({
+                icon: 'error',
+                title: {!! json_encode(session('error')) !!}
+            });
+        @endif
+
+        /**
+         * SweetAlert2 Confirmation Dialog
+         * @param {string} title - Dialog title
+         * @param {string} text - Dialog message
+         * @param {string} icon - 'warning', 'question', 'info', 'error'
+         * @param {string} confirmText - Confirm button text
+         * @param {string} formSelector - CSS selector for the form to submit
+         */
+        function swalConfirm(title, text, icon, confirmText, formSelector) {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: icon,
+                showCancelButton: true,
+                confirmButtonText: confirmText || 'Ya, Lanjutkan',
+                cancelButtonText: 'Batal',
+                reverseButtons: true,
+                customClass: {
+                    popup: isDark ? 'swal-dark' : '',
+                    confirmButton: 'swal-btn-confirm',
+                    cancelButton: 'swal-btn-cancel'
+                },
+                buttonsStyling: false,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.querySelector(formSelector).submit();
+                }
+            });
         }
 
         // Close sidebar on link click (mobile)

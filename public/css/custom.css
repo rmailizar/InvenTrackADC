@@ -1787,3 +1787,154 @@ a:hover {
 .upload-zone {
     transition: background-color 0.4s ease, border-color 0.4s ease, color 0.4s ease;
 }
+
+/* ---------- SweetAlert2 Custom Styles ---------- */
+.swal2-popup {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15) !important;
+    padding: 28px 24px !important;
+}
+
+.swal2-popup .swal2-title {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: var(--text-primary) !important;
+}
+
+.swal2-popup .swal2-html-container {
+    font-size: 14px !important;
+    color: var(--text-secondary) !important;
+    line-height: 1.6 !important;
+}
+
+.swal2-popup .swal2-icon {
+    margin: 12px auto 16px !important;
+    border-width: 3px !important;
+}
+
+.swal2-popup .swal2-icon.swal2-success {
+    border-color: var(--primary) !important;
+    color: var(--primary) !important;
+}
+
+.swal2-popup .swal2-icon.swal2-success .swal2-success-ring {
+    border-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+.swal2-popup .swal2-icon.swal2-success [class^='swal2-success-line'] {
+    background-color: var(--primary) !important;
+}
+
+.swal2-popup .swal2-icon.swal2-warning {
+    border-color: var(--warning) !important;
+    color: var(--warning) !important;
+}
+
+.swal2-popup .swal2-icon.swal2-error {
+    border-color: var(--danger) !important;
+}
+
+.swal2-popup .swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+    background-color: var(--danger) !important;
+}
+
+.swal2-popup .swal2-icon.swal2-question {
+    border-color: var(--info) !important;
+    color: var(--info) !important;
+}
+
+/* SweetAlert2 Confirm/Cancel Buttons */
+.swal-btn-confirm {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+    color: white !important;
+    border: none !important;
+    padding: 10px 24px !important;
+    border-radius: var(--radius-sm) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    cursor: pointer !important;
+    transition: var(--transition) !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin: 0 4px !important;
+}
+
+.swal-btn-confirm:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35) !important;
+}
+
+.swal-btn-confirm:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3) !important;
+}
+
+.swal-btn-cancel {
+    background: var(--body-bg) !important;
+    color: var(--text-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    padding: 10px 24px !important;
+    border-radius: var(--radius-sm) !important;
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    cursor: pointer !important;
+    transition: var(--transition) !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin: 0 4px !important;
+}
+
+.swal-btn-cancel:hover {
+    background: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+.swal-btn-cancel:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* SweetAlert2 Dark Mode */
+.swal-dark {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.swal-dark .swal2-title {
+    color: #e2e8f0 !important;
+}
+
+.swal-dark .swal2-html-container {
+    color: #94a3b8 !important;
+}
+
+/* SweetAlert2 Toast */
+.swal2-popup.swal2-toast {
+    border-radius: var(--radius) !important;
+    box-shadow: var(--shadow-lg) !important;
+    padding: 12px 16px !important;
+    font-size: 13px !important;
+}
+
+.swal2-popup.swal2-toast .swal2-title {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    margin: 0 !important;
+}
+
+/* SweetAlert2 Timer Progress Bar */
+.swal2-timer-progress-bar {
+    background: var(--primary) !important;
+}
+
+/* SweetAlert2 Actions alignment */
+.swal2-actions {
+    gap: 8px !important;
+    margin-top: 20px !important;
+}

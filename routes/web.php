@@ -32,6 +32,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/dashboard/approve-date', [DashboardController::class, 'approveByDate'])->name('dashboard.approveByDate')->middleware('userAkses:admin');
     Route::post('/dashboard/reject-date', [DashboardController::class, 'rejectByDate'])->name('dashboard.rejectByDate')->middleware('userAkses:admin');
 
+    // Dashboard AJAX API endpoints
+    Route::get('/dashboard/api/search-items', [DashboardController::class, 'searchItems'])->name('dashboard.searchItems')->middleware('userAkses:admin,manager');
+    Route::get('/dashboard/api/chart-data', [DashboardController::class, 'chartData'])->name('dashboard.chartData')->middleware('userAkses:admin,manager');
+    Route::get('/dashboard/api/category-by-year', [DashboardController::class, 'categoryByYear'])->name('dashboard.categoryByYear')->middleware('userAkses:admin,manager');
+
     // Items - admin only
     // Lookups routes must come BEFORE resource to avoid matching items/{item}
     Route::get('/items/lookups', [ItemLookupController::class, 'index'])->name('items.lookups.index')->middleware('userAkses:admin');
@@ -64,6 +69,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/stock-requests', [StockRequestController::class, 'adminIndex'])->name('stock-requests.index')->middleware('userAkses:admin,staff');
     Route::post('/stock-requests/{stockRequest}/approve', [StockRequestController::class, 'approve'])->name('stock-requests.approve')->middleware('userAkses:admin');
     Route::post('/stock-requests/{stockRequest}/reject', [StockRequestController::class, 'reject'])->name('stock-requests.reject')->middleware('userAkses:admin');
+    Route::post('/stock-requests/{stockRequest}/complete', [StockRequestController::class, 'complete'])->name('stock-requests.complete')->middleware('userAkses:admin,staff');
+    Route::post('/stock-requests/{stockRequest}/cancel', [StockRequestController::class, 'cancel'])->name('stock-requests.cancel')->middleware('userAkses:admin,staff');
 
     // Reports - admin & manager
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index')->middleware('userAkses:admin,manager');

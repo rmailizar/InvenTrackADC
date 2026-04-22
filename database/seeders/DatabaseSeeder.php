@@ -102,46 +102,46 @@ class DatabaseSeeder extends Seeder
         // ======================
         // TRANSAKSI (OPSIONAL ANTI DUPLIKAT)
         // ======================
-        $allItems = Item::all();
-        $staffUsers = [$staff1, $staff2];
-        $now = Carbon::now();
+        // $allItems = Item::all();
+        // $staffUsers = [$staff1, $staff2];
+        // $now = Carbon::now();
 
-        for ($month = 5; $month >= 0; $month--) {
-            $date = $now->copy()->subMonths($month);
+        // for ($month = 5; $month >= 0; $month--) {
+        //     $date = $now->copy()->subMonths($month);
 
-            foreach ($allItems->random(rand(5, 10)) as $item) {
-                $trxDate = $date->copy()->addDays(rand(1, 28));
+        //     foreach ($allItems->random(rand(5, 10)) as $item) {
+        //         $trxDate = $date->copy()->addDays(rand(1, 28));
 
-                Transaction::firstOrCreate([
-                    'item_id' => $item->id,
-                    'date' => $trxDate->format('Y-m-d'), // ✅ FIX
-                    'type' => 'masuk',
-                ], [
-                    'user_id' => $staffUsers[array_rand($staffUsers)]->id,
-                    'quantity' => rand(10, 100),
-                    'description' => 'Pengadaan rutin bulan ' . $date->translatedFormat('F Y'),
-                    'status' => 'approved',
-                    'approved_by' => $admin->id,
-                    'approved_at' => $trxDate->copy()->addDays(rand(1, 5)),
-                ]);
-            }
+        //         Transaction::firstOrCreate([
+        //             'item_id' => $item->id,
+        //             'date' => $trxDate->format('Y-m-d'), // ✅ FIX
+        //             'type' => 'masuk',
+        //         ], [
+        //             'user_id' => $staffUsers[array_rand($staffUsers)]->id,
+        //             'quantity' => rand(10, 100),
+        //             'description' => 'Pengadaan rutin bulan ' . $date->translatedFormat('F Y'),
+        //             'status' => 'approved',
+        //             'approved_by' => $admin->id,
+        //             'approved_at' => $trxDate->copy()->addDays(rand(1, 5)),
+        //         ]);
+        //     }
 
-            foreach ($allItems->random(rand(3, 7)) as $item) {
-                $trxDate = $date->copy()->addDays(rand(1, 28));
+        //     foreach ($allItems->random(rand(3, 7)) as $item) {
+        //         $trxDate = $date->copy()->addDays(rand(1, 28));
 
-                Transaction::firstOrCreate([
-                    'item_id' => $item->id,
-                    'date' => $trxDate->format('Y-m-d'), // ✅ FIX
-                    'type' => 'keluar',
-                ], [
-                    'user_id' => $staffUsers[array_rand($staffUsers)]->id,
-                    'quantity' => rand(2, 30),
-                    'description' => 'Pemakaian operasional bulan ' . $date->translatedFormat('F Y'),
-                    'status' => 'approved',
-                    'approved_by' => $admin->id,
-                    'approved_at' => $trxDate->copy()->addDays(rand(1, 5)),
-                ]);
-            }
-        }
+        //         Transaction::firstOrCreate([
+        //             'item_id' => $item->id,
+        //             'date' => $trxDate->format('Y-m-d'), // ✅ FIX
+        //             'type' => 'keluar',
+        //         ], [
+        //             'user_id' => $staffUsers[array_rand($staffUsers)]->id,
+        //             'quantity' => rand(2, 30),
+        //             'description' => 'Pemakaian operasional bulan ' . $date->translatedFormat('F Y'),
+        //             'status' => 'approved',
+        //             'approved_by' => $admin->id,
+        //             'approved_at' => $trxDate->copy()->addDays(rand(1, 5)),
+        //         ]);
+        //     }
+        // }
     }
 }

@@ -4,358 +4,732 @@
 @section('subtitle', 'Ringkasan data inventory Anda')
 
 @section('content')
-<div class="animate-fade-in">
-    <!-- Stats Cards -->
-    <div class="row g-3 mb-4">
-        <div class="col-sm-6 col-xl-3">
-            <div class="stats-card primary">
-                <div class="stats-icon">
-                    <i class="bi bi-box-seam-fill"></i>
+    <div class="animate-fade-in">
+        <!-- Stats Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-sm-6 col-xl-3">
+                <div class="stats-card primary">
+                    <div class="stats-icon">
+                        <i class="bi bi-box-seam-fill"></i>
+                    </div>
+                    <div class="stats-value">{{ number_format($totalItems) }}</div>
+                    <div class="stats-label">Total Barang</div>
                 </div>
-                <div class="stats-value">{{ number_format($totalItems) }}</div>
-                <div class="stats-label">Total Barang</div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="stats-card success">
+                    <div class="stats-icon">
+                        <i class="bi bi-arrow-down-circle-fill"></i>
+                    </div>
+                    <div class="stats-value">{{ number_format($masukBulanIni) }}</div>
+                    <div class="stats-label">Barang Masuk (Bulan Ini)</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="stats-card warning">
+                    <div class="stats-icon">
+                        <i class="bi bi-arrow-up-circle-fill"></i>
+                    </div>
+                    <div class="stats-value">{{ number_format($keluarBulanIni) }}</div>
+                    <div class="stats-label">Barang Keluar (Bulan Ini)</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xl-3">
+                <div class="stats-card danger">
+                    <div class="stats-icon">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="stats-value">{{ number_format($pendingCount) }}</div>
+                    <div class="stats-label">Menunggu Approval</div>
+                </div>
             </div>
         </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="stats-card success">
-                <div class="stats-icon">
-                    <i class="bi bi-arrow-down-circle-fill"></i>
-                </div>
-                <div class="stats-value">{{ number_format($masukBulanIni) }}</div>
-                <div class="stats-label">Barang Masuk (Bulan Ini)</div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="stats-card warning">
-                <div class="stats-icon">
-                    <i class="bi bi-arrow-up-circle-fill"></i>
-                </div>
-                <div class="stats-value">{{ number_format($keluarBulanIni) }}</div>
-                <div class="stats-label">Barang Keluar (Bulan Ini)</div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-xl-3">
-            <div class="stats-card danger">
-                <div class="stats-icon">
-                    <i class="bi bi-clock-history"></i>
-                </div>
-                <div class="stats-value">{{ number_format($pendingCount) }}</div>
-                <div class="stats-label">Menunggu Approval</div>
-            </div>
-        </div>
-    </div>
 
-    {{-- ADMIN: Pending Transactions Approval (Per Hari) --}}
-    @if(auth()->user()->isAdmin() && $pendingByDate->count() > 0)
-    <div class="card mb-4">
-        <div class="card-header">
-            <span><i class="bi bi-check2-square text-warning-custom me-2"></i>Transaksi Menunggu Approval</span>
-            <span class="badge bg-warning text-dark">{{ $pendingCount }} pending</span>
-        </div>
-        <div class="card-body p-0">
-            @foreach($pendingByDate as $date => $transactions)
-            <div class="approval-date-group">
-                <div class="d-flex align-items-center justify-content-between px-3 py-3" style="background:var(--body-bg); border-bottom:1px solid var(--border-color);">
+        {{-- ADMIN: Pending Transactions Approval (Per Hari) --}}
+        @if(auth()->user()->isAdmin() && $pendingByDate->count() > 0)
+            <div class="card mb-4">
+                <div class="card-header">
+                    <span><i class="bi bi-check2-square text-warning-custom me-2"></i>Transaksi Menunggu Approval</span>
+                    <span class="badge bg-warning text-dark">{{ $pendingCount }} pending</span>
+                </div>
+                <div class="card-body p-0">
+                    @foreach($pendingByDate as $date => $transactions)
+                        <div class="approval-date-group">
+                            <div class="d-flex align-items-center justify-content-between px-3 py-3"
+                                style="background:var(--body-bg); border-bottom:1px solid var(--border-color);">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-calendar3 text-primary-custom"></i>
+                                    <span class="fw-700"
+                                        style="font-size:14px;">{{ \Carbon\Carbon::parse($date)->translatedFormat('l, d F Y') }}</span>
+                                    <span class="badge bg-secondary" style="font-size:10px;">{{ $transactions->count() }}
+                                        transaksi</span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <form action="{{ route('dashboard.approveByDate') }}" method="POST" style="display:inline;"
+                                        id="approveDate-{{ $loop->index }}">
+                                        @csrf
+                                        <input type="hidden" name="date" value="{{ $date }}">
+                                        <button type="button" class="btn btn-success btn-sm"
+                                            onclick="swalConfirm('Approve Semua', 'Approve semua transaksi tanggal ini?', 'question', 'Ya, Approve', '#approveDate-{{ $loop->index }}')">
+                                            <i class="bi bi-check-all"></i> Approve Semua
+                                        </button>
+                                    </form>
+                                    <form action="{{ route('dashboard.rejectByDate') }}" method="POST" style="display:inline;"
+                                        id="rejectDate-{{ $loop->index }}">
+                                        @csrf
+                                        <input type="hidden" name="date" value="{{ $date }}">
+                                        <button type="button" class="btn btn-danger btn-sm"
+                                            onclick="swalConfirm('Reject Semua', 'Reject semua transaksi tanggal ini?', 'warning', 'Ya, Reject', '#rejectDate-{{ $loop->index }}')">
+                                            <i class="bi bi-x-lg"></i> Reject Semua
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="table-container">
+                                <table class="table" style="margin-bottom:0;">
+                                    <thead>
+                                        <tr>
+                                            <th>Barang</th>
+                                            <th>Kategori</th>
+                                            <th>Jenis</th>
+                                            <th>Jumlah</th>
+                                            <th>Satuan</th>
+                                            <th>Harga Satuan</th>
+                                            <th>User</th>
+                                            <th>Keterangan</th>
+                                            <th class="text-end" style="white-space:nowrap;">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($transactions as $tx)
+                                            <tr>
+                                                <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
+                                                <td>{{ $tx->item->category ?? '-' }}</td>
+                                                <td>
+                                                    <span class="badge-status badge-{{ $tx->type }}">
+                                                        <i class="bi bi-arrow-{{ $tx->type === 'masuk' ? 'down' : 'up' }}-circle-fill"
+                                                            style="font-size:10px;"></i>
+                                                        {{ strtoupper($tx->type) }}
+                                                    </span>
+                                                </td>
+                                                <td class="fw-700">{{ number_format($tx->quantity) }}</td>
+                                                <td>{{ $tx->item->unit ?? '-' }}</td>
+                                                <td>{{ $tx->price ?? '-' }}</td>
+                                                <td>{{ $tx->user->name ?? '-' }}</td>
+                                                <td style="font-size:12px; color:var(--text-secondary);">
+                                                    {{ Str::limit($tx->description, 40) }}
+                                                </td>
+                                                <td class="text-end">
+                                                    <div class="d-flex gap-1 justify-content-end flex-wrap">
+                                                        <a href="{{ route('transactions.edit', $tx) }}"
+                                                            class="btn btn-sm btn-outline-primary py-0 px-2" title="Edit transaksi">
+                                                            <i class="bi bi-pencil"></i> Edit
+                                                        </a>
+                                                        <form action="{{ route('transactions.destroy', $tx) }}" method="POST"
+                                                            class="d-inline" id="deleteTx-{{ $tx->id }}">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2"
+                                                                title="Hapus transaksi"
+                                                                onclick="swalConfirm('Hapus Transaksi', 'Hapus transaksi pending ini?', 'warning', 'Ya, Hapus', '#deleteTx-{{ $tx->id }}')">
+                                                                <i class="bi bi-trash"></i> Hapus
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
+        <!-- Search Bar (Autocomplete) -->
+        <div class="card mb-4" id="searchCard">
+            <div class="card-body py-3">
+                <div class="position-relative" id="searchWrapper">
                     <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-calendar3 text-primary-custom"></i>
-                        <span class="fw-700" style="font-size:14px;">{{ \Carbon\Carbon::parse($date)->translatedFormat('l, d F Y') }}</span>
-                        <span class="badge bg-secondary" style="font-size:10px;">{{ $transactions->count() }} transaksi</span>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <form action="{{ route('dashboard.approveByDate') }}" method="POST" style="display:inline;">
-                            @csrf
-                            <input type="hidden" name="date" value="{{ $date }}">
-                            <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Approve semua transaksi tanggal ini?')">
-                                <i class="bi bi-check-all"></i> Approve Semua
-                            </button>
-                        </form>
-                        <form action="{{ route('dashboard.rejectByDate') }}" method="POST" style="display:inline;">
-                            @csrf
-                            <input type="hidden" name="date" value="{{ $date }}">
-                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Reject semua transaksi tanggal ini?')">
-                                <i class="bi bi-x-lg"></i> Reject Semua
-                            </button>
-                        </form>
-                    </div>
-                </div>
-                <div class="table-container">
-                    <table class="table" style="margin-bottom:0;">
-                        <thead>
-                            <tr>
-                                <th>Barang</th>
-                                <th>Kategori</th>
-                                <th>Jenis</th>
-                                <th>Jumlah</th>
-                                <th>Satuan</th>
-                                <th>Harga Satuan</th>
-                                <th>User</th>
-                                <th>Keterangan</th>
-                                <th class="text-end" style="white-space:nowrap;">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach($transactions as $tx)
-                            <tr>
-                                <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
-                                <td>{{ $tx->item->category ?? '-' }}</td>
-                                <td>
-                                    <span class="badge-status badge-{{ $tx->type }}">
-                                        <i class="bi bi-arrow-{{ $tx->type === 'masuk' ? 'down' : 'up' }}-circle-fill" style="font-size:10px;"></i>
-                                        {{ strtoupper($tx->type) }}
-                                    </span>
-                                </td>
-                                <td class="fw-700">{{ number_format($tx->quantity) }}</td>
-                                <td>{{ $tx->item->unit ?? '-' }}</td>
-                                <td>{{ $tx->price ?? '-' }}</td>
-                                <td>{{ $tx->user->name ?? '-' }}</td>
-                                <td style="font-size:12px; color:var(--text-secondary);">{{ Str::limit($tx->description, 40) }}</td>
-                                <td class="text-end">
-                                    <div class="d-flex gap-1 justify-content-end flex-wrap">
-                                        <a href="{{ route('transactions.edit', $tx) }}" class="btn btn-sm btn-outline-primary py-0 px-2" title="Edit transaksi">
-                                            <i class="bi bi-pencil"></i> Edit
-                                        </a>
-                                        <form action="{{ route('transactions.destroy', $tx) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus transaksi pending ini?');">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2" title="Hapus transaksi">
-                                                <i class="bi bi-trash"></i> Hapus
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            @endforeach
-        </div>
-    </div>
-    @endif
-
-    <!-- Charts Row -->
-    <div class="row g-3 mb-4">
-        <div class="col-lg-8">
-            <div class="card">
-                <div class="card-header">
-                    <span><i class="bi bi-bar-chart-fill text-primary-custom me-2"></i>Barang Masuk vs Keluar (12 Bulan)</span>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container" style="height:320px;">
-                        <canvas id="monthlyChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <span><i class="bi bi-pie-chart-fill text-primary-custom me-2"></i>Stok per Kategori</span>
-                </div>
-                <div class="card-body">
-                    <div class="chart-container" style="height:320px;">
-                        <canvas id="categoryChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bottom Row -->
-    <div class="row g-3">
-        <!-- Low Stock Alert -->
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <span><i class="bi bi-exclamation-triangle-fill text-warning-custom me-2"></i>Stok Menipis</span>
-                    @if($lowStockItems->count() > 0)
-                        <span class="badge bg-danger">{{ $lowStockItems->count() }}</span>
-                    @endif
-                </div>
-                <div class="card-body" style="max-height:350px; overflow-y:auto;">
-                    @forelse($lowStockItems as $item)
-                        <div class="low-stock-item">
-                            <div class="item-info">
-                                <h6>{{ $item->name }}</h6>
-                                <span>{{ $item->category }} · Min: {{ $item->min_stock }} {{ $item->unit }}</span>
-                            </div>
-                            <div class="stock-value">{{ $item->current_stock }} {{ $item->unit }}</div>
-                        </div>
-                    @empty
-                        <div class="empty-state" style="padding:30px 10px;">
-                            <i class="bi bi-check-circle" style="font-size:40px; color:var(--success);"></i>
-                            <h6 class="mt-2" style="font-size:13px;">Semua stok aman</h6>
-                        </div>
-                    @endforelse
-                </div>
-            </div>
-        </div>
-
-        <!-- Top Items Keluar -->
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <span><i class="bi bi-fire text-danger-custom me-2"></i>Barang Paling Sering Keluar</span>
-                </div>
-                <div class="card-body">
-                    @forelse($topKeluar as $index => $tx)
-                        <div class="d-flex align-items-center justify-content-between py-2 {{ !$loop->last ? 'border-bottom' : '' }}">
-                            <div class="d-flex align-items-center gap-3">
-                                <span class="fw-700" style="width:24px;height:24px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:11px;">{{ $index+1 }}</span>
-                                <div>
-                                    <div class="fw-600" style="font-size:13px;">{{ $tx->item->name ?? '-' }}</div>
-                                    <div style="font-size:11px;color:var(--text-secondary);">{{ $tx->item->category ?? '' }}</div>
-                                </div>
-                            </div>
-                            <span class="fw-700 text-danger-custom">{{ number_format($tx->total) }}</span>
-                        </div>
-                    @empty
-                        <div class="empty-state" style="padding:30px 10px;">
-                            <i class="bi bi-inbox" style="font-size:40px;"></i>
-                            <h6 class="mt-2" style="font-size:13px;">Belum ada data</h6>
-                        </div>
-                    @endforelse
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Transactions + Sync Button -->
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <span><i class="bi bi-clock-fill text-primary-custom me-2"></i>Transaksi Terbaru</span>
-                    @if(auth()->user()->isAdmin())
-                    <form action="{{ route('sync.sheets') }}" method="POST" style="display:inline;">
-                        @csrf
-                        <button type="submit" class="btn btn-sm btn-outline-primary" onclick="return confirm('Sync semua data ke Google Sheets?')" title="Sync ke Google Sheets">
-                            <i class="bi bi-cloud-arrow-up-fill"></i> Sync
+                        <i class="bi bi-search" style="color:var(--text-secondary); font-size:18px;"></i>
+                        <input type="text" id="itemSearchInput" class="form-control"
+                            placeholder="Cari barang untuk filter grafik..." autocomplete="off"
+                            style="background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); padding:10px 14px; border-radius:10px; font-size:14px;">
+                        <button type="button" id="clearSearchBtn" class="btn btn-sm btn-outline-secondary"
+                            style="display:none; border-radius:8px; white-space:nowrap;">
+                            <i class="bi bi-x-lg"></i> Reset
                         </button>
-                    </form>
-                    @endif
+                    </div>
+                    <div id="searchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+                    <div id="activeFilter" style="display:none; margin-top:10px;">
+                        <span class="badge"
+                            style="background:var(--primary-bg); color:var(--primary); padding:6px 14px; font-size:12px; border-radius:8px;">
+                            <i class="bi bi-funnel-fill me-1"></i>
+                            Filter aktif: <strong id="activeFilterName"></strong>
+                        </span>
+                    </div>
                 </div>
-                <div class="card-body" style="max-height:350px; overflow-y:auto;">
-                    @forelse($recentTransactions as $tx)
-                        <div class="d-flex align-items-start gap-3 py-2 {{ !$loop->last ? 'border-bottom' : '' }}">
-                            <div style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;{{ $tx->type === 'masuk' ? 'background:var(--success-bg);color:var(--success);' : 'background:var(--danger-bg);color:var(--danger);' }}">
-                                <i class="bi bi-arrow-{{ $tx->type === 'masuk' ? 'down' : 'up' }}-circle-fill"></i>
-                            </div>
-                            <div class="flex-grow-1 min-width-0">
-                                <div class="fw-600" style="font-size:13px;">{{ $tx->item->name ?? '-' }}</div>
-                                <div style="font-size:11px;color:var(--text-secondary);">
-                                    {{ $tx->quantity }} {{ $tx->item->unit ?? '' }} · {{ $tx->user->name ?? '' }}
+            </div>
+        </div>
+
+        <!-- Charts Row: Monthly + Category -->
+        <div class="row g-3 mb-4">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <span><i class="bi bi-bar-chart-fill text-primary-custom me-2"></i>Barang Masuk vs Keluar (12
+                            Bulan)</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="height:320px;">
+                            <canvas id="monthlyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <span><i class="bi bi-pie-chart-fill text-primary-custom me-2"></i>Stok per Kategori</span>
+                        <select id="categoryYearFilter" class="form-select form-select-sm"
+                            style="width:auto; min-width:120px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px; padding:4px 28px 4px 10px;">
+                            <option value="">Semua Tahun</option>
+                            @foreach($availableYears as $year)
+                                <option value="{{ $year }}">{{ $year }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="height:320px;">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Yearly Chart Row -->
+        <div class="row g-3 mb-4">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <span><i class="bi bi-graph-up-arrow text-primary-custom me-2"></i>Barang Masuk vs Keluar
+                            (Tahunan)</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container" style="height:320px;">
+                            <canvas id="yearlyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Row -->
+        <div class="row g-3">
+            <!-- Low Stock Alert -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <span><i class="bi bi-exclamation-triangle-fill text-warning-custom me-2"></i>Stok Menipis</span>
+                        @if($lowStockItems->count() > 0)
+                            <span class="badge bg-danger">{{ $lowStockItems->count() }}</span>
+                        @endif
+                    </div>
+                    <div class="card-body" style="max-height:350px; overflow-y:auto;">
+                        @forelse($lowStockItems as $item)
+                            <div class="low-stock-item">
+                                <div class="item-info">
+                                    <h6>{{ $item->name }}</h6>
+                                    <span>{{ $item->category }} · Min: {{ $item->min_stock }} {{ $item->unit }}</span>
                                 </div>
+                                <div class="stock-value">{{ $item->current_stock }} {{ $item->unit }}</div>
                             </div>
-                            <span class="badge-status badge-{{ $tx->status }}" style="font-size:10px;">{{ ucfirst($tx->status) }}</span>
-                        </div>
-                    @empty
-                        <div class="empty-state" style="padding:30px 10px;">
-                            <i class="bi bi-inbox" style="font-size:40px;"></i>
-                            <h6 class="mt-2" style="font-size:13px;">Belum ada transaksi</h6>
-                        </div>
-                    @endforelse
+                        @empty
+                            <div class="empty-state" style="padding:30px 10px;">
+                                <i class="bi bi-check-circle" style="font-size:40px; color:var(--success);"></i>
+                                <h6 class="mt-2" style="font-size:13px;">Semua stok aman</h6>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top Items Keluar -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <span><i class="bi bi-fire text-danger-custom me-2"></i>Barang Paling Sering Keluar</span>
+                    </div>
+                    <div class="card-body">
+                        @forelse($topKeluar as $index => $tx)
+                            <div
+                                class="d-flex align-items-center justify-content-between py-2 {{ !$loop->last ? 'border-bottom' : '' }}">
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="fw-700"
+                                        style="width:24px;height:24px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:11px;">{{ $index + 1 }}</span>
+                                    <div>
+                                        <div class="fw-600" style="font-size:13px;">{{ $tx->item->name ?? '-' }}</div>
+                                        <div style="font-size:11px;color:var(--text-secondary);">{{ $tx->item->category ?? '' }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <span class="fw-700 text-danger-custom">{{ number_format($tx->total) }}</span>
+                            </div>
+                        @empty
+                            <div class="empty-state" style="padding:30px 10px;">
+                                <i class="bi bi-inbox" style="font-size:40px;"></i>
+                                <h6 class="mt-2" style="font-size:13px;">Belum ada data</h6>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions + Sync Button -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <span><i class="bi bi-clock-fill text-primary-custom me-2"></i>Transaksi Terbaru</span>
+                        @if(auth()->user()->isAdmin())
+                            <form action="{{ route('sync.sheets') }}" method="POST" style="display:inline;" id="syncSheetsForm">
+                                @csrf
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                    onclick="swalConfirm('Sync Data', 'Sync semua data ke Google Sheets?', 'question', 'Ya, Sync', '#syncSheetsForm')"
+                                    title="Sync ke Google Sheets">
+                                    <i class="bi bi-cloud-arrow-up-fill"></i> Sync
+                                </button>
+                            </form>
+                        @endif
+                    </div>
+                    <div class="card-body" style="max-height:350px; overflow-y:auto;">
+                        @forelse($recentTransactions as $tx)
+                            <div class="d-flex align-items-start gap-3 py-2 {{ !$loop->last ? 'border-bottom' : '' }}">
+                                <div
+                                    style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;{{ $tx->type === 'masuk' ? 'background:var(--success-bg);color:var(--success);' : 'background:var(--danger-bg);color:var(--danger);' }}">
+                                    <i class="bi bi-arrow-{{ $tx->type === 'masuk' ? 'down' : 'up' }}-circle-fill"></i>
+                                </div>
+                                <div class="flex-grow-1 min-width-0">
+                                    <div class="fw-600" style="font-size:13px;">{{ $tx->item->name ?? '-' }}</div>
+                                    <div style="font-size:11px;color:var(--text-secondary);">
+                                        {{ $tx->quantity }} {{ $tx->item->unit ?? '' }} · {{ $tx->user->name ?? '' }}
+                                    </div>
+                                </div>
+                                <span class="badge-status badge-{{ $tx->status }}"
+                                    style="font-size:10px;">{{ ucfirst($tx->status) }}</span>
+                            </div>
+                        @empty
+                            <div class="empty-state" style="padding:30px 10px;">
+                                <i class="bi bi-inbox" style="font-size:40px;"></i>
+                                <h6 class="mt-2" style="font-size:13px;">Belum ada transaksi</h6>
+                            </div>
+                        @endforelse
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+
+    <style>
+        .autocomplete-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 1050;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: -2px;
+        }
+
+        .autocomplete-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: background 0.15s ease;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .autocomplete-item:hover,
+        .autocomplete-item.active {
+            background: var(--primary-bg);
+        }
+
+        .autocomplete-item .item-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: var(--primary-bg);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .autocomplete-item .item-name {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-color);
+        }
+
+        .autocomplete-item .item-category {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .autocomplete-no-result {
+            padding: 16px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+    </style>
 @endsection
 
 @push('scripts')
-<script>
-    // Detect current theme
-    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)';
-    const tickColor = isDark ? '#94a3b8' : '#6c757d';
-    const legendColor = isDark ? '#e2e8f0' : '#1a1a2e';
+    <script>
+        // ===== Theme detection =====
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)';
+        const tickColor = isDark ? '#94a3b8' : '#6c757d';
+        const legendColor = isDark ? '#e2e8f0' : '#1a1a2e';
 
-    // Monthly Chart
-    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
-    new Chart(monthlyCtx, {
-        type: 'bar',
-        data: {
-            labels: {!! json_encode(array_column($monthlyData, 'label')) !!},
-            datasets: [
-                {
-                    label: 'Barang Masuk',
-                    data: {!! json_encode(array_column($monthlyData, 'masuk')) !!},
-                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
-                    borderColor: '#10b981',
-                    borderWidth: 2,
-                    borderRadius: 6,
-                    borderSkipped: false,
-                },
-                {
-                    label: 'Barang Keluar',
-                    data: {!! json_encode(array_column($monthlyData, 'keluar')) !!},
-                    backgroundColor: 'rgba(239, 68, 68, 0.7)',
-                    borderColor: '#ef4444',
-                    borderWidth: 2,
-                    borderRadius: 6,
-                    borderSkipped: false,
+        function updateChartTheme() {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+            const newLegendColor = isDark ? '#ffffff' : '#000000';
+            const newTickColor = isDark ? '#cbd5f5' : '#000000';
+            const newGridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)';
+
+            [monthlyChartInstance, yearlyChartInstance, categoryChartInstance].forEach(chart => {
+
+                // ===== LEGEND (SEMUA CHART) =====
+                if (chart.options.plugins?.legend?.labels) {
+                    chart.options.plugins.legend.labels.color = newLegendColor;
                 }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'top',
-                    labels: {
-                        usePointStyle: true,
-                        pointStyle: 'circle',
-                        padding: 20,
-                        color: legendColor,
-                        font: { family: 'Inter', size: 12, weight: 500 }
+
+                // ===== KHUSUS BAR / LINE CHART (ADA SCALES) =====
+                if (chart.options.scales) {
+                    if (chart.options.scales.x?.ticks) {
+                        chart.options.scales.x.ticks.color = newTickColor;
+                    }
+
+                    if (chart.options.scales.y?.ticks) {
+                        chart.options.scales.y.ticks.color = newTickColor;
+                    }
+
+                    if (chart.options.scales.y?.grid) {
+                        chart.options.scales.y.grid.color = newGridColor;
                     }
                 }
+
+                chart.update();
+            });
+        }
+
+        // ===== Chart color constants =====
+        const masukBg = 'rgba(16, 185, 129, 0.8)';
+        const masukBorder = '#10b981';
+        const keluarBg = 'rgba(239, 68, 68, 0.7)';
+        const keluarBorder = '#ef4444';
+
+        // ===== Common chart options factory =====
+        function barChartOptions() {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 20,
+                            color: legendColor,
+                            font: { family: 'Inter', size: 12, weight: 500 }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: tickColor, font: { family: 'Inter', size: 11 } }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: gridColor },
+                        ticks: { color: tickColor, font: { family: 'Inter', size: 11 } }
+                    }
+                }
+            };
+        }
+
+        // ===== Monthly Chart =====
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        const monthlyChartInstance = new Chart(monthlyCtx, {
+            type: 'bar',
+            data: {
+                labels: {!! json_encode(array_column($monthlyData, 'label')) !!},
+                datasets: [
+                    {
+                        label: 'Barang Masuk',
+                        data: {!! json_encode(array_column($monthlyData, 'masuk')) !!},
+                        backgroundColor: masukBg,
+                        borderColor: masukBorder,
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        borderSkipped: false,
+                    },
+                    {
+                        label: 'Barang Keluar',
+                        data: {!! json_encode(array_column($monthlyData, 'keluar')) !!},
+                        backgroundColor: keluarBg,
+                        borderColor: keluarBorder,
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        borderSkipped: false,
+                    }
+                ]
             },
-            scales: {
-                x: {
-                    grid: { display: false },
-                    ticks: { color: tickColor, font: { family: 'Inter', size: 11 } }
-                },
-                y: {
-                    beginAtZero: true,
-                    grid: { color: gridColor },
-                    ticks: { color: tickColor, font: { family: 'Inter', size: 11 } }
-                }
-            }
-        }
-    });
+            options: barChartOptions()
+        });
 
-    // Category Chart
-    const catCtx = document.getElementById('categoryChart').getContext('2d');
-    const catColors = ['#10b981', '#06b6d4', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#6366f1'];
-    new Chart(catCtx, {
-        type: 'doughnut',
-        data: {
-            labels: {!! json_encode(array_column($categoryData, 'category')) !!},
-            datasets: [{
-                data: {!! json_encode(array_column($categoryData, 'stock')) !!},
-                backgroundColor: catColors.slice(0, {{ count($categoryData) }}),
-                borderWidth: 0,
-                hoverOffset: 8,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            cutout: '65%',
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                    labels: {
-                        usePointStyle: true,
-                        pointStyle: 'circle',
-                        padding: 16,
-                        color: legendColor,
-                        font: { family: 'Inter', size: 11, weight: 500 }
+        // ===== Yearly Chart =====
+        const yearlyCtx = document.getElementById('yearlyChart').getContext('2d');
+        const yearlyChartInstance = new Chart(yearlyCtx, {
+            type: 'bar',
+            data: {
+                labels: {!! json_encode(array_column($yearlyData, 'label')) !!},
+                datasets: [
+                    {
+                        label: 'Barang Masuk',
+                        data: {!! json_encode(array_column($yearlyData, 'masuk')) !!},
+                        backgroundColor: masukBg,
+                        borderColor: masukBorder,
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        borderSkipped: false,
+                    },
+                    {
+                        label: 'Barang Keluar',
+                        data: {!! json_encode(array_column($yearlyData, 'keluar')) !!},
+                        backgroundColor: keluarBg,
+                        borderColor: keluarBorder,
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        borderSkipped: false,
+                    }
+                ]
+            },
+            options: barChartOptions()
+        });
+
+        // ===== Category Donut Chart =====
+        const catCtx = document.getElementById('categoryChart').getContext('2d');
+        const catColors = ['#10b981', '#06b6d4', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#6366f1'];
+        const categoryChartInstance = new Chart(catCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {!! json_encode(array_column($categoryData, 'category')) !!},
+                datasets: [{
+                    data: {!! json_encode(array_column($categoryData, 'stock')) !!},
+                    backgroundColor: catColors.slice(0, {{ count($categoryData) }}),
+                    borderWidth: 0,
+                    hoverOffset: 8,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            padding: 16,
+                            color: legendColor,
+                            font: { family: 'Inter', size: 11, weight: 500 }
+                        }
                     }
                 }
             }
+        });
+
+        // ===== Autocomplete Search =====
+        const searchInput = document.getElementById('itemSearchInput');
+        const suggestionsBox = document.getElementById('searchSuggestions');
+        const clearBtn = document.getElementById('clearSearchBtn');
+        const activeFilter = document.getElementById('activeFilter');
+        const activeFilterName = document.getElementById('activeFilterName');
+        let debounceTimer = null;
+        let selectedItemId = null;
+        let activeIndex = -1;
+
+        searchInput.addEventListener('input', function () {
+            const q = this.value.trim();
+            clearTimeout(debounceTimer);
+
+            if (q.length < 1) {
+                suggestionsBox.style.display = 'none';
+                return;
+            }
+
+            debounceTimer = setTimeout(() => {
+                fetch(`{{ route('dashboard.searchItems') }}?q=${encodeURIComponent(q)}`)
+                    .then(res => res.json())
+                    .then(items => {
+                        activeIndex = -1;
+                        if (items.length === 0) {
+                            suggestionsBox.innerHTML = '<div class="autocomplete-no-result"><i class="bi bi-search me-1"></i>Tidak ada barang ditemukan</div>';
+                        } else {
+                            suggestionsBox.innerHTML = items.map((item, idx) => `
+                                            <div class="autocomplete-item" data-id="${item.id}" data-name="${item.name}" data-index="${idx}">
+                                                <div class="item-icon"><i class="bi bi-box-seam"></i></div>
+                                                <div>
+                                                    <div class="item-name">${highlightMatch(item.name, q)}</div>
+                                                    <div class="item-category">${item.category || ''}</div>
+                                                </div>
+                                            </div>
+                                        `).join('');
+
+                            // Click event on suggestion items
+                            suggestionsBox.querySelectorAll('.autocomplete-item').forEach(el => {
+                                el.addEventListener('click', function () {
+                                    selectItem(this.dataset.id, this.dataset.name);
+                                });
+                            });
+                        }
+                        suggestionsBox.style.display = 'block';
+                    })
+                    .catch(() => {
+                        suggestionsBox.style.display = 'none';
+                    });
+            }, 250);
+        });
+
+        // Keyboard navigation
+        searchInput.addEventListener('keydown', function (e) {
+            const items = suggestionsBox.querySelectorAll('.autocomplete-item');
+            if (!items.length) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIndex = Math.min(activeIndex + 1, items.length - 1);
+                updateActiveItem(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIndex = Math.max(activeIndex - 1, 0);
+                updateActiveItem(items);
+            } else if (e.key === 'Enter' && activeIndex >= 0) {
+                e.preventDefault();
+                const active = items[activeIndex];
+                selectItem(active.dataset.id, active.dataset.name);
+            } else if (e.key === 'Escape') {
+                suggestionsBox.style.display = 'none';
+            }
+        });
+
+        function updateActiveItem(items) {
+            items.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
+            if (items[activeIndex]) {
+                items[activeIndex].scrollIntoView({ block: 'nearest' });
+            }
         }
-    });
-</script>
+
+        function highlightMatch(text, query) {
+            const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+            return text.replace(regex, '<mark style="background:var(--primary-bg);color:var(--primary);padding:0 2px;border-radius:3px;">$1</mark>');
+        }
+
+        function selectItem(itemId, itemName) {
+            selectedItemId = itemId;
+            searchInput.value = itemName;
+            suggestionsBox.style.display = 'none';
+            clearBtn.style.display = 'inline-flex';
+            activeFilter.style.display = 'block';
+            activeFilterName.textContent = itemName;
+
+            // Fetch filtered chart data
+            fetch(`{{ route('dashboard.chartData') }}?item_id=${itemId}`)
+                .then(res => res.json())
+                .then(data => {
+                    // Update monthly chart
+                    monthlyChartInstance.data.labels = data.monthlyData.map(d => d.label);
+                    monthlyChartInstance.data.datasets[0].data = data.monthlyData.map(d => d.masuk);
+                    monthlyChartInstance.data.datasets[1].data = data.monthlyData.map(d => d.keluar);
+                    monthlyChartInstance.update('active');
+
+                    // Update yearly chart
+                    yearlyChartInstance.data.labels = data.yearlyData.map(d => d.label);
+                    yearlyChartInstance.data.datasets[0].data = data.yearlyData.map(d => d.masuk);
+                    yearlyChartInstance.data.datasets[1].data = data.yearlyData.map(d => d.keluar);
+                    yearlyChartInstance.update('active');
+                });
+        }
+
+        // Clear / reset search
+        clearBtn.addEventListener('click', function () {
+            selectedItemId = null;
+            searchInput.value = '';
+            suggestionsBox.style.display = 'none';
+            clearBtn.style.display = 'none';
+            activeFilter.style.display = 'none';
+
+            // Reset charts to original data
+            fetch(`{{ route('dashboard.chartData') }}`)
+                .then(res => res.json())
+                .then(data => {
+                    monthlyChartInstance.data.labels = data.monthlyData.map(d => d.label);
+                    monthlyChartInstance.data.datasets[0].data = data.monthlyData.map(d => d.masuk);
+                    monthlyChartInstance.data.datasets[1].data = data.monthlyData.map(d => d.keluar);
+                    monthlyChartInstance.update('active');
+
+                    yearlyChartInstance.data.labels = data.yearlyData.map(d => d.label);
+                    yearlyChartInstance.data.datasets[0].data = data.yearlyData.map(d => d.masuk);
+                    yearlyChartInstance.data.datasets[1].data = data.yearlyData.map(d => d.keluar);
+                    yearlyChartInstance.update('active');
+                });
+        });
+
+        // Close suggestions when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!document.getElementById('searchWrapper').contains(e.target)) {
+                suggestionsBox.style.display = 'none';
+            }
+        });
+
+        // ===== Category Year Filter =====
+        document.getElementById('categoryYearFilter').addEventListener('change', function () {
+            const year = this.value;
+            const url = year
+                ? `{{ route('dashboard.categoryByYear') }}?year=${year}`
+                : `{{ route('dashboard.categoryByYear') }}`;
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    categoryChartInstance.data.labels = data.map(d => d.category);
+                    categoryChartInstance.data.datasets[0].data = data.map(d => d.stock);
+                    categoryChartInstance.data.datasets[0].backgroundColor = catColors.slice(0, data.length);
+                    categoryChartInstance.update('active');
+                });
+        });
+    </script>
 @endpush

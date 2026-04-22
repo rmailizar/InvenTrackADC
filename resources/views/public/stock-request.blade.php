@@ -8,7 +8,8 @@
     <meta name="description" content="Lihat rekap stok barang dan ajukan request stok tanpa login">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="{{ asset('css/custom.css') }}" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <link href="{{ asset('css/custom.css') }}?v={{ filemtime(public_path('css/custom.css')) }}" rel="stylesheet">
 
     <script>
         (function() {
@@ -82,7 +83,7 @@
                         <div class="brand-icon"><i class="bi bi-box-seam-fill"></i></div>
                         <div>
                             <div class="brand-name">InvenTrack</div>
-                            <div class="brand-sub">REKAP STOK & REQUEST BARANG</div>
+                            <div class="brand-sub">DAFTAR BARANG & PERMINTAAN BARANG</div>
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
@@ -98,19 +99,7 @@
             </div>
         </header>
 
-        {{-- Toast --}}
-        @if(session('success'))
-        <div class="public-toast success" id="publicToast">
-            <i class="bi bi-check-circle-fill"></i>
-            <span>{{ session('success') }}</span>
-        </div>
-        @endif
-        @if(session('error'))
-        <div class="public-toast error" id="publicToast">
-            <i class="bi bi-exclamation-circle-fill"></i>
-            <span>{{ session('error') }}</span>
-        </div>
-        @endif
+
 
         {{-- Body --}}
         <div class="public-body">
@@ -119,7 +108,7 @@
                     {{-- Left: Stock Recap --}}
                     <div class="col-lg-8">
                         <div class="section-title">
-                            <i class="bi bi-clipboard-data-fill"></i> Rekap Stok Barang
+                            <i class="bi bi-clipboard-data-fill"></i> Daftar Barang
                         </div>
 
                         {{-- Filter --}}
@@ -177,7 +166,7 @@
                                                     @elseif($stock <= $item->min_stock)
                                                         <span class="stock-status-badge stock-low"><i class="bi bi-exclamation-triangle-fill"></i> Rendah</span>
                                                     @else
-                                                        <span class="stock-status-badge stock-ok"><i class="bi bi-check-circle-fill"></i> Aman</span>
+                                                        <span class="stock-status-badge stock-ok"><i class="bi bi-check-circle-fill"></i> Ada</span>
                                                     @endif
                                                 </td>
                                             </tr>
@@ -199,22 +188,49 @@
                     {{-- Right: Request Form --}}
                     <div class="col-lg-4">
                         <div class="section-title">
-                            <i class="bi bi-send-fill"></i> Request Tambah Stok
+                            <i class="bi bi-send-fill"></i> Permintaan Barang
                         </div>
 
                         <div class="request-form-card">
                             <div class="request-form-header">
-                                <h5><i class="bi bi-plus-circle me-2"></i>Form Request Stok</h5>
-                                <p>Ajukan permintaan penambahan stok tanpa login</p>
+                                <h5><i class="bi bi-plus-circle me-2"></i>Form Permintaan Barang</h5>
+                                <p>Ajukan permintaan penambahan barang tanpa login</p>
                             </div>
                             <div class="request-form-body">
                                 <form method="POST" action="{{ route('public.stock-request.store') }}" id="requestForm">
                                     @csrf
 
                                     <div class="mb-3">
-                                        <label class="form-label">Nama Anda <span class="text-danger">*</span></label>
+                                        <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
                                         <input type="text" name="requester_name" class="form-control" placeholder="Masukkan nama lengkap" value="{{ old('requester_name') }}" required>
                                         @error('requester_name')<div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>@enderror
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">NIP <span class="text-danger">*</span></label>
+                                        <input type="text" name="nip" class="form-control" placeholder="Masukkan NIP"
+                                            value="{{ old('nip') }}" required>
+                                        @error('nip')
+                                            <div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Jabatan/Posisi <span class="text-danger">*</span></label>
+                                        <input type="text" name="jabatan" class="form-control" placeholder="Masukkan jabatan"
+                                            value="{{ old('jabatan') }}" required>
+                                        @error('jabatan')
+                                            <div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Bidang/Bagian <span class="text-danger">*</span></label>
+                                        <input type="text" name="bidang" class="form-control" placeholder="Masukkan bidang"
+                                            value="{{ old('bidang') }}" required>
+                                        @error('bidang')
+                                            <div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>
+                                        @enderror
                                     </div>
 
                                     <div class="mb-3">
@@ -246,7 +262,7 @@
                                     </div>
 
                                     <div class="mb-4">
-                                        <label class="form-label">Catatan <span class="text-muted">(opsional)</span></label>
+                                        <label class="form-label">Kebutuhan</label>
                                         <textarea name="notes" class="form-control" rows="3" placeholder="Alasan request atau keterangan tambahan...">{{ old('notes') }}</textarea>
                                         @error('notes')<div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>@enderror
                                     </div>
@@ -268,7 +284,7 @@
                                     <li>Request akan ditinjau oleh Admin</li>
                                     <li>Tidak memerlukan login</li>
                                     <li>Stok diperbarui secara real-time</li>
-                                    <li>Status: <span class="stock-status-badge stock-ok" style="font-size:10px;">Aman</span>
+                                    <li>Status: <span class="stock-status-badge stock-ok" style="font-size:10px;">Ada</span>
                                         <span class="stock-status-badge stock-low" style="font-size:10px;">Rendah</span>
                                         <span class="stock-status-badge stock-empty" style="font-size:10px;">Habis</span>
                                     </li>
@@ -291,6 +307,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         function toggleTheme() {
             const html = document.documentElement;
@@ -313,14 +330,39 @@
             }
         });
 
-        // Auto-dismiss toast
-        const toast = document.getElementById('publicToast');
-        if (toast) {
-            setTimeout(() => {
-                toast.style.animation = 'slideInRight 0.4s reverse forwards';
-                setTimeout(() => toast.remove(), 400);
-            }, 5000);
-        }
+        // SweetAlert2 Toast
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 4000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.onmouseenter = Swal.stopTimer;
+                toast.onmouseleave = Swal.resumeTimer;
+            }
+        });
+
+        @if(session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: {!! json_encode(session('success')) !!},
+                confirmButtonText: 'OK',
+                customClass: {
+                    popup: document.documentElement.getAttribute('data-theme') === 'dark' ? 'swal-dark' : '',
+                    confirmButton: 'swal-btn-confirm'
+                },
+                buttonsStyling: false,
+            });
+        @endif
+
+        @if(session('error'))
+            Toast.fire({
+                icon: 'error',
+                title: {!! json_encode(session('error')) !!}
+            });
+        @endif
     </script>
 </body>
 </html>

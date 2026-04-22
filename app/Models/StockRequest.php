@@ -11,18 +11,24 @@ class StockRequest extends Model
 
     protected $fillable = [
         'requester_name',
+        'nip',
+        'jabatan',
+        'bidang',
         'item_id',
         'quantity',
         'notes',
         'status',
         'processed_by',
         'processed_at',
+        'completed_by',
+        'completed_at',
     ];
 
     protected function casts(): array
     {
         return [
             'processed_at' => 'datetime',
+            'completed_at' => 'datetime',
         ];
     }
 
@@ -34,6 +40,11 @@ class StockRequest extends Model
     public function processor()
     {
         return $this->belongsTo(User::class, 'processed_by');
+    }
+
+    public function completer()
+    {
+        return $this->belongsTo(User::class, 'completed_by');
     }
 
     public function scopePending($query)
@@ -49,5 +60,15 @@ class StockRequest extends Model
     public function scopeRejected($query)
     {
         return $query->where('status', 'rejected');
+    }
+
+    public function scopeCompleted($query)
+    {
+        return $query->where('status', 'completed');
+    }
+
+    public function scopeCancelled($query)
+    {
+        return $query->where('status', 'cancelled');
     }
 }

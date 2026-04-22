@@ -98,15 +98,15 @@
                                 <div class="action-buttons">
                                     {{-- Manager: Approve/Reject user account --}}
                                     @if(auth()->user()->isManager() && $user->account_status === 'pending')
-                                        <form action="{{ route('users.approveAccount', $user->id) }}" method="POST" style="display:inline;">
+                                        <form action="{{ route('users.approveAccount', $user->id) }}" method="POST" style="display:inline;" id="approveUser-{{ $user->id }}">
                                             @csrf
-                                            <button type="submit" class="btn-action approve" title="Approve" onclick="return confirm('Approve akun user ini?')">
+                                            <button type="button" class="btn-action approve" title="Approve" onclick="swalConfirm('Approve User', 'Approve akun user ini?', 'question', 'Ya, Approve', '#approveUser-{{ $user->id }}')">
                                                 <i class="bi bi-check-lg"></i>
                                             </button>
                                         </form>
-                                        <form action="{{ route('users.rejectAccount', $user->id) }}" method="POST" style="display:inline;">
+                                        <form action="{{ route('users.rejectAccount', $user->id) }}" method="POST" style="display:inline;" id="rejectUser-{{ $user->id }}">
                                             @csrf
-                                            <button type="submit" class="btn-action reject" title="Reject" onclick="return confirm('Reject akun user ini?')">
+                                            <button type="button" class="btn-action reject" title="Reject" onclick="swalConfirm('Reject User', 'Reject akun user ini?', 'warning', 'Ya, Reject', '#rejectUser-{{ $user->id }}')">
                                                 <i class="bi bi-x-lg"></i>
                                             </button>
                                         </form>
@@ -118,9 +118,9 @@
                                             <i class="bi bi-pencil-fill"></i>
                                         </a>
                                         @if($user->id !== auth()->id())
-                                        <form action="{{ route('users.destroy', $user) }}" method="POST" onsubmit="return confirm('Yakin hapus user ini?')">
+                                        <form action="{{ route('users.destroy', $user) }}" method="POST" id="deleteUser-{{ $user->id }}">
                                             @csrf @method('DELETE')
-                                            <button type="submit" class="btn-action delete" title="Hapus">
+                                            <button type="button" class="btn-action delete" title="Hapus" onclick="swalConfirm('Hapus User', 'Yakin hapus user ini? Data yang sudah dihapus tidak bisa dikembalikan.', 'warning', 'Ya, Hapus', '#deleteUser-{{ $user->id }}')">
                                                 <i class="bi bi-trash-fill"></i>
                                             </button>
                                         </form>

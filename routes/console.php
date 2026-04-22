@@ -53,8 +53,8 @@ Artisan::command('notify:daily-digest', function () {
 
     // ── 2. Stock Alert ──
     $allItems = Item::all();
-    $outOfStock = $allItems->filter(fn ($item) => $item->current_stock === 0 && $item->min_stock > 0);
-    $lowStock = $allItems->filter(fn ($item) => $item->current_stock > 0 && $item->current_stock < $item->min_stock);
+    $outOfStock = $allItems->filter(fn($item) => $item->current_stock === 0 && $item->min_stock > 0);
+    $lowStock = $allItems->filter(fn($item) => $item->current_stock > 0 && $item->current_stock < $item->min_stock);
 
     if ($outOfStock->isNotEmpty() || $lowStock->isNotEmpty()) {
         $sentStock = 0;
@@ -76,18 +76,18 @@ Artisan::command('notify:daily-digest', function () {
 })->purpose('Kirim email digest harian (transaksi pending + stock alert)');
 
 // Schedule: jalankan setiap hari jam 15:00
-Schedule::command('notify:daily-digest')->dailyAt('15:00');
+Schedule::command('notify:daily-digest')->dailyAt('15:25');
 
 // ─── Mail Test ────────────────────────────────────────────────────
 Artisan::command('mail:test {email? : Alamat tujuan (default: email user admin pertama)}', function () {
     $email = $this->argument('email');
-    if (! is_string($email) || trim($email) === '') {
+    if (!is_string($email) || trim($email) === '') {
         $admin = User::query()
             ->where('role', 'admin')
             ->whereNotNull('email')
             ->orderBy('id')
             ->first();
-        if (! $admin) {
+        if (!$admin) {
             $this->error('Tidak ada user admin dengan email. Jalankan: php artisan mail:test anda@email.com');
 
             return 1;
@@ -97,13 +97,13 @@ Artisan::command('mail:test {email? : Alamat tujuan (default: email user admin p
 
     try {
         Mail::raw(
-            'Ini email percobaan dari InvenTrack. Waktu server: '.now()->toDateTimeString()."\n\nJika Anda membaca ini, SMTP (mis. Brevo) sudah terkonfigurasi benar.",
+            'Ini email percobaan dari InvenTrack. Waktu server: ' . now()->toDateTimeString() . "\n\nJika Anda membaca ini, SMTP (mis. Brevo) sudah terkonfigurasi benar.",
             function ($message) use ($email) {
                 $message->to($email)->subject('[InvenTrack] Tes pengiriman email');
             }
         );
     } catch (\Throwable $e) {
-        $this->error('Gagal mengirim: '.$e->getMessage());
+        $this->error('Gagal mengirim: ' . $e->getMessage());
         $this->line('Periksa MAIL_MAILER=smtp, MAIL_HOST, MAIL_PORT, MAIL_USERNAME (email Brevo), MAIL_PASSWORD (kunci SMTP Brevo — bukan API key), MAIL_FROM_ADDRESS (pengirim terverifikasi di Brevo).');
         $this->line('Lihat log: storage/logs/laravel.log');
 

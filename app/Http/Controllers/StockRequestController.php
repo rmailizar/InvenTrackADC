@@ -19,7 +19,7 @@ class StockRequestController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%");
+                    ->orWhere('category', 'like', "%{$search}%");
             });
         }
 
@@ -41,15 +41,21 @@ class StockRequestController extends Controller
     {
         $validated = $request->validate([
             'requester_name' => 'required|string|max:255',
-            'item_id'        => 'required|exists:items,id',
-            'quantity'       => 'required|integer|min:1',
-            'notes'          => 'nullable|string|max:500',
+            'nip' => 'required|string|max:50',
+            'jabatan' => 'required|string|max:100',
+            'bidang' => 'required|string|max:100',
+            'item_id' => 'required|exists:items,id',
+            'quantity' => 'required|integer|min:1',
+            'notes' => 'nullable|string|max:500',
         ], [
             'requester_name.required' => 'Nama wajib diisi.',
-            'item_id.required'        => 'Silakan pilih barang.',
-            'item_id.exists'          => 'Barang tidak ditemukan.',
-            'quantity.required'       => 'Jumlah wajib diisi.',
-            'quantity.min'            => 'Jumlah minimal 1.',
+            'nip.required' => 'NIP wajib diisi.',
+            'jabatan.required' => 'Jabatan wajib diisi.',
+            'bidang.required' => 'Bidang wajib diisi.',
+            'item_id.required' => 'Silakan pilih barang.',
+            'item_id.exists' => 'Barang tidak ditemukan.',
+            'quantity.required' => 'Jumlah wajib diisi.',
+            'quantity.min' => 'Jumlah minimal 1.',
         ]);
 
         $validated['status'] = 'pending';
@@ -65,15 +71,15 @@ class StockRequestController extends Controller
      */
     public function adminIndex(Request $request)
     {
-        $query = StockRequest::with(['item', 'processor'])->latest();
+        $query = StockRequest::with(['item', 'processor', 'completer'])->latest();
 
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('requester_name', 'like', "%{$search}%")
-                  ->orWhereHas('item', function ($q2) use ($search) {
-                      $q2->where('name', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('item', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -106,7 +112,7 @@ class StockRequestController extends Controller
         }
 
         $stockRequest->update([
-            'status'       => 'approved',
+            'status' => 'approved',
             'processed_by' => auth()->id(),
             'processed_at' => now(),
         ]);
@@ -124,11 +130,47 @@ class StockRequestController extends Controller
         }
 
         $stockRequest->update([
-            'status'       => 'rejected',
+            'status' => 'rejected',
             'processed_by' => auth()->id(),
             'processed_at' => now(),
         ]);
 
         return back()->with('success', "Request stok dari {$stockRequest->requester_name} telah ditolak.");
+    }
+
+    /**
+     * Mark an approved stock request as completed.
+     */
+    public function complete(StockRequest $stockRequest)
+    {
+        if ($stockRequest->status !== 'approved') {
+            return back()->with('error', 'Hanya request yang sudah disetujui yang bisa diselesaikan.');
+        }
+
+        $stockRequest->update([
+            'status' => 'completed',
+            'completed_by' => auth()->id(),
+            'completed_at' => now(),
+        ]);
+
+        return back()->with('success', "Request stok dari {$stockRequest->requester_name} telah diselesaikan.");
+    }
+
+    /**
+     * Cancel an approved stock request.
+     */
+    public function cancel(StockRequest $stockRequest)
+    {
+        if ($stockRequest->status !== 'approved') {
+            return back()->with('error', 'Hanya request yang sudah disetujui yang bisa dibatalkan.');
+        }
+
+        $stockRequest->update([
+            'status' => 'cancelled',
+            'completed_by' => auth()->id(),
+            'completed_at' => now(),
+        ]);
+
+        return back()->with('success', "Request stok dari {$stockRequest->requester_name} telah dibatalkan.");
     }
 }
