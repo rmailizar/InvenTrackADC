@@ -81,11 +81,15 @@
                                     </td>
                                     <td class="text-center">{{ $item->min_stock }}</td>
                                     <td>
-                                        @if($currentStock <= $item->min_stock)
-                                            <span class="badge-low-stock"><i class="bi bi-exclamation-triangle-fill"></i>
-                                                Rendah</span>
+                                        @if($currentStock == 0)
+                                            <span class="badge-stock-ok text-danger-custom"><i class="bi bi-x-circle-fill"></i>
+                                                Out of Stock</span>
+                                        @elseif($currentStock < $item->min_stock)
+                                            <span class="badge-low-stock text-warning">
+                                                <i class="bi bi-exclamation-triangle-fill"></i> Request Order
+                                            </span>
                                         @else
-                                            <span class="badge-stock-ok"><i class="bi bi-check-circle-fill"></i> Ada</span>
+                                            <span class="badge-stock-ok"><i class="bi bi-check-circle-fill"></i> Ready</span>
                                         @endif
                                     </td>
                                 </tr>

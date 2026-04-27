@@ -72,6 +72,7 @@
                                 <th>No HP</th>
                                 <th>Status Akun</th>
                                 <th>Terdaftar</th>
+                                <th>Terakhir Login</th>
                                 <th style="width:140px;">Aksi</th>
                             </tr>
                         </thead>
@@ -105,6 +106,9 @@
                                     </td>
                                     <td style="font-size:12px; color:var(--text-secondary);">
                                         {{ $user->created_at->format('d/m/Y') }}
+                                    </td>
+                                    <td style="font-size:12px;">
+                                        {{ $user->last_login_at ? \Carbon\Carbon::parse($user->last_login_at)->format('d/m/Y H:i') : '-' }}
                                     </td>
                                     <td>
                                         <div class="action-buttons">
@@ -278,7 +282,7 @@
                     loading.classList.add('show');
                     userModal.show();
 
-                    fetch(`/users/${id}/edit-data`, {
+                    fetch(`{{ url('users') }}/${id}/edit-data`, {
                         headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                     })
                         .then(res => res.json())
@@ -325,7 +329,7 @@
                 submitBtn.disabled = true;
 
                 const formData = new FormData(form);
-                const url = userId ? `/users/${userId}` : '{{ route("users.store") }}';
+                const url = userId ? `{{ url('users') }}/${userId}` : '{{ route("users.store") }}';
 
                 if (method === 'PUT') {
                     formData.append('_method', 'PUT');

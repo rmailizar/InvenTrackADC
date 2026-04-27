@@ -62,11 +62,11 @@ class Transaction extends Model
 
     public function scopeMasuk($query)
     {
-        return $query->where('type', 'masuk');
+        return $query->where('type', 'in');
     }
 
     public function scopeKeluar($query)
     {
-        return $query->where('type', 'keluar');
+        return $query->where('type', 'out');
     }
 }

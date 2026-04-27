@@ -51,7 +51,7 @@ class TransactionImport implements ToModel, WithHeadingRow, WithValidation, Skip
         return [
             'nama_barang' => 'required|string',
             'tanggal'     => 'required',
-            'jenis'       => 'required|in:masuk,keluar,MASUK,KELUAR,Masuk,Keluar',
+            'jenis'       => 'required|in:in,out,IN,OUT,In,Out',
             'jumlah'      => 'required|integer|min:1',
             'harga'       => 'nullable|integer|min:0',
             'keterangan'  => 'nullable|string|max:500',
@@ -63,8 +63,8 @@ class TransactionImport implements ToModel, WithHeadingRow, WithValidation, Skip
         return [
             'nama_barang.required' => 'Kolom nama_barang wajib diisi.',
             'tanggal.required'     => 'Kolom tanggal wajib diisi.',
-            'jenis.required'       => 'Kolom jenis wajib diisi (masuk/keluar).',
-            'jenis.in'             => 'Kolom jenis harus masuk atau keluar.',
+            'jenis.required'       => 'Kolom jenis wajib diisi (in/out).',
+            'jenis.in'             => 'Kolom jenis harus in atau out.',
             'jumlah.required'      => 'Kolom jumlah wajib diisi.',
             'jumlah.min'           => 'Jumlah minimal 1.',
         ];

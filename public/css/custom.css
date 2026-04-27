@@ -13,6 +13,7 @@
     --primary-light: #34d399;
     --primary-bg: rgba(16, 185, 129, 0.08);
     --secondary: #6366f1;
+    --secondary-bg: rgba(99, 102, 241, 0.08);
     --success: #10b981;
     --success-dark: #059669;
     --success-bg: rgba(16, 185, 129, 0.08);
@@ -731,12 +732,12 @@ a:hover {
     background: var(--danger);
 }
 
-.badge-masuk {
+.badge-in {
     background: var(--success-bg);
     color: var(--success-dark);
 }
 
-.badge-keluar {
+.badge-out {
     background: var(--danger-bg);
     color: var(--danger-dark);
 }

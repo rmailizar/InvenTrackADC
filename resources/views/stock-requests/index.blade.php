@@ -145,7 +145,7 @@
                                                 <form method="POST" action="{{ route('stock-requests.approve', $req) }}"
                                                     class="d-inline" id="approveReq-{{ $req->id }}">
                                                     @csrf
-                                                    <button type="button" class="btn btn-sm btn-success swal-btn-confirm"
+                                                    <button type="button" class="btn btn-sm btn-success"
                                                         title="Approve"
                                                         onclick="swalConfirm('Approve Request', 'Setujui request ini?', 'question', 'Ya, Approve', '#approveReq-{{ $req->id }}')">
                                                         <i class="bi bi-check-lg"></i>
@@ -166,7 +166,7 @@
                                                     class="d-inline" id="completeReq-{{ $req->id }}">
                                                     @csrf
                                                     <button type="button" class="btn btn-sm btn-success" title="Done"
-                                                        onclick="swalConfirm('Selesaikan Request', 'Tandai request ini sebagai Done?', 'question', 'Ya, Done', '#completeReq-{{ $req->id }}')">
+                                                        onclick="swalConfirm('Selesaikan Request', 'Tandai request ini sebagai selesai?', 'question', 'Ya, Selesai', '#completeReq-{{ $req->id }}')">
                                                         <i class="bi bi-check-lg"></i>
                                                     </button>
                                                 </form>
@@ -174,7 +174,7 @@
                                                     class="d-inline" id="cancelReq-{{ $req->id }}">
                                                     @csrf
                                                     <button type="button" class="btn btn-sm btn-danger" title="Cancelled"
-                                                        onclick="swalConfirm('Batalkan Request', 'Batalkan request ini?', 'warning', 'Ya, Cancelled', '#cancelReq-{{ $req->id }}')">
+                                                        onclick="swalConfirm('Batalkan Request', 'Batalkan request ini?', 'warning', 'Ya, Batalkan', '#cancelReq-{{ $req->id }}')">
                                                         <i class="bi bi-x-lg"></i>
                                                     </button>
                                                 </form>

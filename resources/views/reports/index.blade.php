@@ -8,21 +8,17 @@
         <!-- Filter Bar -->
         <div class="filter-bar">
             <form method="GET" action="{{ route('reports.index') }}">
-                <div class="row g-3">
-
-                    <!-- Dari Tanggal -->
+                <div class="row g-3 align-items-end">
                     <div class="col-lg-3 col-md-6">
                         <label class="form-label">Dari Tanggal</label>
                         <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
                     </div>
 
-                    <!-- Sampai Tanggal -->
                     <div class="col-lg-3 col-md-6">
                         <label class="form-label">Sampai Tanggal</label>
                         <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
                     </div>
 
-                    <!-- Kategori -->
                     <div class="col-lg-2 col-md-6">
                         <label class="form-label">Kategori</label>
                         <select name="category" class="form-select">
@@ -35,17 +31,15 @@
                         </select>
                     </div>
 
-                    <!-- Jenis -->
                     <div class="col-lg-2 col-md-6">
                         <label class="form-label">Jenis</label>
                         <select name="type" class="form-select">
                             <option value="">Semua</option>
-                            <option value="masuk" {{ request('type') == 'masuk' ? 'selected' : '' }}>Masuk</option>
-                            <option value="keluar" {{ request('type') == 'keluar' ? 'selected' : '' }}>Keluar</option>
+                            <option value="in" {{ request('type') == 'in' ? 'selected' : '' }}>In</option>
+                            <option value="out" {{ request('type') == 'out' ? 'selected' : '' }}>Out</option>
                         </select>
                     </div>
 
-                    <!-- Tahun -->
                     <div class="col-lg-3 col-md-6">
                         <label class="form-label">Tahun</label>
                         <select name="year" class="form-select">
@@ -58,7 +52,6 @@
                         </select>
                     </div>
 
-                    <!-- Harga -->
                     <div class="col-lg-2 col-md-6">
                         <label class="form-label">Harga</label>
                         <select name="price_filter" class="form-select">
@@ -72,12 +65,16 @@
                         </select>
                     </div>
 
-                    <!-- Tombol -->
                     <div class="col-lg-2 col-md-6">
-                        <div class="d-grid gap-2 mt-2 mt-lg-4">
+                        <div class="d-grid">
                             <button type="submit" class="btn btn-success">
                                 <i class="bi bi-search"></i> Filter
                             </button>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-2 col-md-6">
+                        <div class="d-grid">
                             <a href="{{ route('reports.index') }}" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-lg"></i> Reset
                             </a>
@@ -125,11 +122,20 @@
                 </div>
             </div>
             <div class="col-sm-6 col-lg-3">
-                <a href="{{ route('reports.export', request()->all()) }}"
-                    class="stats-card warning d-block text-decoration-none" style="cursor:pointer; text-align:center;">
-                    <div class="stats-icon mx-auto"><i class="bi bi-file-earmark-excel-fill"></i></div>
-                    <div class="stats-value" style="font-size:16px; color:var(--warning-dark);">Export</div>
-                    <div class="stats-label">Download Excel</div>
+                <a href="{{ route('reports.export', request()->all()) }}" class="text-decoration-none">
+                    <div class="stats-card warning" style="cursor:pointer;">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="stats-icon">
+                                <i class="bi bi-file-earmark-excel-fill"></i>
+                            </div>
+                            <div>
+                                <div class="stats-value" style="font-size:22px; color:var(--warning-dark);">
+                                    Export
+                                </div>
+                                <div class="stats-label">Download Excel</div>
+                            </div>
+                        </div>
+                    </div>
                 </a>
             </div>
         </div>

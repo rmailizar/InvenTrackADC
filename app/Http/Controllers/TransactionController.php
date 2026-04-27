@@ -63,7 +63,7 @@ class TransactionController extends Controller
         $validated = $request->validate([
             'item_id' => 'required|exists:items,id',
             'date' => 'required|date',
-            'type' => 'required|in:masuk,keluar',
+            'type' => 'required|in:in,out',
             'quantity' => 'required|integer|min:1',
             'price' => 'nullable|integer|min:0',
             'description' => 'nullable|string|max:500',
@@ -74,7 +74,7 @@ class TransactionController extends Controller
         $item = Item::findOrFail($validated['item_id']);
 
         // Check stock for keluar
-        if ($validated['type'] === 'keluar') {
+        if ($validated['type'] === 'out') {
             if ($item->current_stock < $validated['quantity']) {
                 $errorMsg = 'Stok tidak mencukupi. Stok saat ini: ' . $item->current_stock . ' ' . $item->unit;
                 if ($request->ajax() || $request->wantsJson()) {
@@ -141,7 +141,7 @@ class TransactionController extends Controller
         $validated = $request->validate([
             'item_id' => 'required|exists:items,id',
             'date' => 'required|date',
-            'type' => 'required|in:masuk,keluar',
+            'type' => 'required|in:in,out',
             'quantity' => 'required|integer|min:1',
             'price' => 'nullable|integer|min:0',
             'description' => 'nullable|string|max:500',
@@ -151,7 +151,7 @@ class TransactionController extends Controller
 
         $item = Item::findOrFail($validated['item_id']);
 
-        if ($validated['type'] === 'keluar') {
+        if ($validated['type'] === 'out') {
             if ($item->current_stock < $validated['quantity']) {
                 $errorMsg = 'Stok tidak mencukupi. Stok saat ini: ' . $item->current_stock . ' ' . $item->unit;
                 if ($request->ajax() || $request->wantsJson()) {

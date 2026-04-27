@@ -103,11 +103,11 @@
                                     <tbody>
                                         @foreach($transactions as $tx)
                                             <tr>
-                                                <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
+                                                <td class="fw-600">{{ $tx->item->name ?? 'Barang dihapus' }}</td>
                                                 <td>{{ $tx->item->category ?? '-' }}</td>
                                                 <td>
                                                     <span class="badge-status badge-{{ $tx->type }}">
-                                                        <i class="bi bi-arrow-{{ $tx->type === 'masuk' ? 'down' : 'up' }}-circle-fill"
+                                                        <i class="bi bi-arrow-{{ $tx->type === 'in' ? 'down' : 'up' }}-circle-fill"
                                                             style="font-size:10px;"></i>
                                                         {{ strtoupper($tx->type) }}
                                                     </span>
@@ -178,10 +178,22 @@
         <div class="row g-3 mb-4">
             <div class="col-lg-8">
                 <div class="card">
-                    <div class="card-header">
-                        <span><i class="bi bi-bar-chart-fill text-primary-custom me-2"></i>Barang Masuk vs Keluar (12
-                            Bulan)</span>
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <span>
+                            <i class="bi bi-bar-chart-fill text-primary-custom me-2"></i>
+                            Barang Masuk vs Keluar (12 Bulan)
+                        </span>
+
+                        <select onchange="changeMonthlyYear(this.value)" class="form-select form-select-sm"
+                            style="width:auto; min-width:120px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px; padding:4px 28px 4px 10px;">
+                            @foreach($availableYears as $year)
+                                <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>
+                                    {{ $year }}
+                                </option>
+                            @endforeach
+                        </select>
                     </div>
+
                     <div class="card-body">
                         <div class="chart-container" style="height:320px;">
                             <canvas id="monthlyChart"></canvas>
@@ -214,10 +226,35 @@
         <div class="row g-3 mb-4">
             <div class="col-lg-8">
                 <div class="card">
-                    <div class="card-header">
-                        <span><i class="bi bi-graph-up-arrow text-primary-custom me-2"></i>Barang Masuk vs Keluar
-                            (Tahunan)</span>
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <span>
+                            <i class="bi bi-graph-up-arrow text-primary-custom me-2"></i>
+                            Barang Masuk vs Keluar (Tahunan)
+                        </span>
+
+                        <div class="d-flex align-items-center gap-2">
+                            <select onchange="changeYearRange()" id="startYear" class="form-select form-select-sm"
+                                style="width:auto; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px;">
+                                @foreach($availableYears as $year)
+                                    <option value="{{ $year }}" {{ $startYear == $year ? 'selected' : '' }}>
+                                        {{ $year }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                            <span class="text-muted" style="font-size:12px;">-</span>
+
+                            <select onchange="changeYearRange()" id="endYear" class="form-select form-select-sm"
+                                style="width:auto; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px;">
+                                @foreach($availableYears as $year)
+                                    <option value="{{ $year }}" {{ $endYear == $year ? 'selected' : '' }}>
+                                        {{ $year }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
+
                     <div class="card-body">
                         <div class="chart-container" style="height:320px;">
                             <canvas id="yearlyChart"></canvas>
@@ -245,7 +282,12 @@
                                     <h6>{{ $item->name }}</h6>
                                     <span>{{ $item->category }} · Min: {{ $item->min_stock }} {{ $item->unit }}</span>
                                 </div>
-                                <div class="stock-value">{{ $item->current_stock }} {{ $item->unit }}</div>
+
+                                @if($item->current_stock <= 0)
+                                    <div class="text-danger fw-600">Habis</div>
+                                @else
+                                    <div class="text-warning fw-600" style="color: var(--warning-dark);">Rendah</div>
+                                @endif
                             </div>
                         @empty
                             <div class="empty-state" style="padding:30px 10px;">
@@ -271,7 +313,8 @@
                                     <span class="fw-700"
                                         style="width:24px;height:24px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:11px;">{{ $index + 1 }}</span>
                                     <div>
-                                        <div class="fw-600" style="font-size:13px;">{{ $tx->item->name ?? '-' }}</div>
+                                        <div class="fw-600" style="font-size:13px;">{{ $tx->item->name ?? 'Barang dihapus' }}
+                                        </div>
                                         <div style="font-size:11px;color:var(--text-secondary);">{{ $tx->item->category ?? '' }}
                                         </div>
                                     </div>
@@ -308,11 +351,11 @@
                         @forelse($recentTransactions as $tx)
                             <div class="d-flex align-items-start gap-3 py-2 {{ !$loop->last ? 'border-bottom' : '' }}">
                                 <div
-                                    style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;{{ $tx->type === 'masuk' ? 'background:var(--success-bg);color:var(--success);' : 'background:var(--danger-bg);color:var(--danger);' }}">
-                                    <i class="bi bi-arrow-{{ $tx->type === 'masuk' ? 'down' : 'up' }}-circle-fill"></i>
+                                    style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;{{ $tx->type === 'in' ? 'background:var(--success-bg);color:var(--success);' : 'background:var(--danger-bg);color:var(--danger);' }}">
+                                    <i class="bi bi-arrow-{{ $tx->type === 'in' ? 'down' : 'up' }}-circle-fill"></i>
                                 </div>
                                 <div class="flex-grow-1 min-width-0">
-                                    <div class="fw-600" style="font-size:13px;">{{ $tx->item->name ?? '-' }}</div>
+                                    <div class="fw-600" style="font-size:13px;">{{ $tx->item->name ?? 'Barang dihapus' }}</div>
                                     <div style="font-size:11px;color:var(--text-secondary);">
                                         {{ $tx->quantity }} {{ $tx->item->unit ?? '' }} · {{ $tx->user->name ?? '' }}
                                     </div>
@@ -402,99 +445,100 @@
 
     {{-- Transaction Edit Modal --}}
     @if(auth()->user()->isAdmin())
-    <div class="modal fade inventrack-modal" id="dashTxModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content" style="position:relative;">
-                <div class="modal-loading-overlay" id="dashTxLoading">
-                    <div class="modal-spinner"></div>
-                </div>
-                <div class="modal-header">
-                    <h5 class="modal-title" id="dashTxModalTitle">
-                        <i class="bi bi-pencil-fill"></i> <span>Edit Transaksi</span>
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="modal-error-alert" id="dashTxError">
-                        <i class="bi bi-exclamation-circle me-1"></i>
-                        <span id="dashTxErrorMsg"></span>
+        <div class="modal fade inventrack-modal" id="dashTxModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content" style="position:relative;">
+                    <div class="modal-loading-overlay" id="dashTxLoading">
+                        <div class="modal-spinner"></div>
                     </div>
-                    <form id="dashTxForm" novalidate>
-                        <input type="hidden" id="dashTxId" value="">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="dashTxModalTitle">
+                            <i class="bi bi-pencil-fill"></i> <span>Edit Transaksi</span>
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="modal-error-alert" id="dashTxError">
+                            <i class="bi bi-exclamation-circle me-1"></i>
+                            <span id="dashTxErrorMsg"></span>
+                        </div>
+                        <form id="dashTxForm" novalidate>
+                            <input type="hidden" id="dashTxId" value="">
 
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Tanggal <span class="text-danger">*</span></label>
-                                <input type="date" name="date" class="form-control" required id="dashTxDate">
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Tanggal <span class="text-danger">*</span></label>
+                                    <input type="date" name="date" class="form-control" required id="dashTxDate">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Jenis Transaksi <span class="text-danger">*</span></label>
+                                    <select name="type" class="form-select" required id="dashTxType">
+                                        <option value="">-- Pilih Jenis --</option>
+                                        <option value="in">📥 Barang Masuk</option>
+                                        <option value="out">📤 Barang Keluar</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Jenis Transaksi <span class="text-danger">*</span></label>
-                                <select name="type" class="form-select" required id="dashTxType">
-                                    <option value="">-- Pilih Jenis --</option>
-                                    <option value="masuk">📥 Barang Masuk</option>
-                                    <option value="keluar">📤 Barang Keluar</option>
+
+                            <div class="mb-3">
+                                <label class="form-label">Nama Barang <span class="text-danger">*</span></label>
+                                <select name="item_id" class="form-select" required id="dashTxItemSelect">
+                                    <option value="">-- Pilih Barang --</option>
+                                    @foreach($items as $item)
+                                        <option value="{{ $item->id }}" data-category="{{ $item->category }}"
+                                            data-unit="{{ $item->unit }}" data-stock="{{ $item->current_stock }}">
+                                            {{ $item->name }}
+                                        </option>
+                                    @endforeach
                                 </select>
                             </div>
-                        </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Nama Barang <span class="text-danger">*</span></label>
-                            <select name="item_id" class="form-select" required id="dashTxItemSelect">
-                                <option value="">-- Pilih Barang --</option>
-                                @foreach($items as $item)
-                                    <option value="{{ $item->id }}"
-                                            data-category="{{ $item->category }}"
-                                            data-unit="{{ $item->unit }}"
-                                            data-stock="{{ $item->current_stock }}">
-                                        {{ $item->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-4">
-                                <label class="form-label">Kategori</label>
-                                <input type="text" class="form-control" id="dashTxItemCategory" readonly>
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Kategori</label>
+                                    <input type="text" class="form-control" id="dashTxItemCategory" readonly>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Satuan</label>
+                                    <input type="text" class="form-control" id="dashTxItemUnit" readonly>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Stok Saat Ini</label>
+                                    <input type="text" class="form-control" id="dashTxItemStock" readonly>
+                                </div>
                             </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Satuan</label>
-                                <input type="text" class="form-control" id="dashTxItemUnit" readonly>
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">Stok Saat Ini</label>
-                                <input type="text" class="form-control" id="dashTxItemStock" readonly>
-                            </div>
-                        </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Jumlah <span class="text-danger">*</span></label>
-                            <input type="number" name="quantity" class="form-control" min="1" placeholder="Masukkan jumlah" required id="dashTxQuantity">
-                            <div id="dashTxStockWarning" class="text-danger mt-1" style="font-size:12px;display:none;">
-                                <i class="bi bi-exclamation-triangle-fill"></i> Jumlah melebihi stok yang tersedia!
+                            <div class="mb-3">
+                                <label class="form-label">Jumlah <span class="text-danger">*</span></label>
+                                <input type="number" name="quantity" class="form-control" min="1" placeholder="Masukkan jumlah"
+                                    required id="dashTxQuantity">
+                                <div id="dashTxStockWarning" class="text-danger mt-1" style="font-size:12px;display:none;">
+                                    <i class="bi bi-exclamation-triangle-fill"></i> Jumlah melebihi stok yang tersedia!
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Harga Satuan</label>
-                            <input type="number" name="price" class="form-control" min="0" step="1" placeholder="Kosongkan jika tidak ada" id="dashTxPrice">
-                        </div>
+                            <div class="mb-3">
+                                <label class="form-label">Harga Satuan</label>
+                                <input type="number" name="price" class="form-control" min="0" step="1"
+                                    placeholder="Kosongkan jika tidak ada" id="dashTxPrice">
+                            </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Keterangan</label>
-                            <textarea name="description" class="form-control" rows="3" placeholder="Keterangan tambahan (opsional)" id="dashTxDescription"></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-primary" id="dashTxSubmitBtn" onclick="submitDashTxForm()">
-                        <i class="bi bi-check-lg"></i> Update
-                    </button>
+                            <div class="mb-3">
+                                <label class="form-label">Keterangan</label>
+                                <textarea name="description" class="form-control" rows="3"
+                                    placeholder="Keterangan tambahan (opsional)" id="dashTxDescription"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="button" class="btn btn-primary" id="dashTxSubmitBtn" onclick="submitDashTxForm()">
+                            <i class="bi bi-check-lg"></i> Update
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
     @endif
 @endsection
 
@@ -537,6 +581,32 @@
 
                 chart.update();
             });
+        }
+
+        function changeMonthlyYear(year) {
+            fetch(`{{ route('dashboard.monthlyData') }}?year=${year}`)
+                .then(res => res.json())
+                .then(data => {
+
+                    monthlyChartInstance.data.labels = data.map(d => d.label);
+                    monthlyChartInstance.data.datasets[0].data = data.map(d => d.masuk);
+                    monthlyChartInstance.data.datasets[1].data = data.map(d => d.keluar);
+
+                    monthlyChartInstance.update('active');
+                })
+                .catch(err => console.error(err));
+        }
+
+        function changeYearRange() {
+            const start = document.getElementById('startYear').value;
+            const end = document.getElementById('endYear').value;
+
+            const url = new URL(window.location.href);
+
+            url.searchParams.set('start_year', start);
+            url.searchParams.set('end_year', end);
+
+            window.location.href = url.toString();
         }
 
         // ===== Chart color constants =====
@@ -609,7 +679,7 @@
         // ===== Yearly Chart =====
         const yearlyCtx = document.getElementById('yearlyChart').getContext('2d');
         const yearlyChartInstance = new Chart(yearlyCtx, {
-            type: 'bar',
+            type: 'line',
             data: {
                 labels: {!! json_encode(array_column($yearlyData, 'label')) !!},
                 datasets: [
@@ -697,14 +767,14 @@
                             suggestionsBox.innerHTML = '<div class="autocomplete-no-result"><i class="bi bi-search me-1"></i>Tidak ada barang ditemukan</div>';
                         } else {
                             suggestionsBox.innerHTML = items.map((item, idx) => `
-                                                <div class="autocomplete-item" data-id="${item.id}" data-name="${item.name}" data-index="${idx}">
-                                                    <div class="item-icon"><i class="bi bi-box-seam"></i></div>
-                                                    <div>
-                                                        <div class="item-name">${highlightMatch(item.name, q)}</div>
-                                                        <div class="item-category">${item.category || ''}</div>
-                                                    </div>
-                                                </div>
-                                            `).join('');
+                                                                                                                                                <div class="autocomplete-item" data-id="${item.id}" data-name="${item.name}" data-index="${idx}">
+                                                                                                                                                    <div class="item-icon"><i class="bi bi-box-seam"></i></div>
+                                                                                                                                                    <div>
+                                                                                                                                                        <div class="item-name">${highlightMatch(item.name, q)}</div>
+                                                                                                                                                        <div class="item-category">${item.category || ''}</div>
+                                                                                                                                                    </div>
+                                                                                                                                                </div>
+                                                                                                                                            `).join('');
 
                             // Click event on suggestion items
                             suggestionsBox.querySelectorAll('.autocomplete-item').forEach(el => {
@@ -831,148 +901,49 @@
 
         // ===== Transaction Edit Modal (Dashboard) =====
         @if(auth()->user()->isAdmin())
-        const dashTxModalEl = document.getElementById('dashTxModal');
-        const dashTxModal = dashTxModalEl ? new bootstrap.Modal(dashTxModalEl) : null;
+            const dashTxModalEl = document.getElementById('dashTxModal');
+            const dashTxModal = dashTxModalEl ? new bootstrap.Modal(dashTxModalEl) : null;
 
-        // Item select -> auto-fill
-        const dashTxItemSelect = document.getElementById('dashTxItemSelect');
-        const dashTxCategoryInput = document.getElementById('dashTxItemCategory');
-        const dashTxUnitInput = document.getElementById('dashTxItemUnit');
-        const dashTxStockInput = document.getElementById('dashTxItemStock');
-        const dashTxQuantityInput = document.getElementById('dashTxQuantity');
-        const dashTxTypeSelect = document.getElementById('dashTxType');
-        const dashTxStockWarning = document.getElementById('dashTxStockWarning');
+            // Item select -> auto-fill
+            const dashTxItemSelect = document.getElementById('dashTxItemSelect');
+            const dashTxCategoryInput = document.getElementById('dashTxItemCategory');
+            const dashTxUnitInput = document.getElementById('dashTxItemUnit');
+            const dashTxStockInput = document.getElementById('dashTxItemStock');
+            const dashTxQuantityInput = document.getElementById('dashTxQuantity');
+            const dashTxTypeSelect = document.getElementById('dashTxType');
+            const dashTxStockWarning = document.getElementById('dashTxStockWarning');
 
-        if (dashTxItemSelect) {
-            dashTxItemSelect.addEventListener('change', function() {
-                const selected = this.options[this.selectedIndex];
-                if (this.value) {
-                    dashTxCategoryInput.value = selected.dataset.category || '';
-                    dashTxUnitInput.value = selected.dataset.unit || '';
-                    dashTxStockInput.value = selected.dataset.stock || '0';
-                } else {
-                    dashTxCategoryInput.value = '';
-                    dashTxUnitInput.value = '';
-                    dashTxStockInput.value = '';
-                }
-                checkDashTxStock();
-            });
-
-            dashTxQuantityInput.addEventListener('input', checkDashTxStock);
-            dashTxTypeSelect.addEventListener('change', checkDashTxStock);
-        }
-
-        function checkDashTxStock() {
-            if (dashTxTypeSelect.value === 'keluar' && dashTxItemSelect.value) {
-                const stock = parseInt(dashTxStockInput.value) || 0;
-                const qty = parseInt(dashTxQuantityInput.value) || 0;
-                dashTxStockWarning.style.display = qty > stock ? 'block' : 'none';
-            } else {
-                dashTxStockWarning.style.display = 'none';
-            }
-        }
-
-        function openTxEditModal(id) {
-            // Reset form
-            document.getElementById('dashTxForm').reset();
-            document.getElementById('dashTxError').style.display = 'none';
-            document.querySelectorAll('#dashTxForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
-            dashTxCategoryInput.value = '';
-            dashTxUnitInput.value = '';
-            dashTxStockInput.value = '';
-            dashTxStockWarning.style.display = 'none';
-
-            document.getElementById('dashTxId').value = id;
-
-            const loading = document.getElementById('dashTxLoading');
-            loading.classList.add('show');
-            dashTxModal.show();
-
-            fetch(`/transactions/${id}/edit-data`, {
-                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(res => res.json())
-            .then(data => {
-                loading.classList.remove('show');
-                document.getElementById('dashTxDate').value = data.date;
-                document.getElementById('dashTxType').value = data.type;
-                document.getElementById('dashTxItemSelect').value = data.item_id;
-                document.getElementById('dashTxQuantity').value = data.quantity;
-                document.getElementById('dashTxPrice').value = data.price || '';
-                document.getElementById('dashTxDescription').value = data.description || '';
-
-                // Fill item info
-                dashTxCategoryInput.value = data.item?.category || '';
-                dashTxUnitInput.value = data.item?.unit || '';
-                dashTxStockInput.value = data.item?.current_stock || '0';
-            })
-            .catch(() => {
-                loading.classList.remove('show');
-                document.getElementById('dashTxErrorMsg').textContent = 'Gagal memuat data transaksi.';
-                document.getElementById('dashTxError').style.display = 'block';
-            });
-        }
-
-        function submitDashTxForm() {
-            const form = document.getElementById('dashTxForm');
-            const errorDiv = document.getElementById('dashTxError');
-            const errorMsg = document.getElementById('dashTxErrorMsg');
-            const loading = document.getElementById('dashTxLoading');
-            const submitBtn = document.getElementById('dashTxSubmitBtn');
-            const txId = document.getElementById('dashTxId').value;
-
-            errorDiv.style.display = 'none';
-            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-
-            loading.classList.add('show');
-            submitBtn.disabled = true;
-
-            const formData = new FormData(form);
-            formData.append('_method', 'PUT');
-
-            fetch(`/transactions/${txId}`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: formData
-            })
-            .then(res => res.json().then(data => ({ status: res.status, data })))
-            .then(({ status, data }) => {
-                loading.classList.remove('show');
-                submitBtn.disabled = false;
-
-                if (data.success) {
-                    dashTxModal.hide();
-                    Toast.fire({ icon: 'success', title: data.message });
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    let messages = [];
-                    if (data.errors) {
-                        Object.keys(data.errors).forEach(key => {
-                            messages.push(data.errors[key][0]);
-                            const input = form.querySelector(`[name="${key}"]`);
-                            if (input) input.classList.add('is-invalid');
-                        });
+            if (dashTxItemSelect) {
+                dashTxItemSelect.addEventListener('change', function () {
+                    const selected = this.options[this.selectedIndex];
+                    if (this.value) {
+                        dashTxCategoryInput.value = selected.dataset.category || '';
+                        dashTxUnitInput.value = selected.dataset.unit || '';
+                        dashTxStockInput.value = selected.dataset.stock || '0';
+                    } else {
+                        dashTxCategoryInput.value = '';
+                        dashTxUnitInput.value = '';
+                        dashTxStockInput.value = '';
                     }
-                    if (data.message && !data.errors) messages.push(data.message);
-                    errorMsg.innerHTML = messages.join('<br>');
-                    errorDiv.style.display = 'block';
-                }
-            })
-            .catch(() => {
-                loading.classList.remove('show');
-                submitBtn.disabled = false;
-                errorMsg.textContent = 'Terjadi kesalahan. Silakan coba lagi.';
-                errorDiv.style.display = 'block';
-            });
-        }
+                    checkDashTxStock();
+                });
 
-        // Reset on close
-        if (dashTxModalEl) {
-            dashTxModalEl.addEventListener('hidden.bs.modal', function() {
+                dashTxQuantityInput.addEventListener('input', checkDashTxStock);
+                dashTxTypeSelect.addEventListener('change', checkDashTxStock);
+            }
+
+            function checkDashTxStock() {
+                if (dashTxTypeSelect.value === 'out' && dashTxItemSelect.value) {
+                    const stock = parseInt(dashTxStockInput.value) || 0;
+                    const qty = parseInt(dashTxQuantityInput.value) || 0;
+                    dashTxStockWarning.style.display = qty > stock ? 'block' : 'none';
+                } else {
+                    dashTxStockWarning.style.display = 'none';
+                }
+            }
+
+            function openTxEditModal(id) {
+                // Reset form
                 document.getElementById('dashTxForm').reset();
                 document.getElementById('dashTxError').style.display = 'none';
                 document.querySelectorAll('#dashTxForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
@@ -980,8 +951,107 @@
                 dashTxUnitInput.value = '';
                 dashTxStockInput.value = '';
                 dashTxStockWarning.style.display = 'none';
-            });
-        }
+
+                document.getElementById('dashTxId').value = id;
+
+                const loading = document.getElementById('dashTxLoading');
+                loading.classList.add('show');
+                dashTxModal.show();
+
+                fetch(`{{ url('transactions') }}/${id}/edit-data`, {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        loading.classList.remove('show');
+                        document.getElementById('dashTxDate').value = data.date;
+                        document.getElementById('dashTxType').value = data.type;
+                        document.getElementById('dashTxItemSelect').value = data.item_id;
+                        document.getElementById('dashTxQuantity').value = data.quantity;
+                        document.getElementById('dashTxPrice').value = data.price || '';
+                        document.getElementById('dashTxDescription').value = data.description || '';
+
+                        // Fill item info
+                        dashTxCategoryInput.value = data.item?.category || '';
+                        dashTxUnitInput.value = data.item?.unit || '';
+                        dashTxStockInput.value = data.item?.current_stock || '0';
+                    })
+                    .catch(() => {
+                        loading.classList.remove('show');
+                        document.getElementById('dashTxErrorMsg').textContent = 'Gagal memuat data transaksi.';
+                        document.getElementById('dashTxError').style.display = 'block';
+                    });
+            }
+
+            function submitDashTxForm() {
+                const form = document.getElementById('dashTxForm');
+                const errorDiv = document.getElementById('dashTxError');
+                const errorMsg = document.getElementById('dashTxErrorMsg');
+                const loading = document.getElementById('dashTxLoading');
+                const submitBtn = document.getElementById('dashTxSubmitBtn');
+                const txId = document.getElementById('dashTxId').value;
+
+                errorDiv.style.display = 'none';
+                form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+                loading.classList.add('show');
+                submitBtn.disabled = true;
+
+                const formData = new FormData(form);
+                formData.append('_method', 'PUT');
+
+                fetch(`{{ url('transactions') }}/${txId}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData
+                })
+                    .then(res => res.json().then(data => ({ status: res.status, data })))
+                    .then(({ status, data }) => {
+                        loading.classList.remove('show');
+                        submitBtn.disabled = false;
+
+                        if (data.success) {
+                            dashTxModal.hide();
+                            Toast.fire({ icon: 'success', title: data.message });
+                            setTimeout(() => location.reload(), 1000);
+                        } else {
+                            let messages = [];
+                            if (data.errors) {
+                                Object.keys(data.errors).forEach(key => {
+                                    messages.push(data.errors[key][0]);
+                                    const input = form.querySelector(`[name="${key}"]`);
+                                    if (input) input.classList.add('is-invalid');
+                                });
+                            }
+                            if (data.message && !data.errors) messages.push(data.message);
+                            errorMsg.innerHTML = messages.join('<br>');
+                            errorDiv.style.display = 'block';
+                        }
+                    })
+                    .catch(() => {
+                        loading.classList.remove('show');
+                        submitBtn.disabled = false;
+                        errorMsg.textContent = 'Terjadi kesalahan. Silakan coba lagi.';
+                        errorDiv.style.display = 'block';
+                    });
+            }
+
+            // Reset on close
+            if (dashTxModalEl) {
+                dashTxModalEl.addEventListener('hidden.bs.modal', function () {
+                    document.getElementById('dashTxForm').reset();
+                    document.getElementById('dashTxError').style.display = 'none';
+                    document.querySelectorAll('#dashTxForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                    dashTxCategoryInput.value = '';
+                    dashTxUnitInput.value = '';
+                    dashTxStockInput.value = '';
+                    dashTxStockWarning.style.display = 'none';
+                });
+            }
         @endif
     </script>
 @endpush

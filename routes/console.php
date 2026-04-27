@@ -76,7 +76,7 @@ Artisan::command('notify:daily-digest', function () {
 })->purpose('Kirim email digest harian (transaksi pending + stock alert)');
 
 // Schedule: jalankan setiap hari jam 15:00
-Schedule::command('notify:daily-digest')->dailyAt('15:25');
+Schedule::command('notify:daily-digest')->dailyAt('15:00');
 
 // ─── Mail Test ────────────────────────────────────────────────────
 Artisan::command('mail:test {email? : Alamat tujuan (default: email user admin pertama)}', function () {

@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $user = auth()->user();
 
@@ -23,6 +23,17 @@ class DashboardController extends Controller
         }
 
         $now = Carbon::now();
+
+        // ========================
+        // 🔥 YEAR FILTER
+        // ========================
+        $availableYears = Transaction::approved()
+            ->selectRaw('YEAR(date) as year')
+            ->distinct()
+            ->orderByDesc('year')
+            ->pluck('year');
+
+        $selectedYear = $request->year ?? $availableYears->first() ?? $now->year;
 
         // Stats cards
         $totalItems = Item::count();
@@ -40,39 +51,27 @@ class DashboardController extends Controller
         $allItems = Item::all();
         $lowStockItems = $allItems->filter(fn($item) => $item->is_low_stock && $item->current_stock >= 0);
 
-        // Chart data: monthly masuk vs keluar (last 12 months)
+
+        // 📊 MONTHLY CHART (FIXED 12 BULAN)
+        // ========================
         $monthlyData = [];
-        for ($i = 11; $i >= 0; $i--) {
-            $month = $now->copy()->subMonths($i);
-            $monthLabel = $month->translatedFormat('M Y');
+
+        for ($month = 1; $month <= 12; $month++) {
+
+            $date = Carbon::create($selectedYear, $month, 1);
 
             $masuk = Transaction::approved()->masuk()
-                ->whereMonth('date', $month->month)
-                ->whereYear('date', $month->year)
+                ->whereYear('date', $selectedYear)
+                ->whereMonth('date', $month)
                 ->sum('quantity');
 
             $keluar = Transaction::approved()->keluar()
-                ->whereMonth('date', $month->month)
-                ->whereYear('date', $month->year)
+                ->whereYear('date', $selectedYear)
+                ->whereMonth('date', $month)
                 ->sum('quantity');
 
             $monthlyData[] = [
-                'label' => $monthLabel,
-                'masuk' => (int) $masuk,
-                'keluar' => (int) $keluar,
-            ];
-        }
-
-        // Yearly chart data: last 5 years
-        $yearlyData = [];
-        for ($i = 4; $i >= 0; $i--) {
-            $year = $now->copy()->subYears($i)->year;
-            $masuk = Transaction::approved()->masuk()
-                ->whereYear('date', $year)->sum('quantity');
-            $keluar = Transaction::approved()->keluar()
-                ->whereYear('date', $year)->sum('quantity');
-            $yearlyData[] = [
-                'label' => (string) $year,
+                'label' => $date->translatedFormat('M'),
                 'masuk' => (int) $masuk,
                 'keluar' => (int) $keluar,
             ];
@@ -84,6 +83,37 @@ class DashboardController extends Controller
             ->distinct()
             ->orderByDesc('year')
             ->pluck('year');
+
+        // Default range
+        $startYear = $request->start_year ?? $availableYears->first() ?? $now->year - 4;
+        $endYear = $request->end_year ?? $availableYears->last() ?? $now->year;
+
+        // VALIDASI RANGE (penting)
+        if ($startYear > $endYear) {
+            [$startYear, $endYear] = [$endYear, $startYear];
+        }
+
+        // ========================
+        // 📊 YEARLY DATA (DYNAMIC RANGE)
+        // ========================
+        $yearlyData = [];
+
+        for ($year = $startYear; $year <= $endYear; $year++) {
+
+            $masuk = Transaction::approved()->masuk()
+                ->whereYear('date', $year)
+                ->sum('quantity');
+
+            $keluar = Transaction::approved()->keluar()
+                ->whereYear('date', $year)
+                ->sum('quantity');
+
+            $yearlyData[] = [
+                'label' => (string) $year,
+                'masuk' => (int) $masuk,
+                'keluar' => (int) $keluar,
+            ];
+        }
 
         // Stock per category
         $categories = Item::select('category')->distinct()->pluck('category');
@@ -135,13 +165,46 @@ class DashboardController extends Controller
             'lowStockItems',
             'monthlyData',
             'yearlyData',
+            'selectedYear',
             'categoryData',
             'availableYears',
+            'startYear',
+            'endYear',
             'topKeluar',
             'recentTransactions',
             'pendingByDate',
             'items'
         ));
+    }
+
+    public function monthlyData(Request $request)
+    {
+        $year = $request->year ?? now()->year;
+
+        $monthlyData = [];
+
+        for ($month = 1; $month <= 12; $month++) {
+
+            $date = \Carbon\Carbon::create($year, $month, 1);
+
+            $masuk = Transaction::approved()->masuk()
+                ->whereYear('date', $year)
+                ->whereMonth('date', $month)
+                ->sum('quantity');
+
+            $keluar = Transaction::approved()->keluar()
+                ->whereYear('date', $year)
+                ->whereMonth('date', $month)
+                ->sum('quantity');
+
+            $monthlyData[] = [
+                'label' => $date->translatedFormat('M'),
+                'masuk' => (int) $masuk,
+                'keluar' => (int) $keluar,
+            ];
+        }
+
+        return response()->json($monthlyData);
     }
 
     /**
@@ -160,7 +223,7 @@ class DashboardController extends Controller
 
         // Check stock for all keluar transactions first
         foreach ($transactions as $tx) {
-            if ($tx->type === 'keluar') {
+            if ($tx->type === 'out') {
                 $item = $tx->item;
                 if ($item->current_stock < $tx->quantity) {
                     return back()->with('error', "Stok {$item->name} tidak mencukupi ({$item->current_stock} {$item->unit}). Tidak bisa approve.");
@@ -330,7 +393,7 @@ class DashboardController extends Controller
 
             $data[] = [
                 'category' => $cat,
-                'stock' => max(0, (int)($masuk - $keluar)),
+                'stock' => max(0, (int) ($masuk - $keluar)),
             ];
         }
 

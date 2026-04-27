@@ -75,8 +75,8 @@ class ReportController extends Controller
         $categories = Item::select('category')->distinct()->pluck('category');
 
         // Summary stats
-        $totalMasuk = (clone $query)->where('type', 'masuk')->sum('quantity');
-        $totalKeluar = (clone $query)->where('type', 'keluar')->sum('quantity');
+        $totalMasuk = (clone $query)->where('type', 'in')->sum('quantity');
+        $totalKeluar = (clone $query)->where('type', 'out')->sum('quantity');
 
         // 🔥 LIST TAHUN UNTUK DROPDOWN
         $years = Transaction::selectRaw('YEAR(date) as year')

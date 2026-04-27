@@ -81,7 +81,7 @@
             @endif
 
             {{-- Rekap Stok: Admin & Manager only --}}
-            @if(auth()->user()->isAdmin() || auth()->user()->isManager())
+            @if(auth()->user()->isAdmin() || auth()->user()->isManager() || auth()->user()->isStaff())
                 <a href="{{ route('stock.index') }}"
                     class="sidebar-link {{ request()->routeIs('stock.*') ? 'active' : '' }}">
                     <i class="bi bi-clipboard-data-fill"></i>
@@ -211,7 +211,10 @@
                 </button>
 
                 <div class="d-none d-md-flex align-items-center gap-2 ms-2">
-                    <span class="text-muted" style="font-size:12px;">{{ now()->translatedFormat('l, d M Y') }}</span>
+                    <span class="text-muted" style="font-size:12px;">
+                        {{ now()->translatedFormat('l, d M Y') }}
+                        <span id="live-clock" class="ms-1 fw-bold"></span>
+                    </span>
                 </div>
             </div>
         </header>
@@ -230,6 +233,27 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
+        function updateClock() {
+            const now = new Date();
+
+            // Ambil Jam, Menit, dan Detik
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+
+            // Format tampilan (contoh: 14:05:01)
+            const timeString = `${hours}:${minutes}:${seconds}`;
+
+            // Masukkan ke dalam elemen HTML
+            document.getElementById('live-clock').textContent = timeString;
+        }
+
+        // Jalankan fungsi setiap 1000 milidetik (1 detik)
+        setInterval(updateClock, 1000);
+
+        // Panggil sekali di awal agar tidak menunggu 1 detik pertama
+        updateClock();
+
         // Theme toggle
         function toggleTheme() {
             const html = document.documentElement;

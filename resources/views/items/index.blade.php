@@ -66,21 +66,21 @@
                                     <td>{{ $item->unit }}</td>
                                     <td>{{ $item->min_stock }}</td>
                                     <td class="fw-700
-                                                            @if($item->current_stock == 0)
-                                                                text-danger-custom
-                                                            @elseif($item->current_stock < $item->min_stock)
-                                                                text-warning
-                                                            @else
-                                                                text-success-custom
-                                                            @endif
-                                                        ">
+                                                                    @if($item->current_stock == 0)
+                                                                        text-danger-custom
+                                                                    @elseif($item->current_stock < $item->min_stock)
+                                                                        text-warning
+                                                                    @else
+                                                                        text-success-custom
+                                                                    @endif
+                                                                ">
                                         {{ $item->current_stock }}
                                     </td>
 
                                     <td>
                                         @if($item->current_stock == 0)
                                             <span class="badge-stock-ok text-danger-custom">
-                                                <i class="bi bi-x-circle-fill"></i> Habis
+                                                <i class="bi bi-x-circle-fill"></i> Out of Stock
                                             </span>
 
                                         @elseif($item->current_stock < $item->min_stock)
@@ -90,13 +90,14 @@
 
                                         @else
                                             <span class="badge-stock-ok">
-                                                <i class="bi bi-check-circle-fill"></i> Aman
+                                                <i class="bi bi-check-circle-fill"></i> Ready
                                             </span>
                                         @endif
                                     </td>
                                     <td>
                                         <div class="action-buttons">
-                                            <button type="button" class="btn-action edit" title="Edit" onclick="openItemModal({{ $item->id }})">
+                                            <button type="button" class="btn-action edit" title="Edit"
+                                                onclick="openItemModal({{ $item->id }})">
                                                 <i class="bi bi-pencil-fill"></i>
                                             </button>
                                             <form action="{{ route('items.destroy', $item) }}" method="POST"
@@ -156,13 +157,15 @@
 
                         <div class="mb-3">
                             <label class="form-label">Nama Barang <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control" placeholder="Masukkan nama barang" required id="itemName">
+                            <input type="text" name="name" class="form-control" placeholder="Masukkan nama barang" required
+                                id="itemName">
                         </div>
 
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Kategori <span class="text-danger">*</span></label>
-                                <input type="text" name="category" list="category-list" class="form-control" placeholder="Pilih atau ketik kategori" required id="itemCategory">
+                                <input type="text" name="category" list="category-list" class="form-control"
+                                    placeholder="Pilih atau ketik kategori" required id="itemCategory">
                                 <datalist id="category-list">
                                     @foreach($categories as $cat)
                                         <option value="{{ $cat }}">
@@ -171,7 +174,8 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Satuan <span class="text-danger">*</span></label>
-                                <input type="text" name="unit" list="unit-list" class="form-control" placeholder="Pilih atau ketik satuan" required id="itemUnit">
+                                <input type="text" name="unit" list="unit-list" class="form-control"
+                                    placeholder="Pilih atau ketik satuan" required id="itemUnit">
                                 <datalist id="unit-list">
                                     @foreach($units as $u)
                                         <option value="{{ $u }}">
@@ -182,7 +186,8 @@
 
                         <div class="mb-3">
                             <label class="form-label">Minimum Stok <span class="text-danger">*</span></label>
-                            <input type="number" name="min_stock" class="form-control" min="0" required id="itemMinStock" value="0">
+                            <input type="number" name="min_stock" class="form-control" min="0" required id="itemMinStock"
+                                value="0">
                             <small class="text-muted">Sistem akan memberikan peringatan jika stok di bawah angka ini</small>
                         </div>
                     </form>
@@ -199,122 +204,122 @@
 @endsection
 
 @push('scripts')
-<script>
-    const itemModalEl = document.getElementById('itemModal');
-    const itemModal = new bootstrap.Modal(itemModalEl);
+    <script>
+        const itemModalEl = document.getElementById('itemModal');
+        const itemModal = new bootstrap.Modal(itemModalEl);
 
-    function openItemModal(id = null) {
-        // Reset form
-        document.getElementById('itemForm').reset();
-        document.getElementById('itemError').style.display = 'none';
-        document.querySelectorAll('#itemForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
-        document.getElementById('itemMinStock').value = '0';
+        function openItemModal(id = null) {
+            // Reset form
+            document.getElementById('itemForm').reset();
+            document.getElementById('itemError').style.display = 'none';
+            document.querySelectorAll('#itemForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            document.getElementById('itemMinStock').value = '0';
 
-        if (id) {
-            // Edit mode — load data
-            document.getElementById('itemModalTitle').innerHTML = '<i class="bi bi-pencil-fill"></i> <span>Edit Barang</span>';
-            document.getElementById('itemId').value = id;
-            document.getElementById('itemMethod').value = 'PUT';
-            document.getElementById('itemSubmitBtn').innerHTML = '<i class="bi bi-check-lg"></i> Update';
+            if (id) {
+                // Edit mode — load data
+                document.getElementById('itemModalTitle').innerHTML = '<i class="bi bi-pencil-fill"></i> <span>Edit Barang</span>';
+                document.getElementById('itemId').value = id;
+                document.getElementById('itemMethod').value = 'PUT';
+                document.getElementById('itemSubmitBtn').innerHTML = '<i class="bi bi-check-lg"></i> Update';
 
-            const loading = document.getElementById('itemLoading');
-            loading.classList.add('show');
-            itemModal.show();
+                const loading = document.getElementById('itemLoading');
+                loading.classList.add('show');
+                itemModal.show();
 
-            fetch(`/items/${id}/edit-data`, {
-                headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(res => res.json())
-            .then(data => {
-                loading.classList.remove('show');
-                document.getElementById('itemName').value = data.name;
-                document.getElementById('itemCategory').value = data.category;
-                document.getElementById('itemUnit').value = data.unit;
-                document.getElementById('itemMinStock').value = data.min_stock;
-            })
-            .catch(() => {
-                loading.classList.remove('show');
-                document.getElementById('itemErrorMsg').textContent = 'Gagal memuat data barang.';
-                document.getElementById('itemError').style.display = 'block';
-            });
-        } else {
-            // Create mode
-            document.getElementById('itemModalTitle').innerHTML = '<i class="bi bi-plus-circle-fill"></i> <span>Tambah Barang</span>';
-            document.getElementById('itemId').value = '';
-            document.getElementById('itemMethod').value = 'POST';
-            document.getElementById('itemSubmitBtn').innerHTML = '<i class="bi bi-check-lg"></i> Simpan';
-            itemModal.show();
-        }
-    }
-
-    function submitItemForm() {
-        const form = document.getElementById('itemForm');
-        const errorDiv = document.getElementById('itemError');
-        const errorMsg = document.getElementById('itemErrorMsg');
-        const loading = document.getElementById('itemLoading');
-        const submitBtn = document.getElementById('itemSubmitBtn');
-        const itemId = document.getElementById('itemId').value;
-        const method = document.getElementById('itemMethod').value;
-
-        // Clear errors
-        errorDiv.style.display = 'none';
-        form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-
-        loading.classList.add('show');
-        submitBtn.disabled = true;
-
-        const formData = new FormData(form);
-        const url = itemId ? `/items/${itemId}` : '{{ route("items.store") }}';
-
-        if (method === 'PUT') {
-            formData.append('_method', 'PUT');
-        }
-
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: formData
-        })
-        .then(res => res.json().then(data => ({ status: res.status, data })))
-        .then(({ status, data }) => {
-            loading.classList.remove('show');
-            submitBtn.disabled = false;
-
-            if (data.success) {
-                itemModal.hide();
-                Toast.fire({ icon: 'success', title: data.message });
-                setTimeout(() => location.reload(), 1000);
-            } else {
-                let messages = [];
-                if (data.errors) {
-                    Object.keys(data.errors).forEach(key => {
-                        messages.push(data.errors[key][0]);
-                        const input = form.querySelector(`[name="${key}"]`);
-                        if (input) input.classList.add('is-invalid');
+                fetch(`{{ url('items') }}/${id}/edit-data`, {
+                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        loading.classList.remove('show');
+                        document.getElementById('itemName').value = data.name;
+                        document.getElementById('itemCategory').value = data.category;
+                        document.getElementById('itemUnit').value = data.unit;
+                        document.getElementById('itemMinStock').value = data.min_stock;
+                    })
+                    .catch(() => {
+                        loading.classList.remove('show');
+                        document.getElementById('itemErrorMsg').textContent = 'Gagal memuat data barang.';
+                        document.getElementById('itemError').style.display = 'block';
                     });
-                }
-                if (data.message && !data.errors) messages.push(data.message);
-                errorMsg.innerHTML = messages.join('<br>');
-                errorDiv.style.display = 'block';
+            } else {
+                // Create mode
+                document.getElementById('itemModalTitle').innerHTML = '<i class="bi bi-plus-circle-fill"></i> <span>Tambah Barang</span>';
+                document.getElementById('itemId').value = '';
+                document.getElementById('itemMethod').value = 'POST';
+                document.getElementById('itemSubmitBtn').innerHTML = '<i class="bi bi-check-lg"></i> Simpan';
+                itemModal.show();
             }
-        })
-        .catch(() => {
-            loading.classList.remove('show');
-            submitBtn.disabled = false;
-            errorMsg.textContent = 'Terjadi kesalahan. Silakan coba lagi.';
-            errorDiv.style.display = 'block';
-        });
-    }
+        }
 
-    // Reset modal on close
-    itemModalEl.addEventListener('hidden.bs.modal', function() {
-        document.getElementById('itemForm').reset();
-        document.getElementById('itemError').style.display = 'none';
-        document.querySelectorAll('#itemForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
-    });
-</script>
+        function submitItemForm() {
+            const form = document.getElementById('itemForm');
+            const errorDiv = document.getElementById('itemError');
+            const errorMsg = document.getElementById('itemErrorMsg');
+            const loading = document.getElementById('itemLoading');
+            const submitBtn = document.getElementById('itemSubmitBtn');
+            const itemId = document.getElementById('itemId').value;
+            const method = document.getElementById('itemMethod').value;
+
+            // Clear errors
+            errorDiv.style.display = 'none';
+            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+
+            loading.classList.add('show');
+            submitBtn.disabled = true;
+
+            const formData = new FormData(form);
+            const url = itemId ? `{{ url('items') }}/${itemId}` : '{{ route("items.store") }}';
+
+            if (method === 'PUT') {
+                formData.append('_method', 'PUT');
+            }
+
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+                .then(res => res.json().then(data => ({ status: res.status, data })))
+                .then(({ status, data }) => {
+                    loading.classList.remove('show');
+                    submitBtn.disabled = false;
+
+                    if (data.success) {
+                        itemModal.hide();
+                        Toast.fire({ icon: 'success', title: data.message });
+                        setTimeout(() => location.reload(), 1000);
+                    } else {
+                        let messages = [];
+                        if (data.errors) {
+                            Object.keys(data.errors).forEach(key => {
+                                messages.push(data.errors[key][0]);
+                                const input = form.querySelector(`[name="${key}"]`);
+                                if (input) input.classList.add('is-invalid');
+                            });
+                        }
+                        if (data.message && !data.errors) messages.push(data.message);
+                        errorMsg.innerHTML = messages.join('<br>');
+                        errorDiv.style.display = 'block';
+                    }
+                })
+                .catch(() => {
+                    loading.classList.remove('show');
+                    submitBtn.disabled = false;
+                    errorMsg.textContent = 'Terjadi kesalahan. Silakan coba lagi.';
+                    errorDiv.style.display = 'block';
+                });
+        }
+
+        // Reset modal on close
+        itemModalEl.addEventListener('hidden.bs.modal', function () {
+            document.getElementById('itemForm').reset();
+            document.getElementById('itemError').style.display = 'none';
+            document.querySelectorAll('#itemForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        });
+    </script>
 @endpush

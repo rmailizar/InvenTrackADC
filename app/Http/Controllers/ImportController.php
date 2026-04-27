@@ -96,7 +96,7 @@ class ImportController extends Controller
         } else {
             $sheet->setTitle('Template Transaksi');
             $headers = ['tanggal', 'nama_barang', 'jenis', 'jumlah', 'harga', 'keterangan'];
-            $sample = ['17/04/2026', 'Kertas HVS A4', 'masuk', 50, 55000, 'Pembelian bulanan'];
+            $sample = ['17/04/2026', 'Kertas HVS A4', 'in', 50, 55000, 'Pembelian bulanan'];
         }
 
         // Set headers with styling

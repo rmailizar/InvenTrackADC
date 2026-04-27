@@ -24,12 +24,12 @@ class Item extends Model
     public function getCurrentStockAttribute(): int
     {
         $masuk = $this->transactions()
-            ->where('type', 'masuk')
+            ->where('type', 'in')
             ->where('status', 'approved')
             ->sum('quantity');
 
         $keluar = $this->transactions()
-            ->where('type', 'keluar')
+            ->where('type', 'out')
             ->where('status', 'approved')
             ->sum('quantity');
 

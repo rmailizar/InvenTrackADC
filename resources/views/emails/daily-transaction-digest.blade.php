@@ -31,10 +31,10 @@
                         <td style="padding: 10px 12px; border-bottom: 1px solid #eee; color: #333;">{{ $tx->date->format('d/m/Y') }}</td>
                         <td style="padding: 10px 12px; border-bottom: 1px solid #eee; color: #333; font-weight: 600;">{{ $tx->item->name ?? '-' }}</td>
                         <td style="padding: 10px 12px; border-bottom: 1px solid #eee;">
-                            @if($tx->type === 'masuk')
-                                <span style="background: #d1fae5; color: #065f46; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;">MASUK</span>
+                            @if($tx->type === 'in')
+                                <span style="background: #d1fae5; color: #065f46; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;">IN</span>
                             @else
-                                <span style="background: #fee2e2; color: #991b1b; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;">KELUAR</span>
+                                <span style="background: #fee2e2; color: #991b1b; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;">OUT</span>
                             @endif
                         </td>
                         <td style="padding: 10px 12px; border-bottom: 1px solid #eee; color: #333; font-weight: 700; text-align: right;">{{ $tx->quantity }} {{ $tx->item->unit ?? '' }}</td>

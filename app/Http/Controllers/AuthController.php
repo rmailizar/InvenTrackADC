@@ -10,7 +10,7 @@ class AuthController extends Controller
     public function showLogin()
     {
         if (Auth::check()) {
-            return redirect('/dashboard');
+            return redirect()->route('dashboard');
         }
         return redirect('/')->with('openLogin', true);
     }
@@ -26,6 +26,10 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $user = Auth::user();
+
+            // Update last login
+            $user->last_login_at = now();
+            $user->save();
 
             // Check if account is approved
             if ($user->account_status !== 'approved') {
@@ -49,7 +53,7 @@ class AuthController extends Controller
             // Determine redirect
             $redirect = $user->isStaff()
                 ? route('transactions.index')
-                : '/dashboard';
+                : route('dashboard');
 
             if ($isAjax) {
                 return response()->json(['success' => true, 'redirect' => $redirect]);
@@ -75,6 +79,6 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/')->with('success', 'Berhasil logout.');
+        return redirect()->route('login')->with('success', 'Berhasil logout.');
     }
 }

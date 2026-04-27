@@ -15,7 +15,7 @@ class ItemController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%");
+                    ->orWhere('category', 'like', "%{$search}%");
             });
         }
 
@@ -91,9 +91,6 @@ class ItemController extends Controller
 
     public function destroy(Item $item)
     {
-        if ($item->transactions()->count() > 0) {
-            return back()->with('error', 'Tidak bisa menghapus barang yang memiliki transaksi.');
-        }
 
         $item->delete();
 
