@@ -309,7 +309,23 @@
             }
         }
 
-        function openTransactionModal(id = null) {
+        const txPriceInput = document.getElementById('txPrice');
+
+        function togglePriceInput() {
+            const type = txTypeSelect.value;
+
+            if (type === 'out') {
+                txPriceInput.value = '';
+                txPriceInput.disabled = true;
+            } else {
+                txPriceInput.disabled = false;
+            }
+        }
+
+        // trigger saat dropdown berubah
+        txTypeSelect.addEventListener('change', togglePriceInput);
+
+        window.openTransactionModal = function (id = null) {
             // Reset form
             document.getElementById('txForm').reset();
             document.getElementById('txError').style.display = 'none';
@@ -349,6 +365,7 @@
                         txCategoryInput.value = data.item?.category || '';
                         txUnitInput.value = data.item?.unit || '';
                         txStockInput.value = data.item?.current_stock || '0';
+                        togglePriceInput(); // Penting: Cek status readonly untuk mode edit juga
                     })
                     .catch(() => {
                         loading.classList.remove('show');
@@ -364,6 +381,7 @@
                 document.getElementById('txPendingInfo').style.display = 'block';
                 document.getElementById('txUserRow').style.display = 'block';
                 document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
+                togglePriceInput(); // Panggil ini saat buka modal baru
                 txModal.show();
             }
         }
@@ -439,6 +457,7 @@
             txUnitInput.value = '';
             txStockInput.value = '';
             txStockWarning.style.display = 'none';
+            txPriceInput.disabled = false;
         });
     </script>
 @endpush

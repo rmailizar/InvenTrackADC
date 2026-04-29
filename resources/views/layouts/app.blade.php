@@ -29,6 +29,20 @@
 </head>
 
 <body>
+    <!-- Background Glow SVG Line -->
+    <div class="background-glow-container">
+        <svg viewBox="0 0 1440 400" preserveAspectRatio="none">
+            <path class="glowing-line" d="M0 300 C 300 250, 400 350, 700 200 C 1000 50, 1200 150, 1440 50"
+                  stroke="url(#line_gradient_app)" stroke-width="4" fill="none" />
+            <defs>
+                <linearGradient id="line_gradient_app">
+                    <stop offset="0%" stop-color="#a855f7" />
+                    <stop offset="100%" stop-color="#10b981" />
+                </linearGradient>
+            </defs>
+        </svg>
+    </div>
+
     <!-- Sidebar Overlay (Mobile) -->
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
@@ -80,7 +94,7 @@
                 </a>
             @endif
 
-            {{-- Rekap Stok: Admin & Manager only --}}
+            {{-- Rekap Stok: All user --}}
             @if(auth()->user()->isAdmin() || auth()->user()->isManager() || auth()->user()->isStaff())
                 <a href="{{ route('stock.index') }}"
                     class="sidebar-link {{ request()->routeIs('stock.*') ? 'active' : '' }}">

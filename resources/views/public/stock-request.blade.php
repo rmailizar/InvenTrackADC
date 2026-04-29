@@ -18,88 +18,55 @@
         })();
     </script>
 
-    <style>
-        .public-page { min-height: 100vh; background: var(--body-bg); }
-        .public-header {
-            background: linear-gradient(135deg, #064e3b 0%, #091413 100%);
-            padding: 32px 0;
-            color: white;
-            position: sticky; top: 0; z-index: 100;
-        }
-        .public-header .brand { display: flex; align-items: center; gap: 14px; }
-        .public-header .brand-icon {
-            width: 46px; height: 46px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            border-radius: var(--radius); display: flex; align-items: center; justify-content: center;
-            font-size: 22px; color: white; box-shadow: 0 4px 15px rgba(16,185,129,0.35);
-        }
-        .public-header .brand-name { font-size: 22px; font-weight: 700; }
-        .public-header .brand-sub { font-size: 12px; opacity: 0.6; letter-spacing: 0.5px; }
-        .public-body { padding: 28px 0 60px; }
-        .section-title {
-            font-size: 18px; font-weight: 700; color: var(--text-primary);
-            margin-bottom: 16px; display: flex; align-items: center; gap: 10px;
-        }
-        .section-title i { color: var(--primary); font-size: 20px; }
-        .stock-status-badge {
-            display: inline-flex; align-items: center; gap: 4px;
-            padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
-        }
-        .stock-ok { background: var(--success-bg); color: var(--success); }
-        .stock-low { background: var(--warning-bg); color: var(--warning-dark); }
-        .stock-empty { background: var(--danger-bg); color: var(--danger); }
-        .request-form-card {
-            border: 2px solid var(--primary);
-            border-radius: var(--radius-lg);
-            overflow: hidden;
-        }
-        .request-form-header {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            padding: 20px 24px; color: white;
-        }
-        .request-form-header h5 { margin: 0; font-weight: 700; font-size: 16px; }
-        .request-form-header p { margin: 4px 0 0; font-size: 12px; opacity: 0.8; }
-        .request-form-body { padding: 24px; background: var(--card-bg); }
-
-        /* Toast custom for public page */
-        .public-toast {
-            position: fixed; top: 20px; right: 20px; z-index: 1060;
-            padding: 14px 22px; border-radius: var(--radius);
-            font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 10px;
-            animation: slideInRight 0.4s ease; box-shadow: var(--shadow-lg);
-            max-width: 420px;
-        }
-        .public-toast.success { background: var(--success); color: white; }
-        .public-toast.error { background: var(--danger); color: white; }
-    </style>
 </head>
 <body>
+    <!-- Hero Background -->
+    <div class="background-glow-container">
+        <svg viewBox="0 0 1440 400" preserveAspectRatio="none" style="width:100%; height:100vh; opacity:0.5;">
+            <path class="glowing-line" d="M0 300 C 300 250, 400 350, 700 200 C 1000 50, 1200 150, 1440 50" 
+                  stroke="url(#line_gradient)" stroke-width="4" fill="none" />
+            <defs>
+                <linearGradient id="line_gradient">
+                    <stop offset="0%" stop-color="#a855f7" />
+                    <stop offset="100%" stop-color="#10b981" />
+                </linearGradient>
+            </defs>
+        </svg>
+    </div>
+    
     <div class="public-page">
         {{-- Header --}}
         <header class="public-header">
-            <div class="container">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div class="brand">
-                        <div class="brand-icon"><i class="bi bi-box-seam-fill"></i></div>
-                        <div>
-                            <div class="brand-name">InvenTrack</div>
-                            <div class="brand-sub">DAFTAR BARANG & PERMINTAAN BARANG</div>
-                        </div>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <button class="btn-theme-toggle" onclick="toggleTheme()" title="Ganti tema">
-                            <i class="bi bi-sun-fill icon-sun"></i>
-                            <i class="bi bi-moon-fill icon-moon"></i>
-                        </button>
-                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#loginModal" style="border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;">
-                            <i class="bi bi-box-arrow-in-right me-1"></i> Login
-                        </button>
+        <div class="container">
+            <div class="header-wrapper d-flex align-items-center justify-content-between">
+                
+                <div class="d-none d-md-block">
+                    <div class="company-logo">
+                        <img src="{{ asset('images/logo-perusahaan.png') }}" alt="Logo" class="logo-img">
                     </div>
                 </div>
+
+                <div class="brand text-center">
+                    <div class="brand-icon mx-auto"><i class="bi bi-box-seam-fill"></i></div>
+                    <div>
+                        <div class="brand-name">InvenTrack</div>
+                        <div class="brand-sub">DAFTAR BARANG & PERMINTAAN BARANG</div>
+                    </div>
+                </div>
+
+                <div class="header-actions d-flex align-items-center gap-2">
+                    <button class="btn-theme-toggle" onclick="toggleTheme()" title="Ganti tema">
+                        <i class="bi bi-sun-fill icon-sun"></i>
+                        <i class="bi bi-moon-fill icon-moon"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#loginModal" style="border-radius:8px;padding:8px 16px;font-size:12px;font-weight:600;">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Login
+                    </button>
+                </div>
+
             </div>
-        </header>
-
-
+        </div>
+    </header>
 
         {{-- Body --}}
         <div class="public-body">
@@ -295,19 +262,24 @@
                 </div>
             </div>
         </div>
+    </div> {{-- End .public-page --}}
 
-        {{-- Login Modal --}}
+    {{-- Login Modal (placed outside .public-page to avoid z-index stacking context issues) --}}
         <div class="modal fade inventrack-modal" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" style="max-width:440px;">
                 <div class="modal-content" style="position:relative;">
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="position: absolute; top: 15px; right: 15px; z-index: 1051;"></button>
+
                     <div class="modal-loading-overlay" id="loginLoading">
                         <div class="modal-spinner"></div>
                     </div>
+                    
                     <div class="login-modal-brand">
                         <div class="brand-icon"><i class="bi bi-box-seam-fill"></i></div>
                         <h5>InvenTrack</h5>
                         <p>Sistem Manajemen Inventory</p>
                     </div>
+
                     <div class="modal-body" style="max-height:none;">
                         <div class="modal-error-alert" id="loginError">
                             <i class="bi bi-exclamation-circle me-1"></i>
@@ -335,20 +307,10 @@
                         </form>
                     </div>
                     <div class="modal-footer justify-content-center" style="border-top:none;background:transparent;padding-top:0;">
-                        <span style="font-size:12px;color:var(--text-muted);">&copy; {{ date('Y') }} InvenTrack. All rights reserved.</span>
+                        <span style="font-size:12px;color:var(--text-muted);">&copy; {{ date('Y') }} Port Managemen Unit Suralaya</span>
                     </div>
                 </div>
             </div>
-        </div>
-
-        {{-- Footer --}}
-        <footer style="background:var(--card-bg);border-top:1px solid var(--border-color);padding:20px 0;text-align:center;">
-            <div class="container">
-                <p style="margin:0;font-size:12px;color:var(--text-muted);">
-                    &copy; {{ date('Y') }} InvenTrack. Sistem Manajemen Inventory.
-                </p>
-            </div>
-        </footer>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

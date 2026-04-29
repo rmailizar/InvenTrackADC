@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Dashboard')
-@section('subtitle', 'Ringkasan data inventory Anda')
+@section('subtitle', 'Ringkasan data inventory')
 
 @section('content')
     <div class="animate-fade-in">
@@ -277,6 +277,11 @@
                     </div>
                     <div class="card-body" style="max-height:350px; overflow-y:auto;">
                         @forelse($lowStockItems as $item)
+                                @php
+                                    $totalMasuk = $item->transactions()->masuk()->approved()->sum('quantity');
+                                    $totalKeluar = $item->transactions()->keluar()->approved()->sum('quantity');
+                                    $currentStock = $totalMasuk - $totalKeluar;
+                                @endphp
                             <div class="low-stock-item">
                                 <div class="item-info">
                                     <h6>{{ $item->name }}</h6>
@@ -284,9 +289,9 @@
                                 </div>
 
                                 @if($item->current_stock <= 0)
-                                    <div class="text-danger fw-600">Habis</div>
+                                    <div class="text-danger fw-600">{{ number_format($currentStock) }}</div>
                                 @else
-                                    <div class="text-warning fw-600" style="color: var(--warning-dark);">Rendah</div>
+                                    <div class="text-warning fw-600" style="color: var(--warning-dark);">{{ number_format($currentStock) }}</div>
                                 @endif
                             </div>
                         @empty

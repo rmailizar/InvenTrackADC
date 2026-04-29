@@ -49,6 +49,12 @@
     --table-hover-bg: rgba(16, 185, 129, 0.03);
     --scrollbar-thumb: #c5c8ce;
     --scrollbar-hover: #a0a4ab;
+    --bg-gradient-1: #e8e0f0;
+    --bg-gradient-2: #dde8f0;
+    --accent-purple: rgba(18, 148, 66, 0.25);
+    --accent-indigo: rgba(99, 102, 241, 0.18);
+    --accent-emerald: rgba(45, 212, 191, 0.25);
+    --accent-blue: rgba(59, 130, 246, 0.20);
 }
 
 /* ---------- Dark Mode Variables ---------- */
@@ -75,6 +81,12 @@
     --warning-bg: rgba(245, 158, 11, 0.12);
     --danger-bg: rgba(239, 68, 68, 0.12);
     --info-bg: rgba(6, 182, 212, 0.12);
+    --bg-gradient-1: #0f0a1a;
+    --bg-gradient-2: #0a1225;
+    --accent-purple: rgba(18, 148, 66, 0.25);
+    --accent-indigo: rgba(79, 70, 229, 0.25);
+    --accent-emerald: rgba(16, 185, 129, 0.28);
+    --accent-blue: rgba(59, 130, 246, 0.22);
 }
 
 /* ---------- Reset & Base ---------- */
@@ -85,13 +97,29 @@
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--body-bg);
-    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
     font-size: 14px;
     line-height: 1.6;
+
+    /* Vibrant Mesh Gradient — magenta → indigo → teal */
+    background-color: var(--bg-gradient-1);
+    background-image:
+        /* Emerald Utama (Pusat pendaran) */
+        radial-gradient(ellipse 80% 70% at 50% 50%, rgba(16, 185, 129, 0.15), transparent),
+
+        /* Emerald Kanan Atas (Lebih kuat) */
+        radial-gradient(ellipse 100% 60% at 100% 100%, var(--accent-emerald), transparent),
+
+        /* Emerald Kiri Bawah (Tambahan agar dominan) */
+        radial-gradient(ellipse 60% 50% at 0% 100%, rgba(16, 185, 129, 0.1), transparent),
+
+        linear-gradient(160deg, var(--bg-gradient-1) 0%, var(--bg-gradient-2) 100%) !important;
+
+    background-attachment: fixed;
+    min-height: 100vh;
+    color: var(--text-primary);
+    transition: background 0.5s ease, color 0.4s ease;
     overflow-x: hidden;
-    transition: background-color 0.4s ease, color 0.4s ease;
 }
 
 a {
@@ -129,7 +157,7 @@ a:hover {
     left: 0;
     width: var(--sidebar-width);
     height: 100vh;
-    background: #091413;
+    background: linear-gradient(135deg, #064e3b 0%, #091413 100%);
     z-index: 1040;
     transition: var(--transition);
     display: flex;
@@ -336,6 +364,186 @@ a:hover {
 
 .main-content.sidebar-collapsed {
     margin-left: 72px;
+}
+
+.public-page {
+    min-height: 100vh;
+    background: transparent !important;
+    position: relative;
+    z-index: 2;
+}
+
+.public-header {
+    background: linear-gradient(135deg, #064e3b 0%, #091413 100%);
+    padding: 20px 0;
+    /* Dikurangi sedikit agar tidak terlalu tinggi saat di tengah */
+    color: white;
+
+    top: 0;
+    z-index: 20;
+}
+
+/* Wrapper Utama */
+.header-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+/* Sisi Kiri & Kanan dibuat seimbang agar tengah benar-benar center */
+.company-logo,
+.header-actions {
+    flex: 1;
+}
+
+.company-logo img {
+    filter: brightness(0) invert(1);
+    height: 60px;
+    width: auto;
+}
+
+.header-actions {
+    justify-content: flex-end;
+    display: flex;
+}
+
+/* Sisi Tengah (Brand) */
+.public-header .brand {
+    flex: 2;
+    /* Memberikan ruang lebih besar untuk judul */
+    display: flex;
+    flex-direction: column;
+    /* Mengatur icon dan teks jadi vertikal */
+    align-items: center;
+    gap: 8px;
+}
+
+.public-header .brand-icon {
+    width: 40px;
+    /* Ukuran disesuaikan */
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.35);
+}
+
+.public-header .brand-name {
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.public-header .brand-sub {
+    font-size: 11px;
+    opacity: 0.7;
+    letter-spacing: 1px;
+    margin-top: 2px;
+}
+
+.public-body {
+    padding: 28px 0 60px;
+}
+
+
+.section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.section-title i {
+    color: var(--primary);
+    font-size: 20px;
+}
+
+.stock-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.stock-ok {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.stock-low {
+    background: var(--warning-bg);
+    color: var(--warning-dark);
+}
+
+.stock-empty {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.request-form-card {
+    border: 2px solid var(--primary);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.request-form-header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    padding: 20px 24px;
+    color: white;
+}
+
+.request-form-header h5 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.request-form-header p {
+    margin: 4px 0 0;
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.request-form-body {
+    padding: 24px;
+    background: var(--card-bg);
+}
+
+/* Toast custom for public page */
+.public-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1060;
+    padding: 14px 22px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideInRight 0.4s ease;
+    box-shadow: var(--shadow-lg);
+    max-width: 420px;
+}
+
+.public-toast.success {
+    background: var(--success);
+    color: white;
+}
+
+.public-toast.error {
+    background: var(--danger);
+    color: white;
 }
 
 /* ---------- Topbar ---------- */
@@ -1195,7 +1403,7 @@ a:hover {
     max-width: 440px;
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
     position: relative;
-    z-index: 1;
+    z-index: 10;
     animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -1658,10 +1866,14 @@ a:hover {
 
 /* Dark mode fix: Bootstrap body bg */
 [data-theme="dark"] {
-    --bs-body-bg: #0f172a;
+    /* Ubah ke transparent agar background: radial-gradient di body bisa muncul */
+    --bs-body-bg: transparent;
     --bs-body-color: #e2e8f0;
     --bs-border-color: #334155;
     --bs-table-bg: transparent;
+
+    /* Fallback warna dasar agar saat loading tidak putih silau */
+    background-color: #020617;
 }
 
 /* Dark mode: inline style overrides for dashboard */
@@ -1955,6 +2167,19 @@ a:hover {
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
+/* Disabled input custom style */
+.form-control:disabled,
+.form-select:disabled {
+    background-color: #2b2f36;
+    /* abu gelap */
+    color: #cbd5e1;
+    /* teks tetap terbaca */
+    border-color: #3a3f47;
+    opacity: 1;
+    /* penting: hilangkan efek pudar default */
+    cursor: not-allowed;
+}
+
 .inventrack-modal .invalid-feedback {
     font-size: 12px;
     color: var(--danger);
@@ -2143,40 +2368,97 @@ a:hover {
     color: #94a3b8 !important;
 }
 
-/* SweetAlert2 Toast */
+/* SweetAlert2 Toast Modern & Adaptive */
 .swal2-popup.swal2-toast {
-    border-radius: var(--radius, 12px) !important;
-    box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1)) !important;
-    padding: 1rem !important;
-    /* Menggunakan padding yang lebih lega */
+    background-color: #1e293b !important;
+    /* Sesuaikan dengan tema dark kamu */
+    color: #f8fafc !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
+    padding: 0.75rem 1rem !important;
+    /* Padding lebih proporsional */
     display: flex !important;
     align-items: center !important;
-    /* Menjaga semua elemen di tengah secara vertikal */
-    gap: 10px !important;
+    width: auto !important;
+    /* Biar lebar menyesuaikan konten */
+    min-width: 250px !important;
+    /* Batas minimal agar tidak terlalu kecil */
+    max-width: 350px !important;
+    /* Batas maksimal agar tidak terlalu lebar */
+}
+
+/* Mengatur container ikon agar tidak terpengaruh tinggi teks */
+.swal2-popup.swal2-toast .swal2-icon {
+    margin: 0 !important;
+    min-width: 28px !important;
+    /* Ukuran ikon tetap */
+    height: 28px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .swal2-popup.swal2-toast .swal2-title {
     font-size: 0.875rem !important;
-    /* Sekitar 14px agar lebih terbaca */
     font-weight: 500 !important;
-    margin: 0 0 0 8px !important;
-    /* Memberi jarak antara ikon dan teks */
+    margin: 0 0 0 12px !important;
+    /* Jarak tetap dari ikon */
     padding: 0 !important;
-    line-height: 1.4 !important;
-    color: inherit;
+    line-height: 1.2 !important;
+    text-align: left !important;
+    flex: 1 !important;
+    /* Memaksa teks mengisi ruang yang tersisa secara merata */
+    display: flex !important;
+    align-items: center !important;
 }
 
-/* SweetAlert2 Timer Progress Bar */
+/* Hilangkan margin bawaan yang bikin gap aneh */
+.swal2-popup.swal2-toast .swal2-html-container {
+    margin: 0 0 0 12px !important;
+    font-size: 0.8rem !important;
+    opacity: 0.8;
+}
+
+/* Progress bar tipis di bawah */
 .swal2-timer-progress-bar {
-    background: var(--primary) !important;
+    background: var(--primary, #10b981) !important;
     height: 3px !important;
-    /* Membuat bar sedikit lebih halus */
 }
 
-/* SweetAlert2 Actions alignment */
-.swal2-actions {
-    gap: 8px !important;
-    margin-top: 20px !important;
-    justify-content: flex-end !important;
-    /* Merapikan posisi tombol ke kanan */
+.background-glow-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    /* Di antara Body (0) dan Public Page (2) */
+    pointer-events: none;
+}
+
+.background-glow-container svg {
+    width: 100%;
+    height: 100%;
+    opacity: 0.4;
+    /* Atur kejelasan agar tidak terlalu mencolok */
+}
+
+/* KUNCI UTAMA: Konten harus lebih tinggi dari garis SVG */
+.public-page {
+    position: relative;
+    z-index: 2;
+}
+
+/* Tambahkan Glow pada garis agar terlihat nyata di atas gradient */
+.glowing-line {
+    filter: drop-shadow(0 0 10px var(--primary));
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    animation: drawLine 8s ease-in-out infinite alternate;
+}
+
+@keyframes drawLine {
+    to {
+        stroke-dashoffset: 0;
+    }
 }

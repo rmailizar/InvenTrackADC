@@ -66,8 +66,8 @@ Route::middleware('auth')->group(function () {
     // Pending users list for manager
     Route::get('/pending-users', [UserController::class, 'index'])->name('pendingUsers.index')->middleware('userAkses:manajer');
 
-    // Stock recap - admin & manager
-    Route::get('/stock', [StockController::class, 'index'])->name('stock.index')->middleware('userAkses:admin,manajer');
+    // Stock recap - admin, manager & staff
+    Route::get('/stock', [StockController::class, 'index'])->name('stock.index')->middleware('userAkses:admin,manajer,staf');
 
     // Stock requests - admin & staff
     Route::get('/stock-requests', [StockRequestController::class, 'adminIndex'])->name('stock-requests.index')->middleware('userAkses:admin,staf');

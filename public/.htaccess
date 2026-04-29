@@ -5,7 +5,7 @@
 
     RewriteEngine On
 
-    RewriteBase /inventory/
+    # RewriteBase /inventory/
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
