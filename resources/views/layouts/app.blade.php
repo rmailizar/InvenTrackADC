@@ -242,18 +242,19 @@
         </div>
     </main>
 
-    <footer class="main-footer">
-        <div class="footer-content">
-            <div class="copyright">
-                &copy; 2026 <span class="brand-name">Next Logistic</span>. All rights reserved.
+
+        <footer class="main-footer">
+            <div class="footer-content">
+                <div class="copyright">
+                    &copy; 2026 <span class="brand-name">Next Logistic</span>. All rights reserved.
+                </div>
+                <div class="footer-meta">
+                    <span>Port Management Unit Suralaya</span>
+                </div>
             </div>
-            <div class="footer-meta">
-                <span>Port Management Unit Suralaya</span>
-                <span class="separator">|</span>
-                <span>v1.0.0</span>
-            </div>
-        </div>
-    </footer>
+        </footer>
+
+
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

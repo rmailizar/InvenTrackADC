@@ -282,6 +282,19 @@
         </div>
     </div> {{-- End .public-page --}}
 
+    <!-- Public footer -->
+    <footer class="public-footer">
+        <div class="footer-content">
+            <div class="copyright">
+                &copy; 2026 <span class="brand-name">Next Logistic</span>. All rights reserved.
+            </div>
+            <div class="footer-meta">
+                <span>Port Management Unit Suralaya</span>
+            </div>
+        </div>
+    </footer>
+    <!-- End Public footer -->
+
     {{-- Login Modal (placed outside .public-page to avoid z-index stacking context issues) --}}
         <div class="modal fade inventrack-modal" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" style="max-width:440px;">
@@ -422,63 +435,89 @@
         @endif
 
         // Login Modal AJAX
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const form = this;
-            const errorDiv = document.getElementById('loginError');
-            const errorMsg = document.getElementById('loginErrorMsg');
-            const loading = document.getElementById('loginLoading');
-            const submitBtn = document.getElementById('loginSubmitBtn');
+        document.addEventListener('DOMContentLoaded', function () {
+    const loginForm = document.getElementById('loginForm');
+    const loginModal = document.getElementById('loginModal');
+    const errorDiv = document.getElementById('loginError');
+    const errorMsg = document.getElementById('loginErrorMsg');
+    const loading = document.getElementById('loginLoading');
+    const submitBtn = document.getElementById('loginSubmitBtn');
 
-            // Clear previous errors
-            errorDiv.style.display = 'none';
-            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+    if (!loginForm) return;
 
-            // Show loading
-            loading.classList.add('show');
-            submitBtn.disabled = true;
+    loginForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
 
-            const formData = new FormData(form);
+        errorDiv.style.display = 'none';
+        errorMsg.innerHTML = '';
 
-            fetch('{{ url("/login") }}', {
+        loginForm.querySelectorAll('.is-invalid').forEach(el => {
+            el.classList.remove('is-invalid');
+        });
+
+        loading.classList.add('show');
+        submitBtn.disabled = true;
+
+        try {
+            const response = await fetch('{{ url("/login") }}', {
                 method: 'POST',
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: formData
-            })
-            .then(res => res.json().then(data => ({ status: res.status, data })))
-            .then(({ status, data }) => {
-                loading.classList.remove('show');
-                submitBtn.disabled = false;
-
-                if (data.success) {
-                    // Success — redirect
-                    window.location.href = data.redirect || '/dashboard';
-                } else {
-                    // Show errors
-                    let messages = [];
-                    if (data.errors) {
-                        Object.keys(data.errors).forEach(key => {
-                            messages.push(data.errors[key][0]);
-                            const input = form.querySelector(`[name="${key}"]`);
-                            if (input) input.classList.add('is-invalid');
-                        });
-                    }
-                    if (data.message) messages.push(data.message);
-                    errorMsg.innerHTML = messages.join('<br>');
-                    errorDiv.style.display = 'block';
-                }
-            })
-            .catch(err => {
-                loading.classList.remove('show');
-                submitBtn.disabled = false;
-                errorMsg.textContent = 'Terjadi kesalahan. Silakan coba lagi.';
-                errorDiv.style.display = 'block';
+                body: new FormData(loginForm)
             });
+
+            const data = await response.json();
+
+            loading.classList.remove('show');
+            submitBtn.disabled = false;
+
+            if (response.ok && data.success) {
+                window.location.href = data.redirect || '/dashboard';
+                return;
+            }
+
+            let messages = [];
+
+            if (data.errors) {
+                Object.keys(data.errors).forEach(key => {
+                    messages.push(data.errors[key][0]);
+
+                    const input = loginForm.querySelector(`[name="${key}"]`);
+                    if (input) input.classList.add('is-invalid');
+                });
+            }
+
+            if (data.message) {
+                messages.push(data.message);
+            }
+
+            errorMsg.innerHTML = messages.length
+                ? messages.join('<br>')
+                : 'Email atau password salah.';
+
+            errorDiv.style.display = 'block';
+
+        } catch (error) {
+            loading.classList.remove('show');
+            submitBtn.disabled = false;
+
+            errorMsg.textContent = 'Terjadi kesalahan. Silakan coba lagi.';
+            errorDiv.style.display = 'block';
+        }
+    });
+
+    if (loginModal) {
+        loginModal.addEventListener('hidden.bs.modal', function () {
+            loginForm.reset();
+            errorDiv.style.display = 'none';
+            errorMsg.innerHTML = '';
+            loginForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
         });
+    }
+});
 
         // Reset login form when modal closes
         document.getElementById('loginModal').addEventListener('hidden.bs.modal', function() {
