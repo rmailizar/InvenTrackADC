@@ -33,7 +33,7 @@
     <div class="background-glow-container">
         <svg viewBox="0 0 1440 400" preserveAspectRatio="none">
             <path class="glowing-line" d="M0 300 C 300 250, 400 350, 700 200 C 1000 50, 1200 150, 1440 50"
-                  stroke="url(#line_gradient_app)" stroke-width="4" fill="none" />
+                stroke="url(#line_gradient_app)" stroke-width="4" fill="none" />
             <defs>
                 <linearGradient id="line_gradient_app">
                     <stop offset="0%" stop-color="#a855f7" />
@@ -49,12 +49,15 @@
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
-            <div class="brand-icon">
-                <i class="bi bi-box-seam-fill"></i>
-            </div>
-            <div>
-                <div class="brand-text">InvenTrack</div>
-                <div class="brand-sub">Inventory System</div>
+            <div class="brand-wrapper">
+                <div class="brand-icon">
+                    <img src="{{ asset('images/logo-web.png') }}" alt="InvenTrack Logo" class="sidebar-logo-img">
+                </div>
+                <div class="logo-container">
+                    <div class="next-logistic">
+                        NEXT LOGISTIC
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -108,7 +111,7 @@
                 <a href="{{ route('stock-requests.index') }}"
                     class="sidebar-link {{ request()->routeIs('stock-requests.*') ? 'active' : '' }}">
                     <i class="bi bi-inbox-fill"></i>
-                    <span>Request Stok</span>
+                    <span>Permintaan Barang</span>
                     @php $pendingReqCount = \App\Models\StockRequest::pending()->count(); @endphp
                     @if($pendingReqCount > 0)
                         <span class="badge bg-warning text-dark">{{ $pendingReqCount }}</span>
@@ -238,6 +241,19 @@
             @yield('content')
         </div>
     </main>
+
+    <footer class="main-footer">
+        <div class="footer-content">
+            <div class="copyright">
+                &copy; 2026 <span class="brand-name">Next Logistic</span>. All rights reserved.
+            </div>
+            <div class="footer-meta">
+                <span>Port Management Unit Suralaya</span>
+                <span class="separator">|</span>
+                <span>v1.0.0</span>
+            </div>
+        </div>
+    </footer>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

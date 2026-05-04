@@ -324,7 +324,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <span class="fw-700 text-danger-custom">{{ number_format($tx->total) }}</span>
+                                <span class="fw-700" style="color: #CA5995;">{{ number_format($tx->total) }}</span>
                             </div>
                         @empty
                             <div class="empty-state" style="padding:30px 10px;">

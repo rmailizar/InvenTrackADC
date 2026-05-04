@@ -10,6 +10,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <link href="{{ asset('css/custom.css') }}?v={{ filemtime(public_path('css/custom.css')) }}" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 
     <script>
         (function() {
@@ -47,10 +48,8 @@
                 </div>
 
                 <div class="brand text-center">
-                    <div class="brand-icon mx-auto"><i class="bi bi-box-seam-fill"></i></div>
-                    <div>
-                        <div class="brand-name">InvenTrack</div>
-                        <div class="brand-sub">DAFTAR BARANG & PERMINTAAN BARANG</div>
+                    <div class="brand-logo-wrapper mx-auto">
+                        <img src="{{ asset('images/logo-web.png') }}" alt="InvenTrack Logo" class="app-logo">
                     </div>
                 </div>
 
@@ -200,32 +199,51 @@
                                         @enderror
                                     </div>
 
+                                    @php
+                                        $lineRows = old('lines', [['item_id' => '', 'quantity' => 1]]);
+                                    @endphp
                                     <div class="mb-3">
-                                        <label class="form-label">Pilih Barang <span class="text-danger">*</span></label>
-                                        <select name="item_id" class="form-select" required id="itemSelect">
-                                            <option value="">-- Pilih Barang --</option>
-                                            @foreach($allItems as $it)
-                                                <option value="{{ $it->id }}" {{ old('item_id') == $it->id ? 'selected' : '' }}
-                                                    data-unit="{{ $it->unit }}" data-stock="{{ $it->current_stock }}">
-                                                    {{ $it->name }} ({{ $it->category }})
-                                                </option>
+                                        <label class="form-label d-flex justify-content-between align-items-center">
+                                            <span>Daftar Barang <span class="text-danger">*</span></span>
+                                        </label>
+                                        <p class="small text-muted mb-2" style="font-size:12px;">Pilih satu atau lebih barang beserta jumlahnya.</p>
+                                        <div id="requestLines" class="d-flex flex-column gap-2">
+                                            @foreach($lineRows as $i => $line)
+                                                <div class="request-line-row border rounded-3 p-2" style="border-color:var(--border-color, #dee2e6) !important;background:var(--card-bg-subtle, transparent);">
+                                                    <div class="row g-2 align-items-end">
+                                                        <div class="col-12 col-md-7">
+                                                            <label class="form-label small mb-1 text-muted">Barang</label>
+                                                            <select name="lines[{{ $i }}][item_id]" class="form-select form-select-sm" data-field="item" required>
+                                                                <option value="">-- Pilih barang --</option>
+                                                                @foreach($allItems as $it)
+                                                                    <option value="{{ $it->id }}" @selected((string) old('lines.'.$i.'.item_id', $line['item_id'] ?? '') === (string) $it->id)>
+                                                                        {{ $it->name }} ({{ $it->category }})
+                                                                    </option>
+                                                                @endforeach
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-6 col-md-3">
+                                                            <label class="form-label small mb-1 text-muted">Jumlah</label>
+                                                            <input type="number" name="lines[{{ $i }}][quantity]" data-field="qty" class="form-control form-control-sm" min="1" placeholder="Qty" value="{{ old('lines.'.$i.'.quantity', $line['quantity'] ?? 1) }}" required>
+                                                        </div>
+                                                        <div class="col-6 col-md-2 text-md-end pb-md-1">
+                                                            <button type="button" class="btn btn-outline-danger btn-sm w-100 btn-remove-line" title="Hapus baris">
+                                                                <i class="bi bi-trash"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             @endforeach
-                                        </select>
-                                        @error('item_id')<div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>@enderror
-
-                                        {{-- Item info display --}}
-                                        <div class="d-none mt-2 p-2 rounded-3" id="itemInfo" style="background:var(--primary-bg);font-size:12px;">
-                                            <div class="d-flex justify-content-between">
-                                                <span style="color:var(--text-secondary);">Satuan: <strong id="itemUnit" style="color:var(--text-primary);">-</strong></span>
-                                                <span style="color:var(--text-secondary);">Stok saat ini: <strong id="itemStock" style="color:var(--primary);">-</strong></span>
-                                            </div>
                                         </div>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <label class="form-label">Jumlah Request <span class="text-danger">*</span></label>
-                                        <input type="number" name="quantity" class="form-control" placeholder="Masukkan jumlah" min="1" value="{{ old('quantity', 1) }}" required>
-                                        @error('quantity')<div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>@enderror
+                                        @error('lines')<div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>@enderror
+                                        @foreach ($errors->keys() as $key)
+                                            @if (str_starts_with($key, 'lines.') && $errors->first($key))
+                                                <div class="text-danger mt-1" style="font-size:12px;">{{ $errors->first($key) }}</div>
+                                            @endif
+                                        @endforeach
+                                        <button type="button" class="btn btn-outline-primary btn-sm mt-2 w-100" id="addLineBtn">
+                                            <i class="bi bi-plus-lg"></i> Tambah barang
+                                        </button>
                                     </div>
 
                                     <div class="mb-4">
@@ -275,9 +293,14 @@
                     </div>
                     
                     <div class="login-modal-brand">
-                        <div class="brand-icon"><i class="bi bi-box-seam-fill"></i></div>
-                        <h5>InvenTrack</h5>
-                        <p>Sistem Manajemen Inventory</p>
+                        <div class="brand-icon">
+                            <img src="{{ asset('images/logo-web.png') }}" alt="InvenTrack Logo" class="login-modal-logo-img">
+                        </div>
+                        <div class="logo-container">
+                            <div class="next-logistic">
+                                NEXT LOGISTIC
+                            </div>
+                        </div>
                     </div>
 
                     <div class="modal-body" style="max-height:none;">
@@ -324,18 +347,45 @@
             localStorage.setItem('inventrack-theme', newTheme);
         }
 
-        // Item select → show info
-        document.getElementById('itemSelect').addEventListener('change', function() {
-            const selected = this.options[this.selectedIndex];
-            const info = document.getElementById('itemInfo');
-            if (this.value) {
-                document.getElementById('itemUnit').textContent = selected.dataset.unit;
-                document.getElementById('itemStock').textContent = selected.dataset.stock;
-                info.classList.remove('d-none');
-            } else {
-                info.classList.add('d-none');
+        // Multi-line barang: tambah / hapus baris
+        (function() {
+            const container = document.getElementById('requestLines');
+            const addBtn = document.getElementById('addLineBtn');
+            if (!container || !addBtn) return;
+
+            function reindexLineNames() {
+                container.querySelectorAll('.request-line-row').forEach((row, idx) => {
+                    const sel = row.querySelector('[data-field="item"]');
+                    const qty = row.querySelector('[data-field="qty"]');
+                    if (sel) sel.name = 'lines[' + idx + '][item_id]';
+                    if (qty) qty.name = 'lines[' + idx + '][quantity]';
+                });
             }
-        });
+
+            function bindRemove(btn) {
+                btn.addEventListener('click', function() {
+                    if (container.querySelectorAll('.request-line-row').length <= 1) return;
+                    btn.closest('.request-line-row').remove();
+                    reindexLineNames();
+                });
+            }
+
+            container.querySelectorAll('.btn-remove-line').forEach(bindRemove);
+
+            addBtn.addEventListener('click', function() {
+                const first = container.querySelector('.request-line-row');
+                if (!first) return;
+                const row = first.cloneNode(true);
+                const sel = row.querySelector('[data-field="item"]');
+                const qty = row.querySelector('[data-field="qty"]');
+                if (sel) sel.value = '';
+                if (qty) qty.value = 1;
+                container.appendChild(row);
+                const rm = row.querySelector('.btn-remove-line');
+                if (rm) bindRemove(rm);
+                reindexLineNames();
+            });
+        })();
 
         // SweetAlert2 Toast
         const Toast = Swal.mixin({

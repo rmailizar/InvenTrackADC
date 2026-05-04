@@ -14,8 +14,6 @@ class StockRequest extends Model
         'nip',
         'jabatan',
         'bidang',
-        'item_id',
-        'quantity',
         'notes',
         'status',
         'processed_by',
@@ -32,9 +30,9 @@ class StockRequest extends Model
         ];
     }
 
-    public function item()
+    public function lines()
     {
-        return $this->belongsTo(Item::class);
+        return $this->hasMany(StockRequestItem::class)->orderBy('id');
     }
 
     public function processor()

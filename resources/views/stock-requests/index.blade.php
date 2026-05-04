@@ -1,9 +1,28 @@
 @extends('layouts.app')
 
-@section('title', 'Request Stok')
-@section('subtitle', 'Daftar permintaan stok dari karyawan')
+@section('title', 'Permintaan Barang')
+@section('subtitle', 'Daftar permintaan barang dari karyawan')
 
 @section('content')
+    @php
+        $stockActionData = [];
+        foreach ($requests as $r) {
+            $stockActionData[$r->id] = [
+                'requester' => $r->requester_name,
+                'nip' => $r->nip,
+                'jabatan' => $r->jabatan,
+                'bidang' => $r->bidang,
+                'lines' => $r->lines->map(function ($line) {
+                    return [
+                        'name' => $line->item->name ?? '—',
+                        'category' => $line->item->category ?? '—',
+                        'quantity' => (int) $line->quantity,
+                        'unit' => $line->item->unit ?? '',
+                    ];
+                })->values()->all(),
+            ];
+        }
+    @endphp
     <div class="animate-fade-in">
         {{-- Filter Bar --}}
         <div class="filter-bar">
@@ -48,7 +67,7 @@
         <div class="card">
             <div class="card-header">
                 <span>
-                    <i class="bi bi-inbox-fill text-primary-custom me-2"></i>Daftar Request Stok
+                    <i class="bi bi-inbox-fill text-primary-custom me-2"></i>Daftar Permintaan Barang
                     @if($pendingCount > 0)
                         <span class="badge bg-warning text-dark ms-2">{{ $pendingCount }} pending</span>
                     @endif
@@ -56,7 +75,7 @@
             </div>
             <div class="card-body p-0">
                 <div class="table-container">
-                    <table class="table" id="stock-requests-table">
+                    <table class="table table-striped" id="stock-requests-table">
                         <thead>
                             <tr>
                                 <th style="width:45px;">No</th>
@@ -65,12 +84,10 @@
                                 <th>Jabatan</th>
                                 <th>Bidang</th>
                                 <th>Nama Pemohon</th>
-                                <th>Barang</th>
-                                <th>Kategori</th>
-                                <th class="text-center">Jumlah</th>
+                                <th style="min-width:120px;">Daftar barang</th>
                                 <th>Kebutuhan</th>
                                 <th>Status</th>
-                                <th class="text-center" style="width:120px;">Aksi</th>
+                                <th class="text-center" style="width:72px;">Aksi</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -82,10 +99,12 @@
                                     <td class="fw-600">{{ $req->jabatan }}</td>
                                     <td class="fw-600">{{ $req->bidang }}</td>
                                     <td class="fw-600">{{ $req->requester_name }}</td>
-                                    <td class="fw-600">{{ $req->item->name ?? '-' }}</td>
-                                    <td>{{ $req->item->category ?? '-' }}</td>
-                                    <td class="text-center fw-700" style="color:var(--primary);">{{ $req->quantity }}
-                                        {{ $req->item->unit ?? '' }}
+                                    <td>
+                                        @if($req->lines->isEmpty())
+                                            <span style="color:var(--text-muted);font-size:13px;">—</span>
+                                        @else
+                                            <span class="fw-600" style="font-size:13px;">{{ $req->lines->count() }} jenis barang</span>
+                                        @endif
                                     </td>
                                     <td style="max-width:200px;">
                                         @if($req->notes)
@@ -141,43 +160,36 @@
                                     </td>
                                     <td class="text-center">
                                         @if($req->status === 'pending' && auth()->user()->isAdmin())
-                                            <div class="d-flex gap-1 justify-content-center">
+                                            <button type="button"
+                                                class="btn btn-sm btn-outline-primary btn-stock-request-modal-open"
+                                                title="Rincian barang & tindakan"
+                                                data-req-id="{{ $req->id }}"
+                                                data-scenario="admin_pending"
+                                                data-form-approve="#approveReq-{{ $req->id }}"
+                                                data-form-reject="#rejectReq-{{ $req->id }}">
+                                                <i class="bi bi-box-seam"></i>
+                                            </button>
+                                            <div class="d-none" aria-hidden="true">
                                                 <form method="POST" action="{{ route('stock-requests.approve', $req) }}"
-                                                    class="d-inline" id="approveReq-{{ $req->id }}">
-                                                    @csrf
-                                                    <button type="button" class="btn btn-sm btn-success"
-                                                        title="Approve"
-                                                        onclick="swalConfirm('Approve Request', 'Setujui request ini?', 'question', 'Ya, Approve', '#approveReq-{{ $req->id }}')">
-                                                        <i class="bi bi-check-lg"></i>
-                                                    </button>
-                                                </form>
+                                                    id="approveReq-{{ $req->id }}">@csrf</form>
                                                 <form method="POST" action="{{ route('stock-requests.reject', $req) }}"
-                                                    class="d-inline" id="rejectReq-{{ $req->id }}">
-                                                    @csrf
-                                                    <button type="button" class="btn btn-sm btn-danger" title="Reject"
-                                                        onclick="swalConfirm('Reject Request', 'Tolak request ini?', 'warning', 'Ya, Tolak', '#rejectReq-{{ $req->id }}')">
-                                                        <i class="bi bi-x-lg"></i>
-                                                    </button>
-                                                </form>
+                                                    id="rejectReq-{{ $req->id }}">@csrf</form>
                                             </div>
                                         @elseif($req->status === 'approved' && auth()->user()->isStaff())
-                                            <div class="d-flex gap-1 justify-content-center">
+                                            <button type="button"
+                                                class="btn btn-sm btn-outline-primary btn-stock-request-modal-open"
+                                                title="Rincian barang & tindakan"
+                                                data-req-id="{{ $req->id }}"
+                                                data-scenario="staff_approved"
+                                                data-form-complete="#completeReq-{{ $req->id }}"
+                                                data-form-cancel="#cancelReq-{{ $req->id }}">
+                                                <i class="bi bi-box-seam"></i>
+                                            </button>
+                                            <div class="d-none" aria-hidden="true">
                                                 <form method="POST" action="{{ route('stock-requests.complete', $req) }}"
-                                                    class="d-inline" id="completeReq-{{ $req->id }}">
-                                                    @csrf
-                                                    <button type="button" class="btn btn-sm btn-success" title="Done"
-                                                        onclick="swalConfirm('Selesaikan Request', 'Tandai request ini sebagai selesai?', 'question', 'Ya, Selesai', '#completeReq-{{ $req->id }}')">
-                                                        <i class="bi bi-check-lg"></i>
-                                                    </button>
-                                                </form>
+                                                    id="completeReq-{{ $req->id }}">@csrf</form>
                                                 <form method="POST" action="{{ route('stock-requests.cancel', $req) }}"
-                                                    class="d-inline" id="cancelReq-{{ $req->id }}">
-                                                    @csrf
-                                                    <button type="button" class="btn btn-sm btn-danger" title="Cancelled"
-                                                        onclick="swalConfirm('Batalkan Request', 'Batalkan request ini?', 'warning', 'Ya, Batalkan', '#cancelReq-{{ $req->id }}')">
-                                                        <i class="bi bi-x-lg"></i>
-                                                    </button>
-                                                </form>
+                                                    id="cancelReq-{{ $req->id }}">@csrf</form>
                                             </div>
                                         @else
                                             <span style="font-size:11px;color:var(--text-muted);">—</span>
@@ -186,10 +198,10 @@
                                 </tr>
                             @empty
                                 <tr class="no-data-row">
-                                    <td colspan="9">
+                                    <td colspan="10">
                                         <i class="bi bi-inbox"
                                             style="font-size:40px;display:block;margin-bottom:8px;opacity:0.3;"></i>
-                                        Tidak ada request stok
+                                        Tidak ada Permintaan Barang
                                     </td>
                                 </tr>
                             @endforelse
@@ -205,4 +217,176 @@
             </div>
         @endif
     </div>
+
+    {{-- Modal: rincian barang + Approve / Reject / Done / Cancel --}}
+    <div class="modal fade inventrack-modal" id="stockRequestItemsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="stockRequestItemsModalTitle">
+                        <i class="bi bi-box-seam me-2"></i><span id="stockRequestItemsModalTitleText">Rincian permintaan barang</span>
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="rounded-3 p-3 mb-3" style="background:var(--primary-bg, rgba(99,102,241,0.08));font-size:13px;">
+                        <div class="row g-2">
+                            <div class="col-sm-6"><span class="text-muted">Pemohon</span><br><strong id="stockActionModalRequester">—</strong></div>
+                            <div class="col-sm-6"><span class="text-muted">NIP</span><br><strong id="stockActionModalNip">—</strong></div>
+                            <div class="col-sm-6"><span class="text-muted">Jabatan</span><br><span id="stockActionModalJabatan">—</span></div>
+                            <div class="col-sm-6"><span class="text-muted">Bidang</span><br><span id="stockActionModalBidang">—</span></div>
+                        </div>
+                    </div>
+                    <p class="small text-muted mb-2" id="stockActionModalHint">Barang yang diminta:</p>
+                    <div class="table-responsive rounded-3 border" style="border-color:var(--border-color, #dee2e6) !important;">
+                        <table class="table table-sm mb-0 align-middle">
+                            <thead style="background:var(--table-header-bg, #f8fafc);">
+                                <tr>
+                                    <th style="width:40px;">No</th>
+                                    <th>Barang</th>
+                                    <th>Kategori</th>
+                                    <th class="text-end">Jumlah</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stockActionModalLinesBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer flex-wrap gap-2 justify-content-between align-items-center">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <div class="d-flex flex-wrap gap-2 justify-content-end" id="stockRequestModalActionGroup">
+                        <button type="button" class="btn btn-success d-none" id="stockActionModalBtnApprove">
+                            <i class="bi bi-check-lg me-1"></i>Setujui
+                        </button>
+                        <button type="button" class="btn btn-danger d-none" id="stockActionModalBtnReject">
+                            <i class="bi bi-x-lg me-1"></i>Tolak
+                        </button>
+                        <button type="button" class="btn btn-success d-none" id="stockActionModalBtnComplete">
+                            <i class="bi bi-check2-all me-1"></i>Selesai (Done)
+                        </button>
+                        <button type="button" class="btn btn-danger d-none" id="stockActionModalBtnCancel">
+                            <i class="bi bi-slash-circle me-1"></i>Batalkan
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
+
+@push('scripts')
+    <script>
+        window.__stockActionData = @json($stockActionData);
+
+        (function () {
+            const modalEl = document.getElementById('stockRequestItemsModal');
+            if (!modalEl) return;
+
+            const modal = new bootstrap.Modal(modalEl);
+            const titleTextEl = document.getElementById('stockRequestItemsModalTitleText');
+            const tbody = document.getElementById('stockActionModalLinesBody');
+            const btnApprove = document.getElementById('stockActionModalBtnApprove');
+            const btnReject = document.getElementById('stockActionModalBtnReject');
+            const btnComplete = document.getElementById('stockActionModalBtnComplete');
+            const btnCancel = document.getElementById('stockActionModalBtnCancel');
+
+            let formApproveSel = null;
+            let formRejectSel = null;
+            let formCompleteSel = null;
+            let formCancelSel = null;
+
+            function formatQty(q, unit) {
+                const n = new Intl.NumberFormat('id-ID').format(q);
+                return unit ? (n + ' ' + unit) : n;
+            }
+
+            function hideAllActionButtons() {
+                [btnApprove, btnReject, btnComplete, btnCancel].forEach(function (b) {
+                    b.classList.add('d-none');
+                });
+            }
+
+            function submitFormBySelector(sel) {
+                if (!sel) return;
+                const form = document.querySelector(sel);
+                if (form) form.submit();
+                modal.hide();
+            }
+
+            document.querySelectorAll('.btn-stock-request-modal-open').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const id = this.getAttribute('data-req-id');
+                    const scenario = this.getAttribute('data-scenario');
+                    const data = window.__stockActionData && window.__stockActionData[id];
+
+                    if (!data) return;
+
+                    formApproveSel = this.getAttribute('data-form-approve');
+                    formRejectSel = this.getAttribute('data-form-reject');
+                    formCompleteSel = this.getAttribute('data-form-complete');
+                    formCancelSel = this.getAttribute('data-form-cancel');
+
+                    document.getElementById('stockActionModalRequester').textContent = data.requester || '—';
+                    document.getElementById('stockActionModalNip').textContent = data.nip || '—';
+                    document.getElementById('stockActionModalJabatan').textContent = data.jabatan || '—';
+                    document.getElementById('stockActionModalBidang').textContent = data.bidang || '—';
+
+                    tbody.replaceChildren();
+                    (data.lines || []).forEach(function (line, idx) {
+                        const tr = document.createElement('tr');
+                        const tdNo = document.createElement('td');
+                        tdNo.textContent = String(idx + 1);
+                        const tdName = document.createElement('td');
+                        tdName.className = 'fw-600';
+                        tdName.textContent = line.name || '—';
+                        const tdCat = document.createElement('td');
+                        tdCat.style.color = 'var(--text-secondary)';
+                        tdCat.textContent = line.category || '—';
+                        const tdQty = document.createElement('td');
+                        tdQty.className = 'text-end fw-700';
+                        tdQty.style.color = 'var(--primary)';
+                        tdQty.textContent = formatQty(line.quantity, line.unit);
+                        tr.appendChild(tdNo);
+                        tr.appendChild(tdName);
+                        tr.appendChild(tdCat);
+                        tr.appendChild(tdQty);
+                        tbody.appendChild(tr);
+                    });
+
+                    hideAllActionButtons();
+                    if (scenario === 'admin_pending') {
+                        titleTextEl.textContent = 'Rincian permintaan — persetujuan admin';
+                        btnApprove.classList.remove('d-none');
+                        btnReject.classList.remove('d-none');
+                    } else if (scenario === 'staff_approved') {
+                        titleTextEl.textContent = 'Rincian permintaan — penyelesaian staf';
+                        btnComplete.classList.remove('d-none');
+                        btnCancel.classList.remove('d-none');
+                    } else {
+                        titleTextEl.textContent = 'Rincian permintaan barang';
+                    }
+
+                    modal.show();
+                });
+            });
+
+            btnApprove.addEventListener('click', function () {
+                submitFormBySelector(formApproveSel);
+            });
+            btnReject.addEventListener('click', function () {
+                submitFormBySelector(formRejectSel);
+            });
+            btnComplete.addEventListener('click', function () {
+                submitFormBySelector(formCompleteSel);
+            });
+            btnCancel.addEventListener('click', function () {
+                submitFormBySelector(formCancelSel);
+            });
+
+            modalEl.addEventListener('hidden.bs.modal', function () {
+                hideAllActionButtons();
+                formApproveSel = formRejectSel = formCompleteSel = formCancelSel = null;
+            });
+        })();
+    </script>
+@endpush

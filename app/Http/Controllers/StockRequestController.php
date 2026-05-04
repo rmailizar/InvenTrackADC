@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Item;
 use App\Models\StockRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class StockRequestController extends Controller
 {
@@ -44,23 +45,42 @@ class StockRequestController extends Controller
             'nip' => 'required|string|max:50',
             'jabatan' => 'required|string|max:100',
             'bidang' => 'required|string|max:100',
-            'item_id' => 'required|exists:items,id',
-            'quantity' => 'required|integer|min:1',
+            'lines' => 'required|array|min:1',
+            'lines.*.item_id' => 'required|exists:items,id',
+            'lines.*.quantity' => 'required|integer|min:1',
             'notes' => 'nullable|string|max:500',
         ], [
             'requester_name.required' => 'Nama wajib diisi.',
             'nip.required' => 'NIP wajib diisi.',
             'jabatan.required' => 'Jabatan wajib diisi.',
             'bidang.required' => 'Bidang wajib diisi.',
-            'item_id.required' => 'Silakan pilih barang.',
-            'item_id.exists' => 'Barang tidak ditemukan.',
-            'quantity.required' => 'Jumlah wajib diisi.',
-            'quantity.min' => 'Jumlah minimal 1.',
+            'lines.required' => 'Tambahkan minimal satu barang.',
+            'lines.min' => 'Tambahkan minimal satu barang.',
+            'lines.*.item_id.required' => 'Pilih barang pada setiap baris.',
+            'lines.*.item_id.exists' => 'Barang tidak ditemukan.',
+            'lines.*.quantity.required' => 'Jumlah wajib diisi.',
+            'lines.*.quantity.min' => 'Jumlah minimal 1.',
         ]);
 
-        $validated['status'] = 'pending';
+        $linesInput = $validated['lines'];
+        unset($validated['lines']);
 
-        StockRequest::create($validated);
+        $mergedByItem = [];
+        foreach ($linesInput as $line) {
+            $id = (int) $line['item_id'];
+            $mergedByItem[$id] = ($mergedByItem[$id] ?? 0) + (int) $line['quantity'];
+        }
+
+        DB::transaction(function () use ($validated, $mergedByItem) {
+            $validated['status'] = 'pending';
+            $stockRequest = StockRequest::create($validated);
+            foreach ($mergedByItem as $itemId => $quantity) {
+                $stockRequest->lines()->create([
+                    'item_id' => $itemId,
+                    'quantity' => $quantity,
+                ]);
+            }
+        });
 
         return redirect()->route('public.stock-request')
             ->with('success', 'Request stok berhasil dikirim! Permintaan Anda akan ditinjau oleh Admin.');
@@ -71,14 +91,16 @@ class StockRequestController extends Controller
      */
     public function adminIndex(Request $request)
     {
-        $query = StockRequest::with(['item', 'processor', 'completer'])->latest();
+        $query = StockRequest::with(['lines.item', 'processor', 'completer'])->latest();
 
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('requester_name', 'like', "%{$search}%")
-                    ->orWhereHas('item', function ($q2) use ($search) {
-                        $q2->where('name', 'like', "%{$search}%");
+                    ->orWhere('nip', 'like', "%{$search}%")
+                    ->orWhereHas('lines.item', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%{$search}%")
+                            ->orWhere('category', 'like', "%{$search}%");
                     });
             });
         }
