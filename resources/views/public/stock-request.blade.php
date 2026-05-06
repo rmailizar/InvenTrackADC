@@ -329,7 +329,12 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Password</label>
-                                <input type="password" name="password" class="form-control" placeholder="Masukkan password" required id="loginPassword">
+                                <div class="input-group">
+                                    <input type="password" name="password" class="form-control" placeholder="Masukkan password" required id="loginPassword" style="border-right: none;">
+                                    <span class="input-group-text" id="togglePassword" style="cursor: pointer; border-left: none;">
+                                        <i class="bi bi-eye" id="eyeIcon"></i>
+                                    </span>
+                                </div>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mb-4">
                                 <div class="form-check">
@@ -337,8 +342,8 @@
                                     <label class="form-check-label" for="loginRemember" style="font-size:13px;color:var(--text-secondary);">Ingat Saya</label>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100" id="loginSubmitBtn">
-                                <i class="bi bi-box-arrow-in-right"></i> Masuk
+                            <button type="submit" class="btn btn-primary w-30 mx-auto d-block" id="loginSubmitBtn">
+                                <i class="bi bi-box-arrow-in-right text-center"></i> Masuk
                             </button>
                         </form>
                     </div>
@@ -524,6 +529,20 @@
             document.getElementById('loginForm').reset();
             document.getElementById('loginError').style.display = 'none';
             document.querySelectorAll('#loginForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        });
+        
+        // Toggle password visibility
+        document.addEventListener('DOMContentLoaded', function () {
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('loginPassword');
+            const eyeIcon = document.getElementById('eyeIcon');
+            
+            togglePassword.addEventListener('click', function () {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                eyeIcon.classList.toggle('bi-eye');
+                eyeIcon.classList.toggle('bi-eye-slash');
+            });
         });
 
         // Auto-open login modal if redirected from /login

@@ -536,12 +536,11 @@ a:hover {
     font-weight: 700;
     /* Bold */
     color: #1F6F5F;
-    letter-spacing: 8px;
+    letter-spacing: 13.7px;
     /* Spasi huruf sangat lebar sesuai gambar */
     padding-left: 12px;
     /* Offset agar benar-benar di tengah karena letter-spacing */
     margin-top: -10px;
-    filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.5));
     margin-top: -65px;
 }
 
@@ -1282,20 +1281,45 @@ a:hover {
     border-bottom-left-radius: 0;
 }
 
-/* Dark mode form select dropdown icon */
-[data-theme="dark"] .form-select {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+.input-group .input-group-text {
+    border-left: none; 
+    border-width: 1.5px;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
 }
 
-/* Dark mode form check styles */
-[data-theme="dark"] .form-check-input {
+.input-group:focus-within .form-control {
+    border-color: var(--primary);
+}
+
+.input-group:focus-within .input-group-text {
+    border-color: var(--primary); 
+}
+
+.input-group .form-control:focus {
+    box-shadow: none; 
+}
+
+.input-group .form-control#loginPassword {
+    border-right: none !important;
+}
+
+/* ---------- Input Group darkmode ---------- */
+[data-theme="dark"] .input-group-text {
+    background-color: var(--input-bg); 
+    border-color: var(--border-color); /* Warna border saat tidak fokus */
+    color: var(--text-secondary);
+}
+
+/* Pastikan saat fokus di dark mode tetap menggunakan warna primary emerald */
+[data-theme="dark"] .input-group:focus-within .input-group-text {
+    border-color: var(--primary);
+}
+
+[data-theme="dark"] .input-group-text:hover {
     background-color: var(--input-bg);
     border-color: var(--border-color);
-}
-
-[data-theme="dark"] .form-check-input:checked {
-    background-color: var(--primary);
-    border-color: var(--primary);
+    color: var(--text-secondary);
 }
 
 /* ---------- Filter Bar ---------- */
@@ -1519,6 +1543,17 @@ a:hover {
     position: relative;
     z-index: 10;
     animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#togglePassword {
+    border-top-right-radius: 8px; /* Sesuaikan dengan radius input Anda */
+    border-bottom-right-radius: 8px;
+    color: var(--text-secondary);
+    transition: color 0.3s;
+}
+
+#togglePassword:hover {
+    color: var(--primary); /* Berubah warna emerald saat diarahkan kursor */
 }
 
 [data-theme="dark"] .login-card {
@@ -2446,7 +2481,6 @@ a:hover {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.45)) brightness(1.05);
 }
 
 .login-modal-brand h5 {
