@@ -12,11 +12,12 @@ final class InventoryMail
      *
      * @return list<string>
      */
-    public static function adminNotificationRecipients(): array
+    public static function adminNotificationRecipients(?string $bidang = null): array
     {
         /** @var Collection<int, string> $fromDb */
         $fromDb = User::query()
             ->where('role', 'admin')
+            ->when($bidang, fn($query) => $query->where('bidang', $bidang))
             ->whereNotNull('email')
             ->pluck('email');
 

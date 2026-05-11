@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
+use App\Models\StockRequest;
 use App\Models\Transaction;
 use App\Mail\LowStockAlert;
 use App\Support\InventoryMail;
@@ -27,7 +28,8 @@ class DashboardController extends Controller
         // ========================
         // 🔥 YEAR FILTER
         // ========================
-        $availableYears = Transaction::approved()
+        $availableYears = Transaction::visibleFor($user)
+            ->approved()
             ->selectRaw('YEAR(date) as year')
             ->distinct()
             ->orderByDesc('year')
@@ -36,19 +38,21 @@ class DashboardController extends Controller
         $selectedYear = $request->year ?? $availableYears->first() ?? $now->year;
 
         // Stats cards
-        $totalItems = Item::count();
-        $masukBulanIni = Transaction::approved()->masuk()
+        $totalItems = Item::visibleFor($user)->count();
+        $masukBulanIni = Transaction::visibleFor($user)->approved()->masuk()
             ->whereMonth('date', $now->month)
             ->whereYear('date', $now->year)
             ->sum('quantity');
-        $keluarBulanIni = Transaction::approved()->keluar()
+        $keluarBulanIni = Transaction::visibleFor($user)->approved()->keluar()
             ->whereMonth('date', $now->month)
             ->whereYear('date', $now->year)
             ->sum('quantity');
-        $pendingCount = Transaction::pending()->count();
+        $pendingCount = $user->isManager() && $user->isTeknik()
+            ? StockRequest::visibleFor($user)->pending()->count()
+            : Transaction::visibleFor($user)->pending()->count();
 
         // Low stock items
-        $allItems = Item::all();
+        $allItems = Item::visibleFor($user)->get();
         $lowStockItems = $allItems->filter(fn($item) => $item->is_low_stock && $item->current_stock >= 0);
 
 
@@ -60,12 +64,12 @@ class DashboardController extends Controller
 
             $date = Carbon::create($selectedYear, $month, 1);
 
-            $masuk = Transaction::approved()->masuk()
+            $masuk = Transaction::visibleFor($user)->approved()->masuk()
                 ->whereYear('date', $selectedYear)
                 ->whereMonth('date', $month)
                 ->sum('quantity');
 
-            $keluar = Transaction::approved()->keluar()
+            $keluar = Transaction::visibleFor($user)->approved()->keluar()
                 ->whereYear('date', $selectedYear)
                 ->whereMonth('date', $month)
                 ->sum('quantity');
@@ -78,7 +82,8 @@ class DashboardController extends Controller
         }
 
         // Available years for category filter
-        $availableYears = Transaction::approved()
+        $availableYears = Transaction::visibleFor($user)
+            ->approved()
             ->selectRaw('YEAR(date) as year')
             ->distinct()
             ->orderByDesc('year')
@@ -100,11 +105,11 @@ class DashboardController extends Controller
 
         for ($year = $startYear; $year <= $endYear; $year++) {
 
-            $masuk = Transaction::approved()->masuk()
+            $masuk = Transaction::visibleFor($user)->approved()->masuk()
                 ->whereYear('date', $year)
                 ->sum('quantity');
 
-            $keluar = Transaction::approved()->keluar()
+            $keluar = Transaction::visibleFor($user)->approved()->keluar()
                 ->whereYear('date', $year)
                 ->sum('quantity');
 
@@ -116,10 +121,10 @@ class DashboardController extends Controller
         }
 
         // Stock per category
-        $categories = Item::select('category')->distinct()->pluck('category');
+        $categories = Item::visibleFor($user)->select('category')->distinct()->pluck('category');
         $categoryData = [];
         foreach ($categories as $cat) {
-            $items = Item::where('category', $cat)->get();
+            $items = Item::visibleFor($user)->where('category', $cat)->get();
             $totalStock = $items->sum(fn($item) => $item->current_stock);
             $categoryData[] = [
                 'category' => $cat,
@@ -128,7 +133,7 @@ class DashboardController extends Controller
         }
 
         // Top 5 items most keluar
-        $topKeluar = Transaction::approved()->keluar()
+        $topKeluar = Transaction::visibleFor($user)->approved()->keluar()
             ->selectRaw('item_id, SUM(quantity) as total')
             ->groupBy('item_id')
             ->orderByDesc('total')
@@ -138,6 +143,7 @@ class DashboardController extends Controller
 
         // Recent transactions
         $recentTransactions = Transaction::with(['item', 'user'])
+            ->visibleFor($user)
             ->latest()
             ->limit(5)
             ->get();
@@ -145,7 +151,7 @@ class DashboardController extends Controller
         // Pending transactions grouped by date (for admin daily approval)
         $pendingByDate = [];
         if ($user->isAdmin()) {
-            $pendingByDate = Transaction::pending()
+            $pendingByDate = Transaction::visibleFor($user)->pending()
                 ->with(['item', 'user'])
                 ->orderBy('date', 'desc')
                 ->get()
@@ -155,7 +161,7 @@ class DashboardController extends Controller
         }
 
         // Items for transaction edit modal dropdown
-        $items = Item::orderBy('name')->get();
+        $items = Item::visibleFor($user)->orderBy('name')->get();
 
         return view('dashboard.index', compact(
             'totalItems',
@@ -187,12 +193,12 @@ class DashboardController extends Controller
 
             $date = \Carbon\Carbon::create($year, $month, 1);
 
-            $masuk = Transaction::approved()->masuk()
+            $masuk = Transaction::visibleFor(auth()->user())->approved()->masuk()
                 ->whereYear('date', $year)
                 ->whereMonth('date', $month)
                 ->sum('quantity');
 
-            $keluar = Transaction::approved()->keluar()
+            $keluar = Transaction::visibleFor(auth()->user())->approved()->keluar()
                 ->whereYear('date', $year)
                 ->whereMonth('date', $month)
                 ->sum('quantity');
@@ -215,7 +221,7 @@ class DashboardController extends Controller
         $request->validate(['date' => 'required|date']);
         $date = $request->date;
 
-        $transactions = Transaction::pending()->whereDate('date', $date)->get();
+        $transactions = Transaction::visibleFor(auth()->user())->pending()->whereDate('date', $date)->get();
 
         if ($transactions->isEmpty()) {
             return back()->with('error', 'Tidak ada transaksi pending untuk tanggal ini.');
@@ -225,7 +231,7 @@ class DashboardController extends Controller
         foreach ($transactions as $tx) {
             if ($tx->type === 'out') {
                 $item = $tx->item;
-                if ($item->current_stock < $tx->quantity) {
+                if ($item && $item->current_stock < $tx->quantity) {
                     return back()->with('error', "Stok {$item->name} tidak mencukupi ({$item->current_stock} {$item->unit}). Tidak bisa approve.");
                 }
             }
@@ -247,7 +253,7 @@ class DashboardController extends Controller
         foreach ($itemIds as $itemId) {
             $item = Item::find($itemId);
             if ($item && $item->is_low_stock) {
-                $recipients = InventoryMail::adminNotificationRecipients();
+                $recipients = InventoryMail::adminNotificationRecipients($item->bidang);
                 if ($recipients === []) {
                     Log::warning('Email stok rendah tidak dikirim: tidak ada alamat admin (periksa user role=admin dan email, atau set INVENTORY_ALERT_MAIL di .env).');
                 } else {
@@ -284,7 +290,7 @@ class DashboardController extends Controller
         $request->validate(['date' => 'required|date']);
         $date = $request->date;
 
-        $count = Transaction::pending()
+        $count = Transaction::visibleFor(auth()->user())->pending()
             ->whereDate('date', $date)
             ->update([
                 'status' => 'rejected',
@@ -305,8 +311,14 @@ class DashboardController extends Controller
     public function searchItems(Request $request)
     {
         $q = $request->get('q', '');
-        $items = Item::where('name', 'like', "%{$q}%")
-            ->select('id', 'name', 'category')
+        $items = Item::visibleFor(auth()->user())
+            ->where(function ($query) use ($q) {
+                $query->where('name', 'like', "%{$q}%")
+                    ->orWhere('category', 'like', "%{$q}%")
+                    ->orWhere('no_normalisasi', 'like', "%{$q}%")
+                    ->orWhere('lokasi', 'like', "%{$q}%");
+            })
+            ->select('id', 'name', 'category', 'no_normalisasi')
             ->limit(10)
             ->get();
         return response()->json($items);
@@ -326,10 +338,10 @@ class DashboardController extends Controller
             $month = $now->copy()->subMonths($i);
             $monthLabel = $month->translatedFormat('M Y');
 
-            $masukQuery = Transaction::approved()->masuk()
+            $masukQuery = Transaction::visibleFor(auth()->user())->approved()->masuk()
                 ->whereMonth('date', $month->month)
                 ->whereYear('date', $month->year);
-            $keluarQuery = Transaction::approved()->keluar()
+            $keluarQuery = Transaction::visibleFor(auth()->user())->approved()->keluar()
                 ->whereMonth('date', $month->month)
                 ->whereYear('date', $month->year);
 
@@ -350,8 +362,8 @@ class DashboardController extends Controller
         for ($i = 4; $i >= 0; $i--) {
             $year = $now->copy()->subYears($i)->year;
 
-            $masukQuery = Transaction::approved()->masuk()->whereYear('date', $year);
-            $keluarQuery = Transaction::approved()->keluar()->whereYear('date', $year);
+            $masukQuery = Transaction::visibleFor(auth()->user())->approved()->masuk()->whereYear('date', $year);
+            $keluarQuery = Transaction::visibleFor(auth()->user())->approved()->keluar()->whereYear('date', $year);
 
             if ($itemId) {
                 $masukQuery->where('item_id', $itemId);
@@ -374,14 +386,14 @@ class DashboardController extends Controller
     public function categoryByYear(Request $request)
     {
         $year = $request->get('year');
-        $categories = Item::select('category')->distinct()->pluck('category');
+        $categories = Item::visibleFor(auth()->user())->select('category')->distinct()->pluck('category');
         $data = [];
 
         foreach ($categories as $cat) {
-            $itemIds = Item::where('category', $cat)->pluck('id');
+            $itemIds = Item::visibleFor(auth()->user())->where('category', $cat)->pluck('id');
 
-            $masukQuery = Transaction::approved()->masuk()->whereIn('item_id', $itemIds);
-            $keluarQuery = Transaction::approved()->keluar()->whereIn('item_id', $itemIds);
+            $masukQuery = Transaction::visibleFor(auth()->user())->approved()->masuk()->whereIn('item_id', $itemIds);
+            $keluarQuery = Transaction::visibleFor(auth()->user())->approved()->keluar()->whereIn('item_id', $itemIds);
 
             if ($year) {
                 $masukQuery->whereYear('date', $year);

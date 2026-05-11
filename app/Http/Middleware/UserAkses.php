@@ -16,6 +16,27 @@ class UserAkses
 
         $userRole = auth()->user()->role;
 
+        if ($userRole === 'superadmin') {
+            return $next($request);
+        }
+
+        if (auth()->user()->isManager() && auth()->user()->isTeknik()) {
+            $routeName = $request->route()?->getName();
+            $allowedRoutes = [
+                'dashboard',
+                'dashboard.searchItems',
+                'dashboard.chartData',
+                'dashboard.categoryByYear',
+                'dashboard.monthlyData',
+                'stock-requests.index',
+                'stock-requests.export',
+                'stock-requests.approve',
+                'stock-requests.reject',
+            ];
+
+            abort_unless(in_array($routeName, $allowedRoutes, true), 403, 'Manager Teknik hanya dapat mengakses Dashboard dan Stock Request.');
+        }
+
         if (in_array($userRole, $roles)) {
             return $next($request);
         }

@@ -4,43 +4,68 @@
 @section('subtitle', 'Ringkasan data inventory')
 
 @section('content')
+    @php
+        $isTeknik = auth()->user()->bidang === 'teknik';
+        $receiptLabel = $isTeknik ? 'Goods Receipt' : 'Barang Masuk';
+        $issueLabel = $isTeknik ? 'Goods Issue' : 'Barang Keluar';
+        $componentLabel = $isTeknik ? 'Komponen' : 'Kategori';
+        $pendingApprovalLabel = auth()->user()->isManager() && $isTeknik
+            ? 'Stock Request Menunggu Approval'
+            : 'Menunggu Approval';
+    @endphp
     <div class="animate-fade-in">
         <!-- Stats Cards -->
         <div class="row g-3 mb-4">
-            <div class="col-sm-6 col-xl-3">
+            <div class="col-sm-6 col-lg-3">
                 <div class="stats-card primary">
-                    <div class="stats-icon">
-                        <i class="bi bi-box-seam-fill"></i>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="stats-icon">
+                            <i class="bi bi-box-seam-fill"></i>
+                        </div>
+                        <div>
+                            <div class="stats-value" style="font-size:22px;">{{ number_format($totalItems) }}</div>
+                            <div class="stats-label">Total Barang</div>
+                        </div>
                     </div>
-                    <div class="stats-value">{{ number_format($totalItems) }}</div>
-                    <div class="stats-label">Total Barang</div>
                 </div>
             </div>
-            <div class="col-sm-6 col-xl-3">
+            <div class="col-sm-6 col-lg-3">
                 <div class="stats-card success">
-                    <div class="stats-icon">
-                        <i class="bi bi-arrow-down-circle-fill"></i>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="stats-icon">
+                            <i class="bi bi-arrow-down-circle-fill"></i>
+                        </div>
+                        <div>
+                            <div class="stats-value" style="font-size:22px;">{{ number_format($masukBulanIni) }}</div>
+                            <div class="stats-label">{{ $receiptLabel }} (Bulan Ini)</div>
+                        </div>
                     </div>
-                    <div class="stats-value">{{ number_format($masukBulanIni) }}</div>
-                    <div class="stats-label">Barang Masuk (Bulan Ini)</div>
                 </div>
             </div>
-            <div class="col-sm-6 col-xl-3">
-                <div class="stats-card warning">
-                    <div class="stats-icon">
-                        <i class="bi bi-arrow-up-circle-fill"></i>
-                    </div>
-                    <div class="stats-value">{{ number_format($keluarBulanIni) }}</div>
-                    <div class="stats-label">Barang Keluar (Bulan Ini)</div>
-                </div>
-            </div>
-            <div class="col-sm-6 col-xl-3">
+            <div class="col-sm-6 col-lg-3">
                 <div class="stats-card danger">
-                    <div class="stats-icon">
-                        <i class="bi bi-clock-history"></i>
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="stats-icon">
+                            <i class="bi bi-arrow-up-circle-fill"></i>
+                        </div>
+                        <div>
+                            <div class="stats-value" style="font-size:22px;">{{ number_format($keluarBulanIni) }}</div>
+                            <div class="stats-label">{{ $issueLabel }} (Bulan Ini)</div>
+                        </div>
                     </div>
-                    <div class="stats-value">{{ number_format($pendingCount) }}</div>
-                    <div class="stats-label">Menunggu Approval</div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="stats-card warning">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="stats-icon">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <div>
+                            <div class="stats-value" style="font-size:22px;">{{ number_format($pendingCount) }}</div>
+                            <div class="stats-label">{{ $pendingApprovalLabel }}</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -90,7 +115,7 @@
                                     <thead>
                                         <tr>
                                             <th>Barang</th>
-                                            <th>Kategori</th>
+                                            <th>{{ $componentLabel }}</th>
                                             <th>Jenis</th>
                                             <th>Jumlah</th>
                                             <th>Satuan</th>
@@ -109,7 +134,7 @@
                                                     <span class="badge-status badge-{{ $tx->type }}">
                                                         <i class="bi bi-arrow-{{ $tx->type === 'in' ? 'down' : 'up' }}-circle-fill"
                                                             style="font-size:10px;"></i>
-                                                        {{ strtoupper($tx->type) }}
+                                                        {{ $tx->type_label }}
                                                     </span>
                                                 </td>
                                                 <td class="fw-700">{{ number_format($tx->quantity) }}</td>
@@ -181,7 +206,7 @@
                     <div class="card-header d-flex align-items-center justify-content-between">
                         <span>
                             <i class="bi bi-bar-chart-fill text-primary-custom me-2"></i>
-                            Barang Masuk vs Keluar (12 Bulan)
+                            {{ $receiptLabel }} vs {{ $issueLabel }} (12 Bulan)
                         </span>
 
                         <select onchange="changeMonthlyYear(this.value)" class="form-select form-select-sm"
@@ -204,7 +229,7 @@
             <div class="col-lg-4">
                 <div class="card">
                     <div class="card-header d-flex align-items-center justify-content-between">
-                        <span><i class="bi bi-pie-chart-fill text-primary-custom me-2"></i>Stok per Kategori</span>
+                        <span><i class="bi bi-pie-chart-fill text-primary-custom me-2"></i>Stok per {{ $componentLabel }}</span>
                         <select id="categoryYearFilter" class="form-select form-select-sm"
                             style="width:auto; min-width:120px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px; padding:4px 28px 4px 10px;">
                             <option value="">Semua Tahun</option>
@@ -229,7 +254,7 @@
                     <div class="card-header d-flex align-items-center justify-content-between">
                         <span>
                             <i class="bi bi-graph-up-arrow text-primary-custom me-2"></i>
-                            Barang Masuk vs Keluar (Tahunan)
+                            {{ $receiptLabel }} vs {{ $issueLabel }} (Tahunan)
                         </span>
 
                         <div class="d-flex align-items-center gap-2">
@@ -308,7 +333,7 @@
             <div class="col-lg-4">
                 <div class="card">
                     <div class="card-header">
-                        <span><i class="bi bi-fire text-danger-custom me-2"></i>Barang Paling Sering Keluar</span>
+                        <span><i class="bi bi-fire text-danger-custom me-2"></i>{{ $isTeknik ? 'Goods Issue Terbanyak' : 'Barang Paling Sering Keluar' }}</span>
                     </div>
                     <div class="card-body">
                         @forelse($topKeluar as $index => $tx)
@@ -320,7 +345,11 @@
                                     <div>
                                         <div class="fw-600" style="font-size:13px;">{{ $tx->item->name ?? 'Barang dihapus' }}
                                         </div>
-                                        <div style="font-size:11px;color:var(--text-secondary);">{{ $tx->item->category ?? '' }}
+                                        <div style="font-size:11px;color:var(--text-secondary);">
+                                            @if($isTeknik && $tx->item?->no_normalisasi)
+                                                {{ $tx->item->no_normalisasi }} -
+                                            @endif
+                                            {{ $tx->item->category ?? '' }}
                                         </div>
                                     </div>
                                 </div>
@@ -362,7 +391,7 @@
                                 <div class="flex-grow-1 min-width-0">
                                     <div class="fw-600" style="font-size:13px;">{{ $tx->item->name ?? 'Barang dihapus' }}</div>
                                     <div style="font-size:11px;color:var(--text-secondary);">
-                                        {{ $tx->quantity }} {{ $tx->item->unit ?? '' }} · {{ $tx->user->name ?? '' }}
+                                        {{ $tx->type_label }} - {{ $tx->quantity }} {{ $tx->item->unit ?? '' }} - {{ $tx->user->name ?? '' }}
                                     </div>
                                 </div>
                                 <span class="badge-status badge-{{ $tx->status }}"
@@ -479,8 +508,8 @@
                                     <label class="form-label">Jenis Transaksi <span class="text-danger">*</span></label>
                                     <select name="type" class="form-select" required id="dashTxType">
                                         <option value="">-- Pilih Jenis --</option>
-                                        <option value="in">📥 Barang Masuk</option>
-                                        <option value="out">📤 Barang Keluar</option>
+                                        <option value="in">{{ $isTeknik ? 'Goods Receipt (IN)' : 'Barang Masuk' }}</option>
+                                        <option value="out">{{ $isTeknik ? 'Goods Issue (OUT)' : 'Barang Keluar' }}</option>
                                     </select>
                                 </div>
                             </div>
@@ -500,7 +529,7 @@
 
                             <div class="row g-3 mb-3">
                                 <div class="col-md-4">
-                                    <label class="form-label">Kategori</label>
+                                    <label class="form-label">{{ $componentLabel }}</label>
                                     <input type="text" class="form-control" id="dashTxItemCategory" readonly>
                                 </div>
                                 <div class="col-md-4">
@@ -659,7 +688,7 @@
                 labels: {!! json_encode(array_column($monthlyData, 'label')) !!},
                 datasets: [
                     {
-                        label: 'Barang Masuk',
+                        label: @json($receiptLabel),
                         data: {!! json_encode(array_column($monthlyData, 'masuk')) !!},
                         backgroundColor: masukBg,
                         borderColor: masukBorder,
@@ -668,7 +697,7 @@
                         borderSkipped: false,
                     },
                     {
-                        label: 'Barang Keluar',
+                        label: @json($issueLabel),
                         data: {!! json_encode(array_column($monthlyData, 'keluar')) !!},
                         backgroundColor: keluarBg,
                         borderColor: keluarBorder,
@@ -689,7 +718,7 @@
                 labels: {!! json_encode(array_column($yearlyData, 'label')) !!},
                 datasets: [
                     {
-                        label: 'Barang Masuk',
+                        label: @json($receiptLabel),
                         data: {!! json_encode(array_column($yearlyData, 'masuk')) !!},
                         backgroundColor: masukBg,
                         borderColor: masukBorder,
@@ -698,7 +727,7 @@
                         borderSkipped: false,
                     },
                     {
-                        label: 'Barang Keluar',
+                        label: @json($issueLabel),
                         data: {!! json_encode(array_column($yearlyData, 'keluar')) !!},
                         backgroundColor: keluarBg,
                         borderColor: keluarBorder,
@@ -776,7 +805,7 @@
                                                                                                                                                     <div class="item-icon"><i class="bi bi-box-seam"></i></div>
                                                                                                                                                     <div>
                                                                                                                                                         <div class="item-name">${highlightMatch(item.name, q)}</div>
-                                                                                                                                                        <div class="item-category">${item.category || ''}</div>
+                                                                                                                                                        <div class="item-category">${item.no_normalisasi ? item.no_normalisasi + ' · ' : ''}${item.category || ''}</div>
                                                                                                                                                     </div>
                                                                                                                                                 </div>
                                                                                                                                             `).join('');

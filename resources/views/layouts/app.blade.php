@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'Dashboard') - InvenTrack</title>
+    <title>@yield('title', 'Dashboard') - Nextlog</title>
     <meta name="description" content="InvenTrack - Sistem Manajemen Inventory Modern">
 
     <!-- Bootstrap 5.3 CSS -->
@@ -17,7 +17,7 @@
     <!-- Custom CSS -->
     <link href="{{ asset('css/custom.css') }}?v={{ filemtime(public_path('css/custom.css')) }}" rel="stylesheet">
     <!-- Logo  -->
-    <link rel="icon" type="image/png" href="{{ asset('logo.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo-web.png') }}">
 
     <!-- Prevent flash: apply theme before render -->
     <script>
@@ -32,12 +32,22 @@
     <!-- Background Glow SVG Line -->
     <div class="background-glow-container">
         <svg viewBox="0 0 1440 400" preserveAspectRatio="none">
-            <path class="glowing-line" d="M0 300 C 300 250, 400 350, 700 200 C 1000 50, 1200 150, 1440 50"
+            <path class="glowing-line glowing-line-solid"
+                d="M-60 255 C 120 300, 275 295, 405 240 C 555 178, 665 170, 780 210 C 925 260, 1030 262, 1165 228 C 1300 195, 1390 200, 1500 178"
                 stroke="url(#line_gradient_app)" stroke-width="4" fill="none" />
+            <path class="glowing-line glowing-line-dashed"
+                d="M-60 212 C 110 255, 260 250, 405 220 C 555 188, 685 205, 820 235 C 965 268, 1055 220, 1185 195 C 1320 170, 1405 190, 1500 220"
+                stroke="url(#line_gradient_app_dashed)" stroke-width="3" fill="none" />
             <defs>
-                <linearGradient id="line_gradient_app">
+                <linearGradient id="line_gradient_app" x1="0" y1="0" x2="1440" y2="0"
+                    gradientUnits="userSpaceOnUse">
                     <stop offset="0%" stop-color="#a855f7" />
                     <stop offset="100%" stop-color="#10b981" />
+                </linearGradient>
+                <linearGradient id="line_gradient_app_dashed" x1="0" y1="0" x2="1440" y2="0"
+                    gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#60a5fa" />
+                    <stop offset="100%" stop-color="#34d399" />
                 </linearGradient>
             </defs>
         </svg>
@@ -51,7 +61,12 @@
         <div class="sidebar-brand">
             <div class="brand-wrapper">
                 <div class="brand-icon">
-                    <img src="{{ asset('images/logo-web.png') }}" alt="InvenTrack Logo" class="sidebar-logo-img">
+                    <div class="sidebar-logo-stack">
+                        <img src="{{ asset('images/logo-web-top.png') }}" alt="InvenTrack"
+                            class="sidebar-logo-part sidebar-logo-top" decoding="async">
+                        <img src="{{ asset('images/logo-web-bottom.png') }}" alt=""
+                            class="sidebar-logo-part sidebar-logo-bottom" decoding="async">
+                    </div>
                 </div>
                 <div class="logo-container">
                     <div class="next-logistic">
@@ -62,16 +77,20 @@
         </div>
 
         <nav class="sidebar-nav">
+            @php
+                $isTeknik = auth()->user()->isTeknik();
+                $isTeknikManager = auth()->user()->isManager() && $isTeknik;
+            @endphp
             <div class="sidebar-label">Menu Utama</div>
 
             {{-- Dashboard: Admin & Manager only --}}
-            @if(auth()->user()->isAdmin() || auth()->user()->isManager())
+            @if(auth()->user()->isSuperAdmin() || auth()->user()->isAdmin() || auth()->user()->isManager())
                 <a href="{{ route('dashboard') }}"
                     class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                     <i class="bi bi-grid-1x2-fill"></i>
                     <span>Dashboard</span>
-                    @if(auth()->user()->isAdmin())
-                        @php $pendingTxCount = \App\Models\Transaction::pending()->count(); @endphp
+                    @if(auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
+                        @php $pendingTxCount = \App\Models\Transaction::visibleFor(auth()->user())->pending()->count(); @endphp
                         @if($pendingTxCount > 0)
                             <span class="badge bg-warning text-dark">{{ $pendingTxCount }}</span>
                         @endif
@@ -80,7 +99,7 @@
             @endif
 
             {{-- Master Barang: Admin only --}}
-            @if(auth()->user()->isAdmin())
+            @if(!$isTeknikManager && (auth()->user()->isSuperAdmin() || auth()->user()->isAdmin()))
                 <a href="{{ route('items.index') }}"
                     class="sidebar-link {{ request()->routeIs('items.*') ? 'active' : '' }}">
                     <i class="bi bi-box-fill"></i>
@@ -89,7 +108,7 @@
             @endif
 
             {{-- Transaksi: Admin & Staff only --}}
-            @if(auth()->user()->isAdmin() || auth()->user()->isStaff())
+            @if(!$isTeknikManager && (auth()->user()->isSuperAdmin() || auth()->user()->isAdmin() || auth()->user()->isStaff()))
                 <a href="{{ route('transactions.index') }}"
                     class="sidebar-link {{ request()->routeIs('transactions.*') ? 'active' : '' }}">
                     <i class="bi bi-arrow-left-right"></i>
@@ -98,7 +117,7 @@
             @endif
 
             {{-- Rekap Stok: All user --}}
-            @if(auth()->user()->isAdmin() || auth()->user()->isManager() || auth()->user()->isStaff())
+            @if(!$isTeknikManager && (auth()->user()->isSuperAdmin() || auth()->user()->isAdmin() || auth()->user()->isManager() || auth()->user()->isStaff()))
                 <a href="{{ route('stock.index') }}"
                     class="sidebar-link {{ request()->routeIs('stock.*') ? 'active' : '' }}">
                     <i class="bi bi-clipboard-data-fill"></i>
@@ -106,21 +125,35 @@
                 </a>
             @endif
 
-            {{-- Request Stok: Admin & Staff --}}
-            @if(auth()->user()->isAdmin() || auth()->user()->isStaff())
+            {{-- Stuff Request: Admin & Staff --}}
+            @if(auth()->user()->isSuperAdmin() || auth()->user()->isAdmin() || auth()->user()->isStaff() || $isTeknikManager)
                 <a href="{{ route('stock-requests.index') }}"
                     class="sidebar-link {{ request()->routeIs('stock-requests.*') ? 'active' : '' }}">
-                    <i class="bi bi-inbox-fill"></i>
-                    <span>Permintaan Barang</span>
-                    @php $pendingReqCount = \App\Models\StockRequest::pending()->count(); @endphp
-                    @if($pendingReqCount > 0)
-                        <span class="badge bg-warning text-dark">{{ $pendingReqCount }}</span>
+                    <i class="bi bi-cart-check-fill"></i>
+                    <span>Stok Request</span>
+                    @if(auth()->user()->isSuperAdmin() || (auth()->user()->isAdmin() && !$isTeknik) || $isTeknikManager)
+                        @php $pendingStockReqCount = \App\Models\StockRequest::visibleFor(auth()->user())->pending()->count(); @endphp
+                        @if($pendingStockReqCount > 0)
+                            <span class="badge bg-warning text-dark">{{ $pendingStockReqCount }}</span>
+                        @endif
                     @endif
                 </a>
+
+                @if(!$isTeknikManager)
+                    <a href="{{ route('stuff-requests.index') }}"
+                        class="sidebar-link {{ request()->routeIs('stuff-requests.*') ? 'active' : '' }}">
+                        <i class="bi bi-inbox-fill"></i>
+                        <span>Permintaan Barang</span>
+                        @php $pendingReqCount = \App\Models\StuffRequest::visibleFor(auth()->user())->pending()->count(); @endphp
+                        @if($pendingReqCount > 0)
+                            <span class="badge bg-warning text-dark">{{ $pendingReqCount }}</span>
+                        @endif
+                    </a>
+                @endif
             @endif
 
             {{-- Laporan: Admin & Manager --}}
-            @if(auth()->user()->isAdmin() || auth()->user()->isManager())
+            @if(!$isTeknikManager && (auth()->user()->isSuperAdmin() || auth()->user()->isAdmin() || auth()->user()->isManager()))
                 <div class="sidebar-label" style="margin-top: 8px;">Laporan</div>
 
                 <a href="{{ route('reports.index') }}"
@@ -131,13 +164,13 @@
             @endif
 
             {{-- Pengaturan: Admin only --}}
-            @if(auth()->user()->isAdmin())
+            @if(!$isTeknikManager && (auth()->user()->isSuperAdmin() || auth()->user()->isAdmin()))
                 <div class="sidebar-label" style="margin-top: 8px;">Pengaturan</div>
 
                 <a href="{{ route('users.index') }}"
                     class="sidebar-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
                     <i class="bi bi-people-fill"></i>
-                    <span>Manajemen User</span>
+                    <span>{{ auth()->user()->isSuperAdmin() ? 'User Management Global' : 'Manajemen User' }}</span>
                 </a>
 
                 <a href="{{ route('import.index') }}"
@@ -148,7 +181,7 @@
             @endif
 
             {{-- Approval User: Manager only --}}
-            @if(auth()->user()->isManager())
+            @if(auth()->user()->isManager() && !$isTeknikManager)
                 <div class="sidebar-label" style="margin-top: 8px;">Pengaturan</div>
 
                 <a href="{{ route('pendingUsers.index', ['account_status' => 'pending']) }}"
@@ -159,7 +192,7 @@
                         $pendingUsersCount = 0;
                         try {
                             if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'account_status')) {
-                                $pendingUsersCount = \App\Models\User::where('account_status', 'pending')->count();
+                                $pendingUsersCount = \App\Models\User::visibleFor(auth()->user())->where('account_status', 'pending')->count();
                             }
                         } catch (\Throwable $e) {
                             $pendingUsersCount = 0;
@@ -179,7 +212,7 @@
                 </div>
                 <div class="user-info">
                     <div class="user-name">{{ auth()->user()->name }}</div>
-                    <div class="user-role">{{ ucfirst(auth()->user()->role) }}</div>
+                    <div class="user-role">{{ ucfirst(auth()->user()->role) }} @if(auth()->user()->bidang) - {{ ucfirst(auth()->user()->bidang) }} @endif</div>
                 </div>
                 <form action="{{ route('logout') }}" method="POST" style="margin:0;" id="logoutForm">
                     @csrf
@@ -208,9 +241,9 @@
                 </div>
             </div>
             <div class="topbar-right">
-                @if(!auth()->user()->isStaff())
+                @if(!auth()->user()->isStaff() && !(auth()->user()->isManager() && auth()->user()->isTeknik()))
                     @php
-                        $lowStockCount = \App\Models\Item::all()->filter(fn($i) => $i->is_low_stock)->count();
+                        $lowStockCount = \App\Models\Item::visibleFor(auth()->user())->get()->filter(fn($i) => $i->is_low_stock)->count();
                     @endphp
                     @if($lowStockCount > 0)
                         <a href="{{ route('stock.index', ['stock_status' => 'low']) }}" class="btn-icon"
@@ -246,10 +279,7 @@
         <footer class="main-footer">
             <div class="footer-content">
                 <div class="copyright">
-                    &copy; 2026 <span class="brand-name">Next Logistic</span>. All rights reserved.
-                </div>
-                <div class="footer-meta">
-                    <span>Port Management Unit Suralaya</span>
+                    &copy; 2026 Port Management Unit Suralaya
                 </div>
             </div>
         </footer>

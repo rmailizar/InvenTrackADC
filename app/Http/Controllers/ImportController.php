@@ -32,7 +32,7 @@ class ImportController extends Controller
 
         try {
             if ($type === 'items') {
-                $import = new ItemImport();
+                $import = new ItemImport(auth()->user());
                 Excel::import($import, $file);
 
                 $successCount = $import->getRowCount();
@@ -41,28 +41,28 @@ class ImportController extends Controller
 
                 $message = "✅ Import Barang selesai: {$successCount} baris berhasil diimport.";
                 if ($skipCount > 0) {
-                    $message .= " {$skipCount} baris dilewati (duplikat).";
+                    $message .= " {$skipCount} baris dilewati (duplikat nama/no normalisasi).";
                 }
 
                 return redirect()->route('import.index')->with('success', $message)
-                    ->with('import_failures', $failures->count() > 0 ? $failures : null)
+                    ->with('import_failures', $this->failuresForSession($failures))
                     ->with('import_type', 'Barang');
 
             } else {
-                $import = new TransactionImport();
+                $import = new TransactionImport(auth()->user());
                 Excel::import($import, $file);
 
                 $successCount = $import->getRowCount();
                 $unmatchedItems = $import->getUnmatchedItems();
                 $failures = $import->failures();
 
-                $message = "✅ Import Transaksi selesai: {$successCount} baris berhasil diimport (status: pending).";
+                $message = "Import Transaksi selesai: {$successCount} baris berhasil diimport.";
                 if (count($unmatchedItems) > 0) {
                     $message .= " Barang tidak ditemukan: " . implode(', ', $unmatchedItems) . ".";
                 }
 
                 return redirect()->route('import.index')->with('success', $message)
-                    ->with('import_failures', $failures->count() > 0 ? $failures : null)
+                    ->with('import_failures', $this->failuresForSession($failures))
                     ->with('import_type', 'Transaksi');
             }
         } catch (\Throwable $e) {
@@ -73,30 +73,47 @@ class ImportController extends Controller
 
     public function downloadTemplate($type)
     {
-        $filename = $type === 'items' ? 'template_barang.xlsx' : 'template_transaksi.xlsx';
+        abort_unless(in_array($type, ['items', 'transactions'], true), 404);
+
+        $isTeknik = auth()->user()?->bidang === 'teknik';
+        $filename = match (true) {
+            $type === 'items' && $isTeknik => 'template_barang_teknik.xlsx',
+            $type === 'transactions' && $isTeknik => 'template_transaksi_teknik.xlsx',
+            $type === 'items' => 'template_barang.xlsx',
+            default => 'template_transaksi.xlsx',
+        };
         $path = public_path("templates/{$filename}");
 
-        if (!file_exists($path)) {
-            // Generate template on the fly
-            return $this->generateTemplate($type);
+        if (!$isTeknik && file_exists($path)) {
+            return response()->download($path);
         }
 
-        return response()->download($path);
+        return $this->generateTemplate($type, $isTeknik);
     }
 
-    private function generateTemplate(string $type)
+    private function generateTemplate(string $type, bool $isTeknik = false)
     {
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
 
         if ($type === 'items') {
             $sheet->setTitle('Template Barang');
-            $headers = ['nama_barang', 'kategori', 'satuan', 'min_stok'];
-            $sample = ['Kertas HVS A4', 'ATK', 'Rim', 10];
+            if ($isTeknik) {
+                $headers = ['no_normalisasi', 'nama_barang', 'kategori', 'ship_unloader', 'lokasi', 'satuan', 'min_stok'];
+                $sample = ['SU-01-LAN-001', 'Kabel LAN Cat6 305m', 'Jaringan', '1,2', 'Gudang Teknik A1', 'Box', 2];
+            } else {
+                $headers = ['nama_barang', 'kategori', 'satuan', 'min_stok'];
+                $sample = ['Kertas HVS A4', 'ATK', 'Rim', 10];
+            }
         } else {
             $sheet->setTitle('Template Transaksi');
-            $headers = ['tanggal', 'nama_barang', 'jenis', 'jumlah', 'harga', 'keterangan'];
-            $sample = ['17/04/2026', 'Kertas HVS A4', 'in', 50, 55000, 'Pembelian bulanan'];
+            if ($isTeknik) {
+                $headers = ['tanggal', 'jenis', 'no_normalisasi', 'nama_barang', 'ship_unloader', 'lokasi', 'volume', 'satuan', 'keterangan'];
+                $sample = ['17/04/2026', 'in', 'SU-01-LAN-001', 'Kabel LAN Cat6 305m', '1,2', 'Gudang Teknik A1', 5, 'Box', 'Goods receipt teknik'];
+            } else {
+                $headers = ['tanggal', 'nama_barang', 'jenis', 'jumlah', 'harga', 'keterangan'];
+                $sample = ['17/04/2026', 'Kertas HVS A4', 'in', 50, 55000, 'Pembelian bulanan'];
+            }
         }
 
         // Set headers with styling
@@ -121,11 +138,32 @@ class ImportController extends Controller
 
         // Generate and download
         $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-        $filename = $type === 'items' ? 'template_barang.xlsx' : 'template_transaksi.xlsx';
+        $filename = match (true) {
+            $type === 'items' && $isTeknik => 'template_barang_teknik.xlsx',
+            $type === 'transactions' && $isTeknik => 'template_transaksi_teknik.xlsx',
+            $type === 'items' => 'template_barang.xlsx',
+            default => 'template_transaksi.xlsx',
+        };
 
         $tempPath = storage_path("app/{$filename}");
         $writer->save($tempPath);
 
         return response()->download($tempPath, $filename)->deleteFileAfterSend(true);
+    }
+
+    private function failuresForSession($failures): ?array
+    {
+        if (!$failures || $failures->count() === 0) {
+            return null;
+        }
+
+        return $failures
+            ->map(fn($failure) => [
+                'row' => $failure->row(),
+                'attribute' => $failure->attribute(),
+                'errors' => $failure->errors(),
+            ])
+            ->values()
+            ->all();
     }
 }

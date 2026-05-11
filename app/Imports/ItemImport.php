@@ -3,24 +3,46 @@
 namespace App\Imports;
 
 use App\Models\Item;
+use App\Models\User;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\Importable;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 
-class ItemImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFailure
+class ItemImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFailure, SkipsEmptyRows
 {
     use SkipsFailures, Importable;
 
     private int $rowCount = 0;
     private int $skipCount = 0;
 
+    public function __construct(private ?User $user = null)
+    {
+    }
+
     public function model(array $row)
     {
         // Skip if item with same name already exists
-        $existing = Item::where('name', trim($row['nama_barang']))->first();
+        $bidang = $this->user?->isSuperAdmin()
+            ? strtolower(trim($row['bidang'] ?? 'umum'))
+            : $this->user?->bidang;
+        $bidang = in_array($bidang, ['teknik', 'umum'], true) ? $bidang : 'umum';
+
+        $name = $this->cellString($row['nama_barang'] ?? '');
+        $noNormalisasi = $this->cellString($row['no_normalisasi'] ?? '');
+
+        $existing = Item::where('bidang', $bidang)
+            ->where(function ($query) use ($name, $noNormalisasi) {
+                $query->where('name', $name);
+
+                if ($noNormalisasi !== '') {
+                    $query->orWhere('no_normalisasi', $noNormalisasi);
+                }
+            })
+            ->first();
         if ($existing) {
             $this->skipCount++;
             return null;
@@ -29,9 +51,14 @@ class ItemImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFail
         $this->rowCount++;
 
         return new Item([
-            'name'      => trim($row['nama_barang']),
-            'category'  => trim($row['kategori']),
-            'unit'      => trim($row['satuan']),
+            'name'      => $name,
+            'no_normalisasi' => $bidang === 'teknik' ? $noNormalisasi : null,
+            'category'  => $this->cellString($row['kategori'] ?? ''),
+            'unit'      => $this->cellString($row['satuan'] ?? ''),
+            'bidang'    => $bidang,
+            'lokasi'    => $bidang === 'teknik' ? $this->cellString($row['lokasi'] ?? '') : null,
+            'volume'    => null,
+            'ship_unloader' => $bidang === 'teknik' ? $this->normalizeShipUnloader($row['ship_unloader'] ?? '') : null,
             'min_stock' => (int) ($row['min_stok'] ?? 0),
         ]);
     }
@@ -39,9 +66,13 @@ class ItemImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFail
     public function rules(): array
     {
         return [
-            'nama_barang' => 'required|string|max:255',
-            'kategori'    => 'required|string|max:255',
-            'satuan'      => 'required|string|max:50',
+            'nama_barang' => 'required|max:255',
+            'kategori'    => 'required|max:255',
+            'satuan'      => 'required|max:50',
+            'bidang'      => 'nullable|in:teknik,umum',
+            'no_normalisasi' => 'nullable|max:255',
+            'lokasi'      => 'nullable|max:255',
+            'ship_unloader' => 'nullable|max:20',
             'min_stok'    => 'nullable|integer|min:0',
         ];
     }
@@ -63,5 +94,32 @@ class ItemImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFail
     public function getSkipCount(): int
     {
         return $this->skipCount;
+    }
+
+    private function normalizeShipUnloader($value): ?string
+    {
+        $value = str_replace(['.', ';', '-', ' '], ',', $this->cellString($value));
+
+        $ships = collect(explode(',', $value))
+            ->map(fn($ship) => trim($ship))
+            ->filter(fn($ship) => in_array($ship, ['1', '2', '3', '4'], true))
+            ->unique()
+            ->sort()
+            ->values();
+
+        return $ships->isEmpty() ? null : $ships->implode(',');
+    }
+
+    private function cellString($value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+
+        if (is_float($value) && floor($value) === $value) {
+            return (string) (int) $value;
+        }
+
+        return trim((string) $value);
     }
 }

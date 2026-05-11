@@ -9,8 +9,8 @@ class ItemLookupController extends Controller
 {
     public function index()
     {
-        $categories = Item::query()->select('category')->distinct()->orderBy('category')->pluck('category');
-        $units = Item::query()->select('unit')->distinct()->orderBy('unit')->pluck('unit');
+        $categories = Item::visibleFor(auth()->user())->select('category')->distinct()->orderBy('category')->pluck('category');
+        $units = Item::visibleFor(auth()->user())->select('unit')->distinct()->orderBy('unit')->pluck('unit');
 
         return view('items.lookups', compact('categories', 'units'));
     }
@@ -34,12 +34,13 @@ class ItemLookupController extends Controller
             return back()->with('error', 'Nilai lama dan baru tidak boleh sama.');
         }
 
-        $count = Item::where($field, $from)->count();
+        $query = Item::visibleFor(auth()->user())->where($field, $from);
+        $count = (clone $query)->count();
         if ($count === 0) {
             return back()->with('error', 'Tidak ada barang yang memakai nilai tersebut.');
         }
 
-        Item::where($field, $from)->update([$field => $to]);
+        $query->update([$field => $to]);
 
         $label = $validated['type'] === 'category' ? 'Kategori' : 'Satuan';
 

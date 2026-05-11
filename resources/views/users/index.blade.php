@@ -1,9 +1,13 @@
 @extends('layouts.app')
 
-@section('title', auth()->user()->isManager() ? 'Approval User' : 'Manajemen User')
-@section('subtitle', auth()->user()->isManager() ? 'Setujui atau tolak akun pengguna' : 'Kelola akun pengguna sistem')
+@section('title', auth()->user()->isSuperAdmin() ? 'User Management Global' : (auth()->user()->isManager() ? 'Approval User' : 'Manajemen User'))
+@section('subtitle', auth()->user()->isSuperAdmin() ? 'Kelola akun pengguna Bidang Umum dan Teknik' : (auth()->user()->isManager() ? 'Setujui atau tolak akun pengguna' : 'Kelola akun pengguna sistem'))
 
 @section('content')
+    @php
+        $actor = auth()->user();
+        $isTeknikActor = $actor->isTeknik();
+    @endphp
     <div class="animate-fade-in">
         <!-- Filter Bar -->
         <div class="filter-bar">
@@ -19,12 +23,27 @@
                         <label class="form-label">Role</label>
                         <select name="role" class="form-select">
                             <option value="">Semua Role</option>
+                            @if(auth()->user()->isSuperAdmin())
+                                <option value="superadmin" {{ request('role') == 'superadmin' ? 'selected' : '' }}>Superadmin</option>
+                            @endif
                             <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
                             <option value="manajer" {{ request('role') == 'manajer' ? 'selected' : '' }}>Manajer</option>
-                            <option value="staf" {{ request('role') == 'staf' ? 'selected' : '' }}>Staf</option>
+                            @if(!$isTeknikActor)
+                                <option value="staf" {{ request('role') == 'staf' ? 'selected' : '' }}>Staf</option>
+                            @endif
                         </select>
                     </div>
-                    @if(auth()->user()->isAdmin())
+                    @if(auth()->user()->isSuperAdmin())
+                        <div class="col-md-2">
+                            <label class="form-label">Bidang</label>
+                            <select name="bidang" class="form-select">
+                                <option value="">Semua</option>
+                                <option value="umum" {{ request('bidang') == 'umum' ? 'selected' : '' }}>Umum</option>
+                                <option value="teknik" {{ request('bidang') == 'teknik' ? 'selected' : '' }}>Teknik</option>
+                            </select>
+                        </div>
+                    @endif
+                    @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
                         <div class="col-md-2">
                             <label class="form-label">Status Akun</label>
                             <select name="account_status" class="form-select">
@@ -50,7 +69,7 @@
             </form>
         </div>
 
-        @if(auth()->user()->isAdmin())
+        @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
             <div class="d-flex justify-content-end mb-3">
                 <button type="button" class="btn btn-primary" onclick="openUserModal()">
                     <i class="bi bi-person-plus-fill"></i> Tambah User
@@ -69,10 +88,13 @@
                                 <th>Nama</th>
                                 <th>Email</th>
                                 <th>Role</th>
+                                <th>Bidang</th>
                                 <th>No HP</th>
                                 <th>Status Akun</th>
                                 <th>Terdaftar</th>
+                                @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
                                 <th>Terakhir Login</th>
+                                @endif
                                 <th style="width:140px;">Aksi</th>
                             </tr>
                         </thead>
@@ -84,7 +106,15 @@
                                         <div class="d-flex align-items-center gap-2">
                                             <div
                                                 style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-light));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:11px;flex-shrink:0;">
-                                                {{ strtoupper(substr($user->name, 0, 2)) }}
+                                                @php
+                                                    $words = explode(' ', $user->name);
+                                                    $initials = strtoupper(substr($words[0], 0, 1));
+                                                    
+                                                    if (count($words) > 1) {
+                                                        $initials .= strtoupper(substr(end($words), 0, 1));
+                                                    }
+                                                @endphp
+                                                {{ $initials }}
                                             </div>
                                             <span class="fw-600">{{ $user->name }}</span>
                                         </div>
@@ -92,13 +122,14 @@
                                     <td>{{ $user->email }}</td>
                                     <td>
                                         @php
-                                            $roleColors = ['admin' => 'primary', 'manajer' => 'warning', 'staf' => 'info'];
+                                            $roleColors = ['superadmin' => 'dark', 'admin' => 'primary', 'manajer' => 'warning', 'staf' => 'info'];
                                         @endphp
                                         <span class="badge bg-{{ $roleColors[$user->role] ?? 'secondary' }}"
                                             style="font-size:11px; padding:4px 10px; border-radius:20px;">
                                             {{ ucfirst($user->role) }}
                                         </span>
                                     </td>
+                                    <td>{{ $user->bidang ? ucfirst($user->bidang) : 'Global' }}</td>
                                     <td>{{ $user->no_hp ?? '-' }}</td>
                                     <td>
                                         <span
@@ -107,9 +138,11 @@
                                     <td style="font-size:12px; color:var(--text-secondary);">
                                         {{ $user->created_at->format('d/m/Y') }}
                                     </td>
+                                    @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
                                     <td style="font-size:12px;">
                                         {{ $user->last_login_at ? \Carbon\Carbon::parse($user->last_login_at)->format('d/m/Y H:i') : '-' }}
                                     </td>
+                                    @endif
                                     <td>
                                         <div class="action-buttons">
                                             {{-- Manager: Approve/Reject user account --}}
@@ -133,7 +166,7 @@
                                             @endif
 
                                             {{-- Admin: Edit/Delete --}}
-                                            @if(auth()->user()->isAdmin())
+                                            @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
                                                 <button type="button" class="btn-action edit" title="Edit"
                                                     onclick="openUserModal({{ $user->id }})">
                                                     <i class="bi bi-pencil-fill"></i>
@@ -154,7 +187,7 @@
                                 </tr>
                             @empty
                                 <tr class="no-data-row">
-                                    <td colspan="8">
+                                    <td colspan="{{ (auth()->user()->isAdmin() || auth()->user()->isSuperAdmin()) ? 10 : 9 }}">
                                         <i class="bi bi-people"
                                             style="font-size:40px;display:block;margin-bottom:8px;opacity:0.3;"></i>
                                         {{ auth()->user()->isManager() ? 'Tidak ada user menunggu approval' : 'Belum ada data user' }}
@@ -175,7 +208,7 @@
     </div>
 
     {{-- User Modal (Create/Edit) --}}
-    @if(auth()->user()->isAdmin())
+    @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
         <div class="modal fade inventrack-modal" id="userModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content" style="position:relative;">
@@ -220,11 +253,28 @@
                                 <label class="form-label">Role <span class="text-danger">*</span></label>
                                 <select name="role" class="form-select" required id="userRole">
                                     <option value="">-- Pilih Role --</option>
+                                    @if(auth()->user()->isSuperAdmin())
+                                        <option value="superadmin">Superadmin</option>
+                                    @endif
                                     <option value="admin">Admin</option>
                                     <option value="manajer">Manajer</option>
-                                    <option value="staf">Staf</option>
+                                    @if(!$isTeknikActor || auth()->user()->isSuperAdmin())
+                                        <option value="staf" data-role-option="staf">Staf</option>
+                                    @endif
                                 </select>
                             </div>
+
+                            @if(auth()->user()->isSuperAdmin())
+                                <div class="mb-3">
+                                    <label class="form-label">Bidang <span class="text-danger">*</span></label>
+                                    <select name="bidang" class="form-select" id="userBidang">
+                                        <option value="">-- Pilih Bidang --</option>
+                                        <option value="umum">Umum</option>
+                                        <option value="teknik">Teknik</option>
+                                    </select>
+                                    <small class="text-muted">Tidak wajib untuk role Superadmin.</small>
+                                </div>
+                            @endif
 
                             <div class="row g-3 mb-3">
                                 <div class="col-md-6">
@@ -254,17 +304,39 @@
     @endif
 @endsection
 
-@if(auth()->user()->isAdmin())
+@if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
     @push('scripts')
         <script>
             const userModalEl = document.getElementById('userModal');
             const userModal = new bootstrap.Modal(userModalEl);
+            const isTeknikActorUser = @json($isTeknikActor);
+
+            function updateUserRoleOptions() {
+                const roleSelect = document.getElementById('userRole');
+                const bidangSelect = document.getElementById('userBidang');
+                const staffOption = roleSelect ? roleSelect.querySelector('option[value="staf"]') : null;
+                const selectedBidang = bidangSelect ? bidangSelect.value : (isTeknikActorUser ? 'teknik' : 'umum');
+                const hideStaff = selectedBidang === 'teknik';
+
+                if (staffOption) {
+                    staffOption.hidden = hideStaff;
+                    staffOption.disabled = hideStaff;
+                    if (hideStaff && roleSelect.value === 'staf') {
+                        roleSelect.value = '';
+                    }
+                }
+            }
+
+            if (document.getElementById('userBidang')) {
+                document.getElementById('userBidang').addEventListener('change', updateUserRoleOptions);
+            }
 
             function openUserModal(id = null) {
                 // Reset
                 document.getElementById('userForm').reset();
                 document.getElementById('userError').style.display = 'none';
                 document.querySelectorAll('#userForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                updateUserRoleOptions();
 
                 if (id) {
                     // Edit mode
@@ -292,6 +364,10 @@
                             document.getElementById('userEmail').value = data.email;
                             document.getElementById('userNoHp').value = data.no_hp || '';
                             document.getElementById('userRole').value = data.role;
+                            if (document.getElementById('userBidang')) {
+                                document.getElementById('userBidang').value = data.bidang || '';
+                            }
+                            updateUserRoleOptions();
                         })
                         .catch(() => {
                             loading.classList.remove('show');
@@ -309,6 +385,7 @@
                     document.getElementById('userPassword').placeholder = 'Minimal 6 karakter';
                     document.getElementById('userPassword').setAttribute('required', 'required');
                     document.getElementById('userPasswordConfirm').setAttribute('required', 'required');
+                    updateUserRoleOptions();
                     userModal.show();
                 }
             }

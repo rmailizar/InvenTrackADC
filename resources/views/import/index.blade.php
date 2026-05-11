@@ -4,6 +4,10 @@
 @section('subtitle', 'Import data dari file Excel ke database')
 
 @section('content')
+    @php
+        $isTeknik = auth()->user()->bidang === 'teknik';
+    @endphp
+
     <div class="animate-fade-in">
         <div class="row justify-content-center">
             <div class="col-lg-8">
@@ -44,12 +48,17 @@
                                     </thead>
                                     <tbody>
                                         @foreach(session('import_failures') as $failure)
+                                            @php
+                                                $failureRow = is_array($failure) ? ($failure['row'] ?? '-') : $failure->row();
+                                                $failureAttribute = is_array($failure) ? ($failure['attribute'] ?? '-') : $failure->attribute();
+                                                $failureErrors = is_array($failure) ? ($failure['errors'] ?? []) : $failure->errors();
+                                            @endphp
                                             <tr>
                                                 <td><span class="badge-status"
-                                                        style="background:var(--danger-bg);color:var(--danger);">{{ $failure->row() }}</span>
+                                                        style="background:var(--danger-bg);color:var(--danger);">{{ $failureRow }}</span>
                                                 </td>
-                                                <td><code style="font-size:11px;">{{ $failure->attribute() }}</code></td>
-                                                <td>{{ implode(', ', $failure->errors()) }}</td>
+                                                <td><code style="font-size:11px;">{{ $failureAttribute }}</code></td>
+                                                <td>{{ implode(', ', (array) $failureErrors) }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -82,7 +91,7 @@
                                             </div>
                                             <div>
                                                 <div class="import-type-title">Master Barang</div>
-                                                <div class="import-type-desc">Nama, kategori, satuan, min stok</div>
+                                                <div class="import-type-desc">{{ $isTeknik ? 'No normalisasi, komponen, lokasi' : 'Nama, kategori, satuan, min stok' }}</div>
                                             </div>
                                         </div>
                                     </label>
@@ -95,7 +104,7 @@
                                             </div>
                                             <div>
                                                 <div class="import-type-title">Transaksi</div>
-                                                <div class="import-type-desc">Tanggal, barang, jenis, jumlah</div>
+                                                <div class="import-type-desc">{{ $isTeknik ? 'Goods receipt/issue teknik' : 'Tanggal, barang, jenis, jumlah' }}</div>
                                             </div>
                                         </div>
                                     </label>
@@ -197,12 +206,34 @@
                                                 <td><span class="badge-status" style="color:var(--success);">Ya</span>
                                                 </td>
                                             </tr>
+                                            @if($isTeknik)
+                                                <tr>
+                                                    <td><code>no_normalisasi</code></td>
+                                                    <td>Nomor normalisasi barang teknik</td>
+                                                    <td><span class="badge-status" style="color:var(--warning);">Opsional</span>
+                                                    </td>
+                                                </tr>
+                                            @endif
                                             <tr>
                                                 <td><code>kategori</code></td>
-                                                <td>Kategori barang</td>
+                                                <td>{{ $isTeknik ? 'Komponen barang' : 'Kategori barang' }}</td>
                                                 <td><span class="badge-status" style="color:var(--success);">Ya</span>
                                                 </td>
                                             </tr>
+                                            @if($isTeknik)
+                                                <tr>
+                                                    <td><code>ship_unloader</code></td>
+                                                    <td>Nomor ship unloader, pisahkan dengan koma</td>
+                                                    <td><span class="badge-status" style="color:var(--warning);">Opsional</span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>lokasi</code></td>
+                                                    <td>Lokasi penyimpanan</td>
+                                                    <td><span class="badge-status" style="color:var(--warning);">Opsional</span>
+                                                    </td>
+                                                </tr>
+                                            @endif
                                             <tr>
                                                 <td><code>satuan</code></td>
                                                 <td>Satuan (Pcs, Rim, dll)</td>
@@ -245,24 +276,56 @@
                                                 <td><span class="badge-status" style="color:var(--success);">Ya</span>
                                                 </td>
                                             </tr>
+                                            @if($isTeknik)
+                                                <tr>
+                                                    <td><code>no_normalisasi</code></td>
+                                                    <td>Nomor seri barang teknik</td>
+                                                    <td><span class="badge-status" style="color:var(--warning);">Opsional</span>
+                                                    </td>
+                                                </tr>
+                                            @endif
                                             <tr>
                                                 <td><code>jenis</code></td>
-                                                <td>in / out</td>
+                                                <td>{{ $isTeknik ? 'in untuk Goods Receipt, out untuk Goods Issue' : 'in / out' }}</td>
                                                 <td><span class="badge-status" style="color:var(--success);">Ya</span>
                                                 </td>
                                             </tr>
-                                            <tr>
-                                                <td><code>jumlah</code></td>
-                                                <td>Jumlah (angka)</td>
-                                                <td><span class="badge-status" style="color:var(--success);">Ya</span>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td><code>harga</code></td>
-                                                <td>Harga satuan</td>
-                                                <td><span class="badge-status" style="color:var(--warning);">Opsional</span>
-                                                </td>
-                                            </tr>
+                                            @if($isTeknik)
+                                                <tr>
+                                                    <td><code>ship_unloader</code></td>
+                                                    <td>Nomor ship unloader, pisahkan dengan koma</td>
+                                                    <td><span class="badge-status" style="color:var(--warning);">Opsional</span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>lokasi</code></td>
+                                                    <td>Lokasi transaksi/barang</td>
+                                                    <td><span class="badge-status" style="color:var(--warning);">Opsional</span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>volume</code></td>
+                                                    <td>Jumlah barang transaksi</td>
+                                                    <td><span class="badge-status" style="color:var(--success);">Ya</span>
+                                                    </td>
+                                                </tr>
+                                            @endif
+                                            @unless($isTeknik)
+                                                <tr>
+                                                    <td><code>jumlah</code></td>
+                                                    <td>Jumlah (angka)</td>
+                                                    <td><span class="badge-status" style="color:var(--success);">Ya</span>
+                                                    </td>
+                                                </tr>
+                                            @endunless
+                                            @unless($isTeknik)
+                                                <tr>
+                                                    <td><code>harga</code></td>
+                                                    <td>Harga satuan</td>
+                                                    <td><span class="badge-status" style="color:var(--warning);">Opsional</span>
+                                                    </td>
+                                                </tr>
+                                            @endunless
                                             <tr>
                                                 <td><code>keterangan</code></td>
                                                 <td>Catatan</td>

@@ -17,6 +17,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'bidang',
         'no_hp',
         'account_status',
         'last_login_at',
@@ -40,6 +41,11 @@ class User extends Authenticatable
         return $this->role === 'admin';
     }
 
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'superadmin';
+    }
+
     public function isManager(): bool
     {
         return $this->role === 'manajer';
@@ -50,9 +56,44 @@ class User extends Authenticatable
         return $this->role === 'staf';
     }
 
+    public function isTeknik(): bool
+    {
+        return $this->bidang === 'teknik';
+    }
+
+    public function isUmum(): bool
+    {
+        return $this->bidang === 'umum';
+    }
+
     public function isApproved(): bool
     {
         return $this->account_status === 'approved';
+    }
+
+    public function departmentLabel(): string
+    {
+        return match ($this->bidang) {
+            'teknik' => 'Teknik',
+            'umum' => 'Umum',
+            default => 'Global',
+        };
+    }
+
+    public function canAccessBidang(?string $bidang): bool
+    {
+        return $this->isSuperAdmin() || ($bidang !== null && $this->bidang === $bidang);
+    }
+
+    public function scopeVisibleFor($query, ?User $user = null)
+    {
+        $user ??= auth()->user();
+
+        if (!$user || $user->isSuperAdmin()) {
+            return $query;
+        }
+
+        return $query->where('bidang', $user->bidang);
     }
 
     public function transactions()

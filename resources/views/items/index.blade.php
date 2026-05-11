@@ -4,6 +4,24 @@
 @section('subtitle', 'Kelola daftar barang inventory')
 
 @section('content')
+    @php
+        $isTeknik = auth()->user()->bidang === 'teknik';
+        $itemDetailData = [];
+        foreach ($items as $itemRow) {
+            $itemDetailData[$itemRow->id] = [
+                'name' => $itemRow->name,
+                'no_normalisasi' => $itemRow->no_normalisasi ?: '-',
+                'category' => $itemRow->category,
+                'bidang' => $itemRow->bidang ? ucfirst($itemRow->bidang) : '-',
+                'lokasi' => $itemRow->lokasi ?: '-',
+                'volume' => $itemRow->current_stock,
+                'ship_unloader' => $itemRow->ship_unloader_label,
+                'unit' => $itemRow->unit,
+                'min_stock' => $itemRow->min_stock,
+                'current_stock' => $itemRow->current_stock,
+            ];
+        }
+    @endphp
     <div class="animate-fade-in">
         <!-- Filter Bar -->
         <div class="filter-bar">
@@ -46,24 +64,55 @@
                 <div class="table-container">
                     <table class="table" id="items-table">
                         <thead>
-                            <tr>
-                                <th style="width:50px;">No</th>
-                                <th>Nama Barang</th>
-                                <th>Kategori</th>
-                                <th>Satuan</th>
-                                <th>Min Stok</th>
-                                <th>Stok Saat Ini</th>
-                                <th>Status</th>
-                                <th style="width:100px;">Aksi</th>
-                            </tr>
+                            @if($isTeknik)
+                                <tr>
+                                    <th style="width:50px;">No</th>
+                                    <th>No Normalisasi</th>
+                                    <th>Nama Barang</th>
+                                    <th>Komponen</th>
+                                    <th>Lokasi</th>
+                                    <th class="text-center">Volume</th>
+                                    <th>Satuan</th>
+                                    <th>Min Stok</th>
+                                    <th>Stok Saat Ini</th>
+                                    <th>Status</th>
+                                    <th style="width:100px;">Aksi</th>
+                                </tr>
+                            @else
+                                <tr>
+                                    <th style="width:50px;">No</th>
+                                    <th>Nama Barang</th>
+                                    <th>Kategori</th>
+                                    @if(auth()->user()->isSuperAdmin())
+                                        <th>Bidang</th>
+                                    @endif
+                                    <th>Satuan</th>
+                                    <th>Min Stok</th>
+                                    <th>Stok Saat Ini</th>
+                                    <th>Status</th>
+                                    <th style="width:100px;">Aksi</th>
+                                </tr>
+                            @endif
                         </thead>
                         <tbody>
                             @forelse($items as $index => $item)
                                 <tr>
                                     <td>{{ $items->firstItem() + $index }}</td>
-                                    <td class="fw-600">{{ $item->name }}</td>
-                                    <td>{{ $item->category }}</td>
-                                    <td>{{ $item->unit }}</td>
+                                    @if($isTeknik)
+                                        <td class="fw-600">{{ $item->no_normalisasi ?? '-' }}</td>
+                                        <td class="fw-600">{{ $item->name }}</td>
+                                        <td>{{ $item->category }}</td>
+                                        <td>{{ $item->lokasi ?? '-' }}</td>
+                                        <td class="text-center fw-700">{{ $item->current_stock }}</td>
+                                        <td>{{ $item->unit }}</td>
+                                    @else
+                                        <td class="fw-600">{{ $item->name }}</td>
+                                        <td>{{ $item->category }}</td>
+                                        @if(auth()->user()->isSuperAdmin())
+                                            <td>{{ ucfirst($item->bidang) }}</td>
+                                        @endif
+                                        <td>{{ $item->unit }}</td>
+                                    @endif
                                     <td>{{ $item->min_stock }}</td>
                                     <td class="fw-700
                                                                     @if($item->current_stock == 0)
@@ -79,17 +128,17 @@
 
                                     <td>
                                         @if($item->current_stock == 0)
-                                            <span class="badge-stock-ok text-danger-custom">
+                                            <span class="badge-status badge-rejected">
                                                 <i class="bi bi-x-circle-fill"></i> Out of Stock
                                             </span>
 
                                         @elseif($item->current_stock < $item->min_stock)
-                                            <span class="badge-low-stock text-warning">
+                                            <span class="badge-status badge-pending">
                                                 <i class="bi bi-exclamation-triangle-fill"></i> Request Order
                                             </span>
 
                                         @else
-                                            <span class="badge-stock-ok">
+                                            <span class="badge-status badge-approved">
                                                 <i class="bi bi-check-circle-fill"></i> Ready
                                             </span>
                                         @endif
@@ -99,6 +148,10 @@
                                             <button type="button" class="btn-action edit" title="Edit"
                                                 onclick="openItemModal({{ $item->id }})">
                                                 <i class="bi bi-pencil-fill"></i>
+                                            </button>
+                                            <button type="button" class="btn-action view btn-item-detail-open" title="Lihat Detail"
+                                                data-item-id="{{ $item->id }}">
+                                                <i class="bi bi-eye-fill"></i>
                                             </button>
                                             <form action="{{ route('items.destroy', $item) }}" method="POST"
                                                 id="deleteItem-{{ $item->id }}">
@@ -113,7 +166,7 @@
                                 </tr>
                             @empty
                                 <tr class="no-data-row">
-                                    <td colspan="8">
+                                    <td colspan="{{ $isTeknik ? 11 : (auth()->user()->isSuperAdmin() ? 9 : 8) }}">
                                         <i class="bi bi-inbox"
                                             style="font-size:40px;display:block;margin-bottom:8px;opacity:0.3;"></i>
                                         Belum ada data barang
@@ -131,6 +184,23 @@
                 {{ $items->links('pagination.custom') }}
             </div>
         @endif
+    </div>
+
+    <div class="modal fade inventrack-modal" id="itemDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-eye-fill me-2"></i>Detail Barang</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3" id="itemDetailGrid"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     {{-- Item Modal (Create/Edit) --}}
@@ -163,7 +233,7 @@
 
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">Kategori <span class="text-danger">*</span></label>
+                                <label class="form-label">{{ $isTeknik ? 'Komponen' : 'Kategori' }} <span class="text-danger">*</span></label>
                                 <input type="text" name="category" list="category-list" class="form-control"
                                     placeholder="Pilih atau ketik kategori" required id="itemCategory">
                                 <datalist id="category-list">
@@ -190,6 +260,50 @@
                                 value="0">
                             <small class="text-muted">Sistem akan memberikan peringatan jika stok di bawah angka ini</small>
                         </div>
+
+                        @if($isTeknik || auth()->user()->isSuperAdmin())
+                            <div class="technical-item-fields">
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">No Normalisasi / No Seri</label>
+                                        <input type="text" name="no_normalisasi" class="form-control" placeholder="Contoh: SU-01-MTR-001" id="itemNoNormalisasi">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Lokasi</label>
+                                        <input type="text" name="lokasi" class="form-control" placeholder="Letak penyimpanan" id="itemLokasi">
+                                    </div>
+                                </div>
+
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Volume</label>
+                                        <input type="text" class="form-control" id="itemVolume" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Ship Unloader</label>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            @foreach([1, 2, 3, 4] as $ship)
+                                                <label class="form-check form-check-inline mb-0">
+                                                    <input class="form-check-input item-ship-checkbox" type="checkbox" name="ship_unloader[]" value="{{ $ship }}">
+                                                    <span class="form-check-label">Ship {{ $ship }}</span>
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+
+                        @if(auth()->user()->isSuperAdmin())
+                            <div class="mb-3">
+                                <label class="form-label">Bidang <span class="text-danger">*</span></label>
+                                <select name="bidang" class="form-select" id="itemBidang" required>
+                                    <option value="">-- Pilih Bidang --</option>
+                                    <option value="umum">Umum</option>
+                                    <option value="teknik">Teknik</option>
+                                </select>
+                            </div>
+                        @endif
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -205,8 +319,52 @@
 
 @push('scripts')
     <script>
+        window.__itemDetailData = @json($itemDetailData);
+        const isTeknikItem = @json($isTeknik);
         const itemModalEl = document.getElementById('itemModal');
         const itemModal = new bootstrap.Modal(itemModalEl);
+        const itemDetailModalEl = document.getElementById('itemDetailModal');
+        const itemDetailModal = new bootstrap.Modal(itemDetailModalEl);
+
+        function appendDetailCell(container, label, value) {
+            const wrap = document.createElement('div');
+            wrap.className = 'col-sm-6';
+            const muted = document.createElement('div');
+            muted.className = 'text-muted';
+            muted.style.fontSize = '12px';
+            muted.textContent = label;
+            const strong = document.createElement('div');
+            strong.className = 'fw-700';
+            strong.textContent = value || '-';
+            wrap.appendChild(muted);
+            wrap.appendChild(strong);
+            container.appendChild(wrap);
+        }
+
+        document.querySelectorAll('.btn-item-detail-open').forEach(function(button) {
+            button.addEventListener('click', function() {
+                const data = window.__itemDetailData[this.dataset.itemId];
+                if (!data) return;
+                const grid = document.getElementById('itemDetailGrid');
+                grid.replaceChildren();
+                if (isTeknikItem) {
+                    appendDetailCell(grid, 'No Normalisasi', data.no_normalisasi);
+                    appendDetailCell(grid, 'Nama Barang', data.name);
+                    appendDetailCell(grid, 'Komponen', data.category);
+                    appendDetailCell(grid, 'Lokasi', data.lokasi);
+                    appendDetailCell(grid, 'Volume', data.volume);
+                    appendDetailCell(grid, 'Ship Unloader', data.ship_unloader);
+                } else {
+                    appendDetailCell(grid, 'Nama Barang', data.name);
+                    appendDetailCell(grid, 'Kategori', data.category);
+                    appendDetailCell(grid, 'Bidang', data.bidang);
+                }
+                appendDetailCell(grid, 'Satuan', data.unit);
+                appendDetailCell(grid, 'Min Stok', data.min_stock);
+                appendDetailCell(grid, 'Stok Saat Ini', data.current_stock);
+                itemDetailModal.show();
+            });
+        });
 
         function openItemModal(id = null) {
             // Reset form
@@ -214,6 +372,8 @@
             document.getElementById('itemError').style.display = 'none';
             document.querySelectorAll('#itemForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
             document.getElementById('itemMinStock').value = '0';
+            document.querySelectorAll('.item-ship-checkbox').forEach(el => el.checked = false);
+            toggleTechnicalItemFields();
 
             if (id) {
                 // Edit mode — load data
@@ -236,6 +396,17 @@
                         document.getElementById('itemCategory').value = data.category;
                         document.getElementById('itemUnit').value = data.unit;
                         document.getElementById('itemMinStock').value = data.min_stock;
+                        if (document.getElementById('itemNoNormalisasi')) {
+                            document.getElementById('itemNoNormalisasi').value = data.no_normalisasi || '';
+                            document.getElementById('itemLokasi').value = data.lokasi || '';
+                            document.getElementById('itemVolume').value = data.current_stock || 0;
+                            const ships = (data.ship_unloader || '').split(',').filter(Boolean);
+                            document.querySelectorAll('.item-ship-checkbox').forEach(el => el.checked = ships.includes(el.value));
+                        }
+                        if (document.getElementById('itemBidang')) {
+                            document.getElementById('itemBidang').value = data.bidang || '';
+                        }
+                        toggleTechnicalItemFields();
                     })
                     .catch(() => {
                         loading.classList.remove('show');
@@ -248,8 +419,22 @@
                 document.getElementById('itemId').value = '';
                 document.getElementById('itemMethod').value = 'POST';
                 document.getElementById('itemSubmitBtn').innerHTML = '<i class="bi bi-check-lg"></i> Simpan';
+                toggleTechnicalItemFields();
                 itemModal.show();
             }
+        }
+
+        function toggleTechnicalItemFields() {
+            const wrapper = document.querySelector('.technical-item-fields');
+            if (!wrapper) return;
+            const bidangSelect = document.getElementById('itemBidang');
+            const show = !bidangSelect || bidangSelect.value === 'teknik';
+            wrapper.style.display = show ? '' : 'none';
+        }
+
+        const itemBidangSelect = document.getElementById('itemBidang');
+        if (itemBidangSelect) {
+            itemBidangSelect.addEventListener('change', toggleTechnicalItemFields);
         }
 
         function submitItemForm() {

@@ -75,7 +75,7 @@
     </div>
 </div>
 
-<div class="modal fade" id="lookupReplaceModal" tabindex="-1" aria-labelledby="lookupReplaceModalLabel" aria-hidden="true">
+<div class="modal fade inventrack-modal" id="lookupReplaceModal" tabindex="-1" aria-labelledby="lookupReplaceModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <form method="POST" action="{{ route('items.lookup.replace') }}">
@@ -144,4 +144,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 @endpush
-

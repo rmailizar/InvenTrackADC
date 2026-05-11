@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Rekap Stok & Request Barang - InvenTrack</title>
-    <meta name="description" content="Lihat rekap stok barang dan ajukan request stok tanpa login">
+    <title>Rekap Stok & Permintaan Barang - NextLog</title>
+    <meta name="description" content="Lihat rekap stok barang dan ajukan stuff request tanpa login">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <link href="{{ asset('css/custom.css') }}?v={{ filemtime(public_path('css/custom.css')) }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
-
+    <link rel="icon" type="image/png" href="{{ asset('images/logo-web.png') }}">
     <script>
         (function() {
             const theme = localStorage.getItem('inventrack-theme') || 'light';
@@ -23,13 +23,23 @@
 <body>
     <!-- Hero Background -->
     <div class="background-glow-container">
-        <svg viewBox="0 0 1440 400" preserveAspectRatio="none" style="width:100%; height:100vh; opacity:0.5;">
-            <path class="glowing-line" d="M0 300 C 300 250, 400 350, 700 200 C 1000 50, 1200 150, 1440 50" 
-                  stroke="url(#line_gradient)" stroke-width="4" fill="none" />
+        <svg viewBox="0 0 1440 400" preserveAspectRatio="none">
+            <path class="glowing-line glowing-line-solid"
+                d="M-60 255 C 120 300, 275 295, 405 240 C 555 178, 665 170, 780 210 C 925 260, 1030 262, 1165 228 C 1300 195, 1390 200, 1500 178"
+                stroke="url(#line_gradient)" stroke-width="4" fill="none" />
+            <path class="glowing-line glowing-line-dashed"
+                d="M-60 212 C 110 255, 260 250, 405 220 C 555 188, 685 205, 820 235 C 965 268, 1055 220, 1185 195 C 1320 170, 1405 190, 1500 220"
+                stroke="url(#line_gradient_dashed)" stroke-width="3" fill="none" />
             <defs>
-                <linearGradient id="line_gradient">
+                <linearGradient id="line_gradient" x1="0" y1="0" x2="1440" y2="0"
+                    gradientUnits="userSpaceOnUse">
                     <stop offset="0%" stop-color="#a855f7" />
                     <stop offset="100%" stop-color="#10b981" />
+                </linearGradient>
+                <linearGradient id="line_gradient_dashed" x1="0" y1="0" x2="1440" y2="0"
+                    gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stop-color="#60a5fa" />
+                    <stop offset="100%" stop-color="#34d399" />
                 </linearGradient>
             </defs>
         </svg>
@@ -77,16 +87,32 @@
                             <i class="bi bi-clipboard-data-fill"></i> Daftar Barang
                         </div>
 
+                        <div class="report-tabs mb-3">
+                            <a href="{{ route('public.stuff-request', array_merge(request()->except(['bidang', 'page']), ['bidang' => 'umum'])) }}"
+                                class="report-tab {{ $activeBidang === 'umum' ? 'active' : '' }}">
+                                <i class="bi bi-building"></i>
+                                Barang Bidang Umum
+                            </a>
+                            <a href="{{ route('public.stuff-request', array_merge(request()->except(['bidang', 'page']), ['bidang' => 'teknik'])) }}"
+                                class="report-tab {{ $activeBidang === 'teknik' ? 'active' : '' }}">
+                                <i class="bi bi-tools"></i>
+                                Barang Bidang Teknik
+                            </a>
+                        </div>
+
                         {{-- Filter --}}
                         <div class="filter-bar mb-3">
-                            <form method="GET" action="{{ route('public.stock-request') }}">
+                            <form method="GET" action="{{ route('public.stuff-request') }}">
+                                <input type="hidden" name="bidang" value="{{ $activeBidang }}">
                                 <div class="row align-items-end g-2">
                                     <div class="col-md-5">
-                                        <input type="text" name="search" class="form-control" placeholder="Cari nama barang..." value="{{ request('search') }}">
+                                        <input type="text" name="search" class="form-control"
+                                            placeholder="{{ $activeBidang === 'teknik' ? 'Cari no normalisasi, nama, komponen, lokasi, satuan...' : 'Cari nama barang...' }}"
+                                            value="{{ request('search') }}">
                                     </div>
                                     <div class="col-md-4">
                                         <select name="category" class="form-select">
-                                            <option value="">Semua Kategori</option>
+                                            <option value="">Semua {{ $activeBidang === 'teknik' ? 'Komponen' : 'Kategori' }}</option>
                                             @foreach($categories as $cat)
                                                 <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
                                             @endforeach
@@ -94,7 +120,7 @@
                                     </div>
                                     <div class="col-md-3 d-flex gap-2">
                                         <button type="submit" class="btn btn-primary btn-sm flex-fill"><i class="bi bi-search"></i> Cari</button>
-                                        <a href="{{ route('public.stock-request') }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-lg"></i></a>
+                                        <a href="{{ route('public.stuff-request', ['bidang' => $activeBidang]) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-lg"></i></a>
                                     </div>
                                 </div>
                             </form>
@@ -108,8 +134,14 @@
                                         <thead>
                                             <tr>
                                                 <th style="width:45px;">No</th>
+                                                @if($activeBidang === 'teknik')
+                                                    <th>No Normalisasi</th>
+                                                @endif
                                                 <th>Nama Barang</th>
-                                                <th>Kategori</th>
+                                                <th>{{ $activeBidang === 'teknik' ? 'Komponen' : 'Kategori' }}</th>
+                                                @if($activeBidang === 'teknik')
+                                                    <th>Lokasi</th>
+                                                @endif
                                                 <th>Satuan</th>
                                                 <th class="text-center">Stok</th>
                                                 <th>Status</th>
@@ -120,8 +152,14 @@
                                             @php $stock = $item->current_stock; @endphp
                                             <tr>
                                                 <td>{{ $index + 1 }}</td>
+                                                @if($activeBidang === 'teknik')
+                                                    <td class="fw-600">{{ $item->no_normalisasi ?? '-' }}</td>
+                                                @endif
                                                 <td class="fw-600">{{ $item->name }}</td>
                                                 <td>{{ $item->category }}</td>
+                                                @if($activeBidang === 'teknik')
+                                                    <td>{{ $item->lokasi ?? '-' }}</td>
+                                                @endif
                                                 <td>{{ $item->unit }}</td>
                                                 <td class="text-center fw-700" style="font-size:15px; {{ $stock === 0 ? 'color:var(--danger);' : ($stock <= $item->min_stock ? 'color:var(--warning-dark);' : 'color:var(--success);') }}">
                                                     {{ number_format($stock) }}
@@ -138,7 +176,7 @@
                                             </tr>
                                             @empty
                                             <tr class="no-data-row">
-                                                <td colspan="6">
+                                                <td colspan="{{ $activeBidang === 'teknik' ? 8 : 6 }}">
                                                     <i class="bi bi-inbox" style="font-size:40px;display:block;margin-bottom:8px;opacity:0.3;"></i>
                                                     Belum ada data barang
                                                 </td>
@@ -163,8 +201,9 @@
                                 <p>Ajukan permintaan penambahan barang tanpa login</p>
                             </div>
                             <div class="request-form-body">
-                                <form method="POST" action="{{ route('public.stock-request.store') }}" id="requestForm">
+                                <form method="POST" action="{{ route('public.stuff-request.store') }}" id="requestForm">
                                     @csrf
+                                    <input type="hidden" name="bidang" value="{{ $activeBidang }}">
 
                                     <div class="mb-3">
                                         <label class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
@@ -191,9 +230,8 @@
                                     </div>
 
                                     <div class="mb-3">
-                                        <label class="form-label">Bidang/Bagian <span class="text-danger">*</span></label>
-                                        <input type="text" name="bidang" class="form-control" placeholder="Masukkan bidang"
-                                            value="{{ old('bidang') }}" required>
+                                        <label class="form-label">Bidang Tujuan</label>
+                                        <input type="text" class="form-control" value="Bidang {{ ucfirst($activeBidang) }}" readonly>
                                         @error('bidang')
                                             <div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>
                                         @enderror
@@ -216,15 +254,20 @@
                                                             <select name="lines[{{ $i }}][item_id]" class="form-select form-select-sm" data-field="item" required>
                                                                 <option value="">-- Pilih barang --</option>
                                                                 @foreach($allItems as $it)
-                                                                    <option value="{{ $it->id }}" @selected((string) old('lines.'.$i.'.item_id', $line['item_id'] ?? '') === (string) $it->id)>
-                                                                        {{ $it->name }} ({{ $it->category }})
+                                                                    <option value="{{ $it->id }}"
+                                                                        data-stock="{{ $it->current_stock }}"
+                                                                        data-unit="{{ $it->unit }}"
+                                                                        @selected((string) old('lines.'.$i.'.item_id', $line['item_id'] ?? '') === (string) $it->id)>
+                                                                        {{ $it->name }}
                                                                     </option>
                                                                 @endforeach
                                                             </select>
+                                                            <div class="small text-muted mt-1" data-field="stock-info"></div>
                                                         </div>
                                                         <div class="col-6 col-md-3">
                                                             <label class="form-label small mb-1 text-muted">Jumlah</label>
                                                             <input type="number" name="lines[{{ $i }}][quantity]" data-field="qty" class="form-control form-control-sm" min="1" placeholder="Qty" value="{{ old('lines.'.$i.'.quantity', $line['quantity'] ?? 1) }}" required>
+                                                            <div class="text-danger mt-1 d-none" data-field="stock-error" style="font-size:11px;"></div>
                                                         </div>
                                                         <div class="col-6 col-md-2 text-md-end pb-md-1">
                                                             <button type="button" class="btn btn-outline-danger btn-sm w-100 btn-remove-line" title="Hapus baris">
@@ -252,7 +295,7 @@
                                         @error('notes')<div class="text-danger mt-1" style="font-size:12px;">{{ $message }}</div>@enderror
                                     </div>
 
-                                    <button type="submit" class="btn btn-primary w-100">
+                                    <button type="submit" class="btn btn-primary w-100" id="requestSubmitBtn">
                                         <i class="bi bi-send-fill me-1"></i> Kirim Request
                                     </button>
                                 </form>
@@ -286,17 +329,14 @@
     <footer class="public-footer">
         <div class="footer-content">
             <div class="copyright">
-                &copy; 2026 <span class="brand-name">Next Logistic</span>. All rights reserved.
-            </div>
-            <div class="footer-meta">
-                <span>Port Management Unit Suralaya</span>
+                &copy; 2026 Port Management Unit Suralaya
             </div>
         </div>
     </footer>
     <!-- End Public footer -->
 
     {{-- Login Modal (placed outside .public-page to avoid z-index stacking context issues) --}}
-        <div class="modal fade inventrack-modal" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal fade inventrack-modal login-modal" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered" style="max-width:440px;">
                 <div class="modal-content" style="position:relative;">
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="position: absolute; top: 15px; right: 15px; z-index: 1051;"></button>
@@ -369,6 +409,8 @@
         (function() {
             const container = document.getElementById('requestLines');
             const addBtn = document.getElementById('addLineBtn');
+            const form = document.getElementById('requestForm');
+            const submitBtn = document.getElementById('requestSubmitBtn');
             if (!container || !addBtn) return;
 
             function reindexLineNames() {
@@ -380,15 +422,90 @@
                 });
             }
 
+            function getSelectedOption(row) {
+                const select = row.querySelector('[data-field="item"]');
+                return select && select.value ? select.options[select.selectedIndex] : null;
+            }
+
+            function refreshStockValidation() {
+                const totals = {};
+                const rows = Array.from(container.querySelectorAll('.request-line-row'));
+
+                rows.forEach((row) => {
+                    const select = row.querySelector('[data-field="item"]');
+                    const qty = row.querySelector('[data-field="qty"]');
+                    if (!select || !qty || !select.value) return;
+
+                    totals[select.value] = (totals[select.value] || 0) + (parseInt(qty.value || '0', 10) || 0);
+                });
+
+                let hasError = false;
+
+                rows.forEach((row) => {
+                    const option = getSelectedOption(row);
+                    const qty = row.querySelector('[data-field="qty"]');
+                    const info = row.querySelector('[data-field="stock-info"]');
+                    const error = row.querySelector('[data-field="stock-error"]');
+
+                    if (!qty || !info || !error) return;
+
+                    qty.classList.remove('is-invalid');
+                    error.classList.add('d-none');
+                    error.textContent = '';
+
+                    if (!option) {
+                        qty.removeAttribute('max');
+                        info.textContent = '';
+                        return;
+                    }
+
+                    const stock = parseInt(option.dataset.stock || '0', 10) || 0;
+                    const unit = option.dataset.unit || '';
+                    const total = totals[option.value] || 0;
+
+                    qty.max = stock;
+                    info.textContent = `Stok tersedia: ${new Intl.NumberFormat('id-ID').format(stock)} ${unit}`;
+
+                    if (stock <= 0) {
+                        hasError = true;
+                        qty.classList.add('is-invalid');
+                        error.textContent = 'Habis.';
+                        error.classList.remove('d-none');
+                    } else if (total > stock) {
+                        hasError = true;
+                        qty.classList.add('is-invalid');
+                        error.textContent = `Total permintaan barang ini ${new Intl.NumberFormat('id-ID').format(total)} ${unit}, melebihi stok ${new Intl.NumberFormat('id-ID').format(stock)} ${unit}.`;
+                        error.classList.remove('d-none');
+                    }
+                });
+
+                if (submitBtn) {
+                    submitBtn.disabled = hasError;
+                }
+
+                return !hasError;
+            }
+
+            function bindLine(row) {
+                const select = row.querySelector('[data-field="item"]');
+                const qty = row.querySelector('[data-field="qty"]');
+                const remove = row.querySelector('.btn-remove-line');
+
+                if (select) select.addEventListener('change', refreshStockValidation);
+                if (qty) qty.addEventListener('input', refreshStockValidation);
+                if (remove) bindRemove(remove);
+            }
+
             function bindRemove(btn) {
                 btn.addEventListener('click', function() {
                     if (container.querySelectorAll('.request-line-row').length <= 1) return;
                     btn.closest('.request-line-row').remove();
                     reindexLineNames();
+                    refreshStockValidation();
                 });
             }
 
-            container.querySelectorAll('.btn-remove-line').forEach(bindRemove);
+            container.querySelectorAll('.request-line-row').forEach(bindLine);
 
             addBtn.addEventListener('click', function() {
                 const first = container.querySelector('.request-line-row');
@@ -399,10 +516,24 @@
                 if (sel) sel.value = '';
                 if (qty) qty.value = 1;
                 container.appendChild(row);
-                const rm = row.querySelector('.btn-remove-line');
-                if (rm) bindRemove(rm);
+                bindLine(row);
                 reindexLineNames();
+                refreshStockValidation();
             });
+
+            if (form) {
+                form.addEventListener('submit', function(event) {
+                    if (!refreshStockValidation()) {
+                        event.preventDefault();
+                        Toast.fire({
+                            icon: 'error',
+                            title: 'Jumlah permintaan melebihi stok tersedia.'
+                        });
+                    }
+                });
+            }
+
+            refreshStockValidation();
         })();
 
         // SweetAlert2 Toast

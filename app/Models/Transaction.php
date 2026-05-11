@@ -12,6 +12,11 @@ class Transaction extends Model
     protected $fillable = [
         'item_id',
         'user_id',
+        'bidang',
+        'no_normalisasi',
+        'lokasi',
+        'volume',
+        'ship_unloader',
         'date',
         'type',
         'quantity',
@@ -68,5 +73,30 @@ class Transaction extends Model
     public function scopeKeluar($query)
     {
         return $query->where('type', 'out');
+    }
+
+    public function scopeVisibleFor($query, ?User $user = null)
+    {
+        $user ??= auth()->user();
+
+        if (!$user || $user->isSuperAdmin()) {
+            return $query;
+        }
+
+        return $query->where('bidang', $user->bidang);
+    }
+
+    public function getShipUnloaderLabelAttribute(): string
+    {
+        return Item::formatShipUnloader($this->ship_unloader);
+    }
+
+    public function getTypeLabelAttribute(): string
+    {
+        if ($this->bidang === 'teknik') {
+            return $this->type === 'in' ? 'Goods Receipt (IN)' : 'Goods Issue (OUT)';
+        }
+
+        return strtoupper($this->type);
     }
 }

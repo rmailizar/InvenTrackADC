@@ -4,18 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Item;
 use App\Models\Transaction;
-use App\Mail\NewTransactionNotification;
-use App\Support\InventoryMail;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use Carbon\Carbon;
 
 class TransactionController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Transaction::with(['item', 'user', 'approver']);
+        $query = Transaction::with(['item', 'user', 'approver'])->visibleFor(auth()->user());
 
         // Staff can only see their own transactions
         if (auth()->user()->isStaff()) {
@@ -24,8 +19,14 @@ class TransactionController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('item', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->where('no_normalisasi', 'like', "%{$search}%")
+                    ->orWhere('lokasi', 'like', "%{$search}%")
+                    ->orWhereHas('item', fn($itemQuery) => $itemQuery
+                        ->where('name', 'like', "%{$search}%")
+                        ->orWhere('category', 'like', "%{$search}%")
+                        ->orWhere('no_normalisasi', 'like', "%{$search}%")
+                        ->orWhere('lokasi', 'like', "%{$search}%"));
             });
         }
 
@@ -45,10 +46,16 @@ class TransactionController extends Controller
             $query->whereDate('date', '<=', $request->date_to);
         }
 
-        $transactions = $query->latest()->paginate(15)->withQueryString();
+        $sort = $request->input('sort', 'latest') === 'oldest' ? 'asc' : 'desc';
+        $transactions = $query
+            ->orderBy('date', $sort)
+            ->orderBy('created_at', $sort)
+            ->orderBy('id', $sort)
+            ->paginate(15)
+            ->withQueryString();
 
         // Pass items for modal dropdown
-        $items = Item::orderBy('name')->get();
+        $items = Item::visibleFor(auth()->user())->orderBy('name')->get();
 
         return view('transactions.index', compact('transactions', 'items'));
     }
@@ -61,19 +68,19 @@ class TransactionController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'item_id' => 'required|exists:items,id',
             'date' => 'required|date',
             'type' => 'required|in:in,out',
+            'item_id' => 'required|exists:items,id',
             'quantity' => 'required|integer|min:1',
             'price' => 'nullable|integer|min:0',
             'description' => 'nullable|string|max:500',
+            'ship_unloader' => 'nullable|array',
+            'ship_unloader.*' => 'in:1,2,3,4',
         ]);
 
-        $validated['price'] = $request->filled('price') ? (int) $request->price : 0;
-
         $item = Item::findOrFail($validated['item_id']);
+        abort_unless(auth()->user()->canAccessBidang($item->bidang), 403, 'Anda tidak memiliki akses ke barang bidang ini.');
 
-        // Check stock for keluar
         if ($validated['type'] === 'out') {
             if ($item->current_stock < $validated['quantity']) {
                 $errorMsg = 'Stok tidak mencukupi. Stok saat ini: ' . $item->current_stock . ' ' . $item->unit;
@@ -85,11 +92,23 @@ class TransactionController extends Controller
         }
 
         $validated['user_id'] = auth()->id();
-        $validated['status'] = 'pending';
+        $validated['bidang'] = $item->bidang;
+        $validated['no_normalisasi'] = $item->no_normalisasi;
+        $validated['lokasi'] = $item->lokasi;
+        $validated['volume'] = $item->bidang === 'teknik' ? $validated['quantity'] : null;
+        $validated['ship_unloader'] = $item->bidang === 'teknik'
+            ? ($this->normalizeShipUnloader($validated['ship_unloader'] ?? []) ?: $item->ship_unloader)
+            : null;
+        $validated['status'] = $item->bidang === 'teknik' ? 'approved' : 'pending';
+        $validated['approved_by'] = $item->bidang === 'teknik' ? auth()->id() : null;
+        $validated['approved_at'] = $item->bidang === 'teknik' ? now() : null;
+        $validated['price'] = $validated['price'] ?? 0;
 
-        $transaction = Transaction::create($validated);
+        Transaction::create($validated);
 
-        $successMsg = 'Transaksi berhasil ditambahkan dan menunggu approval dari Admin.';
+        $successMsg = $item->bidang === 'teknik'
+            ? 'Transaksi Teknik berhasil ditambahkan dan otomatis approved.'
+            : 'Transaksi berhasil ditambahkan dan menunggu approval dari Admin.';
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true, 'message' => $successMsg]);
@@ -107,6 +126,8 @@ class TransactionController extends Controller
             return redirect()->route('dashboard')->with('error', 'Hanya transaksi berstatus pending yang bisa diubah.');
         }
 
+        abort_unless(auth()->user()->canAccessBidang($transaction->bidang), 403, 'Anda tidak memiliki akses ke transaksi bidang ini.');
+
         // AJAX request returns JSON data for modal pre-fill
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
@@ -117,10 +138,18 @@ class TransactionController extends Controller
                 'quantity' => $transaction->quantity,
                 'price' => $transaction->price,
                 'description' => $transaction->description,
+                'no_normalisasi' => $transaction->no_normalisasi,
+                'lokasi' => $transaction->lokasi,
+                'volume' => $transaction->quantity,
+                'ship_unloader' => $transaction->ship_unloader ? explode(',', $transaction->ship_unloader) : [],
                 'item' => [
                     'category' => $transaction->item->category ?? '',
                     'unit' => $transaction->item->unit ?? '',
                     'current_stock' => $transaction->item->current_stock ?? 0,
+                    'no_normalisasi' => $transaction->item->no_normalisasi ?? '',
+                    'lokasi' => $transaction->item->lokasi ?? '',
+                    'volume' => $transaction->item->current_stock ?? '',
+                    'ship_unloader' => $transaction->item->ship_unloader ?? '',
                 ],
             ]);
         }
@@ -138,18 +167,21 @@ class TransactionController extends Controller
             return redirect()->route('dashboard')->with('error', $errorMsg);
         }
 
+        abort_unless(auth()->user()->canAccessBidang($transaction->bidang), 403, 'Anda tidak memiliki akses ke transaksi bidang ini.');
+
         $validated = $request->validate([
-            'item_id' => 'required|exists:items,id',
             'date' => 'required|date',
             'type' => 'required|in:in,out',
+            'item_id' => 'required|exists:items,id',
             'quantity' => 'required|integer|min:1',
             'price' => 'nullable|integer|min:0',
             'description' => 'nullable|string|max:500',
+            'ship_unloader' => 'nullable|array',
+            'ship_unloader.*' => 'in:1,2,3,4',
         ]);
 
-        $validated['price'] = $request->filled('price') ? (int) $request->price : 0;
-
         $item = Item::findOrFail($validated['item_id']);
+        abort_unless(auth()->user()->canAccessBidang($item->bidang), 403, 'Anda tidak memiliki akses ke barang bidang ini.');
 
         if ($validated['type'] === 'out') {
             if ($item->current_stock < $validated['quantity']) {
@@ -160,6 +192,15 @@ class TransactionController extends Controller
                 return back()->withInput()->with('error', $errorMsg);
             }
         }
+
+        $validated['price'] = $validated['price'] ?? 0;
+        $validated['bidang'] = $item->bidang;
+        $validated['no_normalisasi'] = $item->no_normalisasi;
+        $validated['lokasi'] = $item->lokasi;
+        $validated['volume'] = $item->bidang === 'teknik' ? $validated['quantity'] : null;
+        $validated['ship_unloader'] = $item->bidang === 'teknik'
+            ? ($this->normalizeShipUnloader($validated['ship_unloader'] ?? []) ?: $item->ship_unloader)
+            : null;
 
         $transaction->update($validated);
 
@@ -174,6 +215,8 @@ class TransactionController extends Controller
 
     public function destroy(Transaction $transaction)
     {
+        abort_unless(auth()->user()->canAccessBidang($transaction->bidang), 403, 'Anda tidak memiliki akses ke transaksi bidang ini.');
+
         if ($transaction->status !== 'pending') {
             return redirect()->route('dashboard')->with('error', 'Hanya transaksi berstatus pending yang bisa dihapus.');
         }
@@ -183,13 +226,73 @@ class TransactionController extends Controller
         return redirect()->route('dashboard')->with('success', 'Transaksi pending berhasil dihapus.');
     }
 
+    public function approve(Transaction $transaction)
+    {
+        abort_unless(auth()->user()->canAccessBidang($transaction->bidang), 403, 'Anda tidak memiliki akses ke transaksi bidang ini.');
+
+        if ($transaction->status !== 'pending') {
+            return back()->with('error', 'Hanya transaksi pending yang bisa disetujui.');
+        }
+
+        if ($transaction->type === 'out') {
+            $item = $transaction->item;
+            if ($item && $item->current_stock < $transaction->quantity) {
+                return back()->with('error', "Stok {$item->name} tidak mencukupi.");
+            }
+        }
+
+        $transaction->update([
+            'status' => 'approved',
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+        ]);
+
+        return back()->with('success', 'Transaksi berhasil disetujui.');
+    }
+
+    public function reject(Transaction $transaction)
+    {
+        abort_unless(auth()->user()->canAccessBidang($transaction->bidang), 403, 'Anda tidak memiliki akses ke transaksi bidang ini.');
+
+        if ($transaction->status !== 'pending') {
+            return back()->with('error', 'Hanya transaksi pending yang bisa ditolak.');
+        }
+
+        $transaction->update([
+            'status' => 'rejected',
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
+        ]);
+
+        return back()->with('success', 'Transaksi berhasil ditolak.');
+    }
+
     public function getItemDetails($id)
     {
         $item = Item::findOrFail($id);
+        abort_unless(auth()->user()->canAccessBidang($item->bidang), 403, 'Anda tidak memiliki akses ke barang bidang ini.');
+
         return response()->json([
             'category' => $item->category,
             'unit' => $item->unit,
             'current_stock' => $item->current_stock,
+            'no_normalisasi' => $item->no_normalisasi,
+            'lokasi' => $item->lokasi,
+            'volume' => $item->current_stock,
+            'ship_unloader' => $item->ship_unloader,
+            'ship_unloader_label' => $item->ship_unloader_label,
         ]);
+    }
+
+    private function normalizeShipUnloader(array $ships): ?string
+    {
+        $normalized = collect($ships)
+            ->map(fn($ship) => (string) $ship)
+            ->filter(fn($ship) => in_array($ship, ['1', '2', '3', '4'], true))
+            ->unique()
+            ->sort()
+            ->values();
+
+        return $normalized->isEmpty() ? null : $normalized->implode(',');
     }
 }

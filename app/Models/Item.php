@@ -11,8 +11,13 @@ class Item extends Model
 
     protected $fillable = [
         'name',
+        'no_normalisasi',
         'category',
         'unit',
+        'bidang',
+        'lokasi',
+        'volume',
+        'ship_unloader',
         'min_stock',
     ];
 
@@ -41,10 +46,73 @@ class Item extends Model
         return $this->current_stock <= $this->min_stock;
     }
 
+    public function getShipUnloaderLabelAttribute(): string
+    {
+        return self::formatShipUnloader($this->ship_unloader);
+    }
+
+    public function getStockShipUnloaderAttribute(): ?string
+    {
+        $values = $this->transactions()
+            ->where('status', 'approved')
+            ->whereNotNull('ship_unloader')
+            ->pluck('ship_unloader')
+            ->prepend($this->ship_unloader)
+            ->filter()
+            ->all();
+
+        return self::mergeShipUnloaders($values);
+    }
+
+    public function getStockShipUnloaderLabelAttribute(): string
+    {
+        return self::formatShipUnloader($this->stock_ship_unloader);
+    }
+
+    public static function mergeShipUnloaders(array $values): ?string
+    {
+        $ships = collect($values)
+            ->flatMap(fn($value) => explode(',', (string) $value))
+            ->map(fn($ship) => trim($ship))
+            ->filter(fn($ship) => in_array($ship, ['1', '2', '3', '4'], true))
+            ->unique()
+            ->sort()
+            ->values();
+
+        return $ships->isEmpty() ? null : $ships->implode(',');
+    }
+
+    public static function formatShipUnloader(?string $value): string
+    {
+        if (!$value) {
+            return '-';
+        }
+
+        $ships = collect(explode(',', $value))
+            ->map(fn($ship) => trim($ship))
+            ->filter(fn($ship) => in_array($ship, ['1', '2', '3', '4'], true))
+            ->unique()
+            ->sort()
+            ->values();
+
+        return $ships->isEmpty() ? '-' : $ships->implode(' - ');
+    }
+
     public function scopeLowStock($query)
     {
         return $query->get()->filter(function ($item) {
             return $item->is_low_stock;
         });
+    }
+
+    public function scopeVisibleFor($query, ?User $user = null)
+    {
+        $user ??= auth()->user();
+
+        if (!$user || $user->isSuperAdmin()) {
+            return $query;
+        }
+
+        return $query->where('bidang', $user->bidang);
     }
 }

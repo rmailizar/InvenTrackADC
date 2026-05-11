@@ -6,19 +6,21 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class StockRequestItem extends Model
+class StuffRequestItem extends Model
 {
     use HasFactory;
 
+    protected $table = 'stuff_request_items';
+
     protected $fillable = [
-        'stock_request_id',
+        'stuff_request_id',
         'item_id',
         'quantity',
     ];
 
-    public function stockRequest(): BelongsTo
+    public function stuffRequest(): BelongsTo
     {
-        return $this->belongsTo(StockRequest::class);
+        return $this->belongsTo(StuffRequest::class);
     }
 
     public function item(): BelongsTo

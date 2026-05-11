@@ -11,11 +11,14 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\GoogleSheetController;
 use App\Http\Controllers\ItemLookupController;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\StuffRequestController;
 use App\Http\Controllers\StockRequestController;
 
 // Public Routes (no auth)
-Route::get('/', [StockRequestController::class, 'publicIndex'])->name('public.stock-request');
-Route::post('/request-stock', [StockRequestController::class, 'store'])->name('public.stock-request.store');
+Route::get('/', [StuffRequestController::class, 'publicIndex'])->name('public.stuff-request');
+Route::post('/request-stuff', [StuffRequestController::class, 'store'])->name('public.stuff-request.store');
+Route::get('/stock-request', [StuffRequestController::class, 'publicIndex'])->name('public.stock-request');
+Route::post('/request-stock', [StuffRequestController::class, 'store'])->name('public.stock-request.store');
 
 // Auth Routes
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -51,6 +54,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/transactions/{transaction}/edit-data', [TransactionController::class, 'edit'])->name('transactions.editData')->middleware('userAkses:admin');
     Route::put('/transactions/{transaction}', [TransactionController::class, 'update'])->name('transactions.update')->middleware('userAkses:admin');
     Route::delete('/transactions/{transaction}', [TransactionController::class, 'destroy'])->name('transactions.destroy')->middleware('userAkses:admin');
+    Route::post('/transactions/{transaction}/approve', [TransactionController::class, 'approve'])->name('transactions.approve')->middleware('userAkses:admin');
+    Route::post('/transactions/{transaction}/reject', [TransactionController::class, 'reject'])->name('transactions.reject')->middleware('userAkses:admin');
 
     // AJAX: Get item details
     Route::get('/api/items/{id}', [TransactionController::class, 'getItemDetails'])->name('api.items.show');
@@ -69,12 +74,19 @@ Route::middleware('auth')->group(function () {
     // Stock recap - admin, manager & staff
     Route::get('/stock', [StockController::class, 'index'])->name('stock.index')->middleware('userAkses:admin,manajer,staf');
 
-    // Stock requests - admin & staff
-    Route::get('/stock-requests', [StockRequestController::class, 'adminIndex'])->name('stock-requests.index')->middleware('userAkses:admin,staf');
-    Route::post('/stock-requests/{stockRequest}/approve', [StockRequestController::class, 'approve'])->name('stock-requests.approve')->middleware('userAkses:admin');
-    Route::post('/stock-requests/{stockRequest}/reject', [StockRequestController::class, 'reject'])->name('stock-requests.reject')->middleware('userAkses:admin');
-    Route::post('/stock-requests/{stockRequest}/complete', [StockRequestController::class, 'complete'])->name('stock-requests.complete')->middleware('userAkses:admin,staf');
-    Route::post('/stock-requests/{stockRequest}/cancel', [StockRequestController::class, 'cancel'])->name('stock-requests.cancel')->middleware('userAkses:admin,staf');
+    // Stock requests - Umum: staff creates/admin approves, Teknik: admin creates/manager approves
+    Route::get('/Stok-request', [StockRequestController::class, 'index'])->name('stock-requests.index')->middleware('userAkses:admin,manajer,staf');
+    Route::post('/Stok-request', [StockRequestController::class, 'store'])->name('stock-requests.store')->middleware('userAkses:admin,staf');
+    Route::get('/Stok-request/export', [StockRequestController::class, 'export'])->name('stock-requests.export')->middleware('userAkses:admin,manajer,staf');
+    Route::post('/Stok-request/{stockRequest}/approve', [StockRequestController::class, 'approve'])->name('stock-requests.approve')->middleware('userAkses:admin,manajer');
+    Route::post('/Stok-request/{stockRequest}/reject', [StockRequestController::class, 'reject'])->name('stock-requests.reject')->middleware('userAkses:admin,manajer');
+
+    // Stuff requests - admin & staff
+    Route::get('/stuff-requests', [StuffRequestController::class, 'adminIndex'])->name('stuff-requests.index')->middleware('userAkses:admin,staf');
+    Route::post('/stuff-requests/{stuffRequest}/approve', [StuffRequestController::class, 'approve'])->name('stuff-requests.approve')->middleware('userAkses:admin');
+    Route::post('/stuff-requests/{stuffRequest}/reject', [StuffRequestController::class, 'reject'])->name('stuff-requests.reject')->middleware('userAkses:admin');
+    Route::post('/stuff-requests/{stuffRequest}/complete', [StuffRequestController::class, 'complete'])->name('stuff-requests.complete')->middleware('userAkses:admin,staf');
+    Route::post('/stuff-requests/{stuffRequest}/cancel', [StuffRequestController::class, 'cancel'])->name('stuff-requests.cancel')->middleware('userAkses:admin,staf');
 
     // Reports - admin & manager
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index')->middleware('userAkses:admin,manajer');

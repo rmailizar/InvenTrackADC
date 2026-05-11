@@ -9,7 +9,6 @@ use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use Illuminate\Support\Facades\DB;
 
 class TransactionExport implements FromQuery, WithHeadings, WithMapping, WithStyles, ShouldAutoSize
 {
@@ -19,6 +18,7 @@ class TransactionExport implements FromQuery, WithHeadings, WithMapping, WithSty
     protected $type;
     protected $year;
     protected $priceFilter;
+    protected $sort;
 
     public function __construct(
         $dateFrom = null,
@@ -26,7 +26,8 @@ class TransactionExport implements FromQuery, WithHeadings, WithMapping, WithSty
         $category = null,
         $type = null,
         $year = null,
-        $priceFilter = null
+        $priceFilter = null,
+        $sort = 'latest'
     ) {
         $this->dateFrom = $dateFrom;
         $this->dateTo = $dateTo;
@@ -34,11 +35,14 @@ class TransactionExport implements FromQuery, WithHeadings, WithMapping, WithSty
         $this->type = $type;
         $this->year = $year;
         $this->priceFilter = $priceFilter;
+        $this->sort = $sort === 'oldest' ? 'oldest' : 'latest';
     }
 
     public function query()
     {
-        $query = Transaction::with(['item', 'user', 'approver'])->approved();
+        $query = Transaction::with(['item', 'user', 'approver'])
+            ->visibleFor(auth()->user())
+            ->approved();
 
         if ($this->dateFrom) {
             $query->whereDate('date', '>=', $this->dateFrom);
@@ -96,11 +100,33 @@ class TransactionExport implements FromQuery, WithHeadings, WithMapping, WithSty
             }
         }
 
-        return $query->orderBy('date', 'desc');
+        $direction = $this->sort === 'oldest' ? 'asc' : 'desc';
+
+        return $query
+            ->orderBy('date', $direction)
+            ->orderBy('created_at', $direction)
+            ->orderBy('id', $direction);
     }
 
     public function headings(): array
     {
+        if ($this->isTeknikReport()) {
+            return [
+                'No',
+                'Tanggal',
+                'Jenis',
+                'No Normalisasi',
+                'Nama Barang',
+                'Komponen',
+                'Ship Unloader',
+                'Lokasi',
+                'Volume',
+                'Satuan',
+                'User',
+                'Status',
+            ];
+        }
+
         return [
             'No',
             'Tanggal',
@@ -123,6 +149,23 @@ class TransactionExport implements FromQuery, WithHeadings, WithMapping, WithSty
         static $no = 0;
         $no++;
 
+        if ($this->isTeknikReport()) {
+            return [
+                $no,
+                $transaction->date->format('d/m/Y'),
+                $transaction->type_label,
+                $transaction->no_normalisasi ?: ($transaction->item->no_normalisasi ?? '-'),
+                $transaction->item->name ?? '-',
+                $transaction->item->category ?? '-',
+                $transaction->ship_unloader_label,
+                $transaction->lokasi ?: ($transaction->item->lokasi ?? '-'),
+                $transaction->quantity,
+                $transaction->item->unit ?? '-',
+                $transaction->user->name ?? '-',
+                'Auto Approve',
+            ];
+        }
+
         return [
             $no,
             $transaction->date->format('d/m/Y'),
@@ -131,7 +174,7 @@ class TransactionExport implements FromQuery, WithHeadings, WithMapping, WithSty
             strtoupper($transaction->type),
             $transaction->quantity,
             $transaction->item->unit ?? '-',
-            'Rp ' . number_format($transaction->price, 0, ',', '.'),
+            'Rp ' . number_format($transaction->price ?? 0, 0, ',', '.'),
             $transaction->user->name ?? '-',
             $transaction->description ?? '-',
             strtoupper($transaction->status),
@@ -151,5 +194,10 @@ class TransactionExport implements FromQuery, WithHeadings, WithMapping, WithSty
                 ],
             ],
         ];
+    }
+
+    private function isTeknikReport(): bool
+    {
+        return auth()->user()?->bidang === 'teknik';
     }
 }

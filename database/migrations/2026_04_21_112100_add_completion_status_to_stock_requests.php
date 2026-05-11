@@ -9,8 +9,10 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Modify the enum to include 'completed' and 'cancelled'
-        DB::statement("ALTER TABLE stock_requests MODIFY COLUMN status ENUM('pending', 'approved', 'rejected', 'completed', 'cancelled') DEFAULT 'pending'");
+        // SQLite used by tests does not support MySQL enum modification syntax.
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE stock_requests MODIFY COLUMN status ENUM('pending', 'approved', 'rejected', 'completed', 'cancelled') DEFAULT 'pending'");
+        }
 
         Schema::table('stock_requests', function (Blueprint $table) {
             $table->foreignId('completed_by')->nullable()->after('processed_at')->constrained('users')->nullOnDelete();
@@ -25,6 +27,8 @@ return new class extends Migration
             $table->dropColumn(['completed_by', 'completed_at']);
         });
 
-        DB::statement("ALTER TABLE stock_requests MODIFY COLUMN status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE stock_requests MODIFY COLUMN status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending'");
+        }
     }
 };

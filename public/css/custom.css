@@ -100,6 +100,7 @@ body {
     font-family: 'Inter', sans-serif;
     font-size: 14px;
     line-height: 1.6;
+    position: relative;
 
     /* Vibrant Mesh Gradient — magenta → indigo → teal */
     background-color: var(--bg-gradient-1);
@@ -120,6 +121,23 @@ body {
     color: var(--text-primary);
     transition: background 0.5s ease, color 0.4s ease;
     overflow-x: hidden;
+    isolation: isolate;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: url('https://www.transparenttextures.com/patterns/cubes.png');
+    mix-blend-mode: overlay;
+    filter: contrast(1.18);
+    opacity: 0.16;
+}
+
+[data-theme="dark"] body::before {
+    opacity: 0.22;
 }
 
 a {
@@ -157,21 +175,40 @@ a:hover {
     left: 0;
     width: var(--sidebar-width);
     height: 100vh;
-    /* Glassmorphism sidebar (warna dasar tetap agar logo tidak tenggelam) */
-    background: #0f172a;
-    /* rgba(2, 44, 34, 0.98) 100%,
-    backdrop-filter: blur(30px) saturate(150%);
-    -webkit-backdrop-filter: blur(30px) saturate(150%);*/
-    backdrop-filter: blur(10px) saturate(150%);
-    -webkit-backdrop-filter: blur(10px) saturate(150%);
-    border-right: 1px solid rgba(255, 255, 255, 0.12);
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18);
+    
+    /* Warna Dasar: Hitam ke Abu-abuan yang sangat gelap dengan transparansi */
+    /* Menggunakan 0.85 - 0.9 agar tetap terlihat glass tapi tidak terlalu transparan */
+    background: rgba(15, 18, 20, 0.88); 
+    
+    /* Efek Glassmorphism */
+    /* Blur 20px memberikan efek kaca buram yang sangat halus */
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    
+    /* Border kanan yang halus untuk memisahkan dengan konten */
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    
+    /* Bayangan lembut */
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.25);
+    
     z-index: 1040;
     transition: var(--transition);
     display: flex;
     flex-direction: column;
     overflow-y: auto;
     overflow-x: hidden;
+}
+
+[data-theme="dark"] .sidebar {
+    /* Gunakan transparansi lebih rendah (0.7) agar garis animasi terlihat */
+    background: rgba(15, 18, 20, 0.30) !important; 
+    
+    /* Blur harus ada agar terlihat seperti kaca */
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    
+    /* Pastikan tidak ada background-color solid yang menimpa */
+    background-image: none; 
 }
 
 .sidebar-brand {
@@ -181,7 +218,6 @@ a:hover {
     justify-content: center;
     gap: 14px;
     flex-direction: column;
-    min-height: 120px;
 }
 
 .brand-wrapper {
@@ -192,15 +228,15 @@ a:hover {
 }
 
 .sidebar-brand .next-logistic {
-    font-size: 12px; /* Ukuran font lebih kecil dibanding modal agar muat di sidebar */
+    font-size: 13px; /* Ukuran font lebih kecil dibanding modal agar muat di sidebar */
     font-weight: 800;
-    letter-spacing: 4px;
+    letter-spacing: 5.3px;
     color: #1F6F5F; /* Warna hijau emerald */
     text-align: center;
     white-space: nowrap;
     opacity: 1;
     transition: opacity 0.3s ease;
-    margin-top: -45px;
+    margin-top: -65px;
 }
 
 .sidebar-brand .brand-icon {
@@ -217,11 +253,32 @@ a:hover {
     padding: 4px;
 }
 
-.sidebar-brand .brand-icon .sidebar-logo-img {
+/* Logo sidebar: dua potongan (atas + bawah) menyatu visual seperti logo tunggal */
+.sidebar-brand .sidebar-logo-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     width: 100%;
     height: 100%;
+    gap: 0;
+    line-height: 0;
+}
+
+.sidebar-brand .sidebar-logo-part {
+    display: block;
+    width: 100%;
+    flex: 1 1 0;
+    min-height: 0;
     object-fit: contain;
-    
+}
+
+.sidebar-brand .sidebar-logo-top {
+    object-position: center bottom;
+}
+
+.sidebar-brand .sidebar-logo-bottom {
+    object-position: center top;
 }
 
 .sidebar-brand .brand-text {
@@ -348,20 +405,49 @@ a:hover {
     width: 72px;
 }
 
-.sidebar.collapsed .sidebar-brand,
 .sidebar.collapsed .brand-text,
 .sidebar.collapsed .brand-sub,
 .sidebar.collapsed .sidebar-label,
 .sidebar.collapsed .sidebar-link span,
 .sidebar.collapsed .sidebar-link .badge,
 .sidebar.collapsed .sidebar-user .user-info,
-.sidebar.collapsed .sidebar-user form {
+.sidebar.collapsed .sidebar-user form,
+.sidebar.collapsed .sidebar-brand .logo-container {
     display: none;
 }
 
 .sidebar.collapsed .sidebar-brand {
-    padding: 24px 15px 20px;
+    display: flex;
+    padding: 16px 8px 12px;
     justify-content: center;
+    min-height: 0;
+    gap: 0;
+}
+
+.sidebar.collapsed .sidebar-brand .brand-wrapper {
+    width: 100%;
+}
+
+.sidebar.collapsed .sidebar-brand .brand-icon {
+    width: 52px;
+    height: 52px;
+    padding: 2px;
+}
+
+.sidebar.collapsed .sidebar-brand .sidebar-logo-bottom {
+    display: none !important;
+}
+
+.sidebar.collapsed .sidebar-brand .sidebar-logo-stack {
+    height: 100%;
+}
+
+.sidebar.collapsed .sidebar-brand .sidebar-logo-top {
+    flex: none;
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    object-position: center;
 }
 
 .sidebar.collapsed .sidebar-nav {
@@ -397,6 +483,7 @@ a:hover {
     margin-left: var(--sidebar-width);
     min-height: 100vh;
     transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
 }
 
 .main-content.sidebar-collapsed {
@@ -411,21 +498,26 @@ a:hover {
 }
 
 .public-header {
-    /* Background disesuaikan supaya warna logo terlihat lebih jelas */
-    background: linear-gradient(90deg, 
-        #020c0a 0%, 
-        #006d4a 50%, 
-        #020c0a 100%
-    );
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-    padding: 20px 0;
-    /* Dikurangi sedikit agar tidak terlalu tinggi saat di tengah */
-    color: white;
+    /* Menggunakan warna dasar yang sama dengan sidebar (Hitam Keabuan Gelap) */
+    background: rgba(15, 18, 20, 0.80); 
+    
+    /* Efek Glassmorphism yang diselaraskan dengan sidebar */
+    /* Menggunakan blur 20px dan saturasi 160% agar identik */
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    
+    /* Border bawah tipis yang halus untuk efek kaca */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    
+    /* Bayangan lembut ke arah bawah */
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.25);
 
+    padding: 15px 0; /* Padding sedikit diperkecil agar lebih elegan */
+    color: white;
+    position: sticky;
     top: 0;
-    z-index: 20;
+    z-index: 1040; /* Disamakan atau disesuaikan dengan kebutuhan layering */
+    transition: var(--transition);
 }
 
 /* Wrapper Utama */
@@ -466,7 +558,6 @@ a:hover {
     width: auto;
     /* Biarkan lebar proporsional */
     object-fit: contain;
-    filter: drop-shadow(0 0 1.5px rgba(16, 185, 129, 0.5));
 }
 
 /* Teks Sub Header tetap dipertahankan gaya sebelumnya */
@@ -494,7 +585,6 @@ a:hover {
     justify-self: center;
     min-width: 300px;
     /* Menjaga agar elemen teks tidak bertumpuk */
-    filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.5));
 }
 
 /* Kolom Kanan */
@@ -616,6 +706,194 @@ a:hover {
 .request-form-body {
     padding: 24px;
     background: var(--card-bg);
+}
+
+/* Public Stuff Request item rows: keep the compact mobile layout on every viewport. */
+#requestLines {
+    gap: 10px !important;
+}
+
+#requestLines .request-line-row {
+    padding: 10px !important;
+    border-radius: 8px !important;
+}
+
+#requestLines .request-line-row > .row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 44px;
+    gap: 10px 12px !important;
+    margin: 0;
+    align-items: end;
+}
+
+#requestLines .request-line-row > .row > [class*="col-"] {
+    width: auto;
+    max-width: none;
+    padding: 0;
+}
+
+#requestLines .request-line-row > .row > [class*="col-"]:first-child {
+    grid-column: 1 / -1;
+}
+
+#requestLines .request-line-row > .row > [class*="col-"]:nth-child(2) {
+    grid-column: 1;
+    max-width: 202px;
+}
+
+#requestLines .request-line-row > .row > [class*="col-"]:nth-child(3) {
+    grid-column: 2;
+    padding-bottom: 8px !important;
+    text-align: center !important;
+}
+
+#requestLines .form-label {
+    display: block;
+    margin-bottom: 6px !important;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-muted) !important;
+}
+
+#requestLines .form-select,
+#requestLines .form-control {
+    min-height: 48px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+#requestLines [data-field="stock-info"] {
+    min-height: 18px;
+    margin-top: 6px !important;
+    color: var(--text-muted) !important;
+}
+
+#requestLines [data-field="stock-error"] {
+    min-height: 0;
+    line-height: 1.55;
+}
+
+#requestLines .btn-remove-line {
+    width: 32px !important;
+    height: 32px;
+    padding: 0 !important;
+    border: none;
+    background: transparent;
+    color: var(--danger);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#requestLines .btn-remove-line:hover {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+#addLineBtn {
+    min-height: 46px;
+    border-width: 2px;
+    border-radius: 8px;
+    font-weight: 700;
+}
+
+.stock-trigger-btn {
+    min-width: 150px;
+    font-weight: 700;
+    border-radius: 8px;
+}
+
+.stock-request-status {
+    min-width: 92px;
+    justify-content: center;
+    text-align: center;
+}
+
+.stock-request-status-pending {
+    background: var(--warning-bg);
+    color: var(--warning-dark);
+}
+
+.stock-request-status-approved {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.stock-request-status-rejected {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.stock-request-category-group {
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--card-bg);
+}
+
+.stock-request-category-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--primary-bg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.stock-request-category-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+.stock-request-category-subtitle {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.stock-request-category-group .table th,
+.stock-request-category-group .table td {
+    vertical-align: top;
+}
+
+.stock-request-category-group .table td {
+    padding-top: 18px;
+}
+
+.stock-request-inline-warning {
+    display: block;
+    max-width: 100%;
+    color: var(--warning-dark);
+    font-size: 11px;
+    line-height: 1.35;
+    word-break: break-word;
+}
+
+.stock-request-grand-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: var(--primary-bg);
+    color: var(--text-primary);
+}
+
+.stock-request-grand-total span {
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.stock-request-grand-total strong {
+    color: var(--primary);
+    font-size: 18px;
+    font-weight: 800;
+    text-align: right;
+    white-space: nowrap;
 }
 
 /* Toast custom for public page */
@@ -1016,14 +1294,8 @@ a:hover {
     letter-spacing: 0.3px;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 5px;
-}
-
-.badge-status::before {
-    content: '';
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
 }
 
 .badge-pending {
@@ -1211,6 +1483,16 @@ a:hover {
     color: white;
 }
 
+.btn-action.view {
+    background: var(--info-bg);
+    color: var(--info);
+}
+
+.btn-action.view:hover {
+    background: var(--info);
+    color: white;
+}
+
 .btn-action.delete {
     background: var(--danger-bg);
     color: var(--danger);
@@ -1339,6 +1621,68 @@ a:hover {
 /* Make filter buttons consistent and responsive */
 .filter-bar .btn {
     white-space: nowrap;
+}
+
+.report-tabs {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.report-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 12px 18px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.72);
+    color: var(--text-secondary);
+    font-weight: 700;
+    box-shadow: var(--shadow-sm);
+    transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.report-tab:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.report-tab.active {
+    background: linear-gradient(135deg, #0f3b32, var(--primary-dark));
+    border-color: rgba(16, 185, 129, 0.5);
+    color: #ffffff;
+    box-shadow: var(--shadow-primary);
+}
+
+.report-filter-panel {
+    animation: fadeInUp 0.24s ease;
+}
+
+.report-filter-panel .btn-success {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: #ffffff;
+}
+
+.report-filter-panel .btn-success:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.report-filter-panel .btn-outline-secondary {
+    background: transparent;
+    border-color: var(--border-color);
+    color: var(--text-secondary);
+}
+
+.report-filter-panel .btn-outline-secondary:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+[data-theme="dark"] .report-tab {
+    background: rgba(30, 41, 59, 0.66);
 }
 
 /* ---------- Alerts / Toasts ---------- */
@@ -1743,16 +2087,16 @@ a:hover {
 /* Dark mode modal styles */
 [data-theme="dark"] .modal-content {
     background-color: var(--card-bg);
-    border-color: var(--border-color);
+    border: 0;
     color: var(--text-primary);
 }
 
 [data-theme="dark"] .modal-header {
-    border-color: var(--border-color);
+    border-bottom: 0;
 }
 
 [data-theme="dark"] .modal-footer {
-    border-color: var(--border-color);
+    border-top: 0;
 }
 
 [data-theme="dark"] .btn-close {
@@ -1810,6 +2154,33 @@ a:hover {
 
     .sidebar.collapsed.show .sidebar-user {
         justify-content: flex-start;
+    }
+
+    /* Mobile drawer: tampilkan logo penuh (atas + bawah) seperti sidebar expanded */
+    .sidebar.collapsed.show .sidebar-brand .logo-container {
+        display: block;
+    }
+
+    .sidebar.collapsed.show .sidebar-brand .brand-icon {
+        width: 180px;
+        height: 180px;
+        padding: 4px;
+    }
+
+    .sidebar.collapsed.show .sidebar-brand .sidebar-logo-bottom {
+        display: block !important;
+    }
+
+    .sidebar.collapsed.show .sidebar-brand .sidebar-logo-top {
+        flex: 1 1 0;
+        width: 100%;
+        height: auto;
+        max-height: none;
+        object-position: center bottom;
+    }
+
+    .sidebar.collapsed.show .sidebar-brand .sidebar-logo-stack {
+        height: 100%;
     }
 
     .main-content,
@@ -2104,16 +2475,16 @@ a:hover {
 /* Dark mode modal styles */
 [data-theme="dark"] .modal-content {
     background-color: var(--card-bg);
-    border-color: var(--border-color);
+    border: 0;
     color: var(--text-primary);
 }
 
 [data-theme="dark"] .modal-header {
-    border-color: var(--border-color);
+    border-bottom: 0;
 }
 
 [data-theme="dark"] .modal-footer {
-    border-color: var(--border-color);
+    border-top: 0;
 }
 
 [data-theme="dark"] .btn-close {
@@ -2298,11 +2669,32 @@ a:hover {
 }
 
 /* ---------- InvenTrack Modal System ---------- */
+.modal.inventrack-modal {
+    z-index: 2060;
+    pointer-events: auto;
+}
+
+.modal.inventrack-modal.show {
+    display: block;
+}
+
+.modal.inventrack-modal .modal-dialog {
+    position: relative;
+    z-index: 2061;
+    pointer-events: auto;
+}
+
+.modal-backdrop {
+    z-index: 2050;
+}
+
+.modal-backdrop.show {
+    pointer-events: auto;
+}
+
 .inventrack-modal .modal-content {
     background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.2);
+    border: 0 !important;
     overflow: hidden;
     animation: modalSlideUp 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -2356,14 +2748,15 @@ a:hover {
 }
 
 .inventrack-modal .modal-body {
+    border: 0 !important;
     padding: 24px;
     max-height: 70vh;
     overflow-y: auto;
 }
 
 .inventrack-modal .modal-footer {
+    border-top: 0 !important;
     padding: 16px 24px;
-    border-top: 1px solid var(--border-color);
     background: var(--body-bg);
     gap: 8px;
 }
@@ -2494,6 +2887,165 @@ a:hover {
     color: var(--text-secondary);
     font-size: 12px;
     margin-bottom: 0;
+}
+
+/* Public login modal only: white glassmorphism without affecting other modals. */
+#loginModal .modal-dialog {
+    max-width: 440px;
+}
+
+#loginModal .modal-content {
+    background: rgba(255, 255, 255, 0.20) !important;
+    border: 0 !important;
+    border-radius: 18px !important;
+    box-shadow: 0 28px 80px rgba(15, 23, 42, 0.28) !important;
+    backdrop-filter: blur(10px) saturate(170%);
+    -webkit-backdrop-filter: blur(10px) saturate(170%);
+    color: #1f2937;
+}
+
+#loginModal .modal-content::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 18px;
+    pointer-events: none;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(255, 255, 255, 0.22));
+    z-index: 0;
+}
+
+#loginModal .modal-content > * {
+    position: relative;
+    z-index: 1;
+}
+
+#loginModal .modal-body {
+    border: 0 !important;
+    padding: 10px 34px 24px;
+}
+
+#loginModal .modal-footer {
+    background: transparent !important;
+    border-top: none !important;
+    padding-bottom: 24px;
+}
+
+#loginModal .login-modal-brand {
+    margin-bottom: 10px;
+}
+
+#loginModal .login-modal-brand .brand-icon {
+    filter: drop-shadow(0 14px 28px rgba(16, 185, 129, 0.18));
+}
+
+#loginModal .login-modal-brand .next-logistic {
+    color: #047857;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+#loginModal .form-label {
+    color: #334155;
+    font-weight: 700;
+}
+
+#loginModal .form-control,
+#loginModal .input-group-text {
+    background: rgba(255, 255, 255, 0.40);
+    border-color: rgba(148, 163, 184, 0.38);
+    color: #111827;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+#loginModal .form-control::placeholder {
+    color: #94a3b8;
+}
+
+#loginModal .form-control:focus {
+    background: rgba(255, 255, 255, 0.82);
+    border-color: rgba(16, 185, 129, 0.72);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.14);
+}
+
+#loginModal .input-group-text {
+    color: #64748b;
+}
+
+#loginModal .input-group {
+    border: 1px solid rgba(148, 163, 184, 0.38);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.40);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    overflow: hidden;
+}
+
+#loginModal .input-group:focus-within {
+    background: rgba(255, 255, 255, 0.82);
+    border-color: rgba(16, 185, 129, 0.72);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.14);
+}
+
+#loginModal .input-group #loginPassword,
+#loginModal .input-group #togglePassword {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+#loginModal .input-group #loginPassword {
+    border-radius: 0;
+}
+
+#loginModal .input-group #togglePassword {
+    border-radius: 0;
+    padding-inline: 16px;
+}
+
+#loginModal .input-group #togglePassword:hover,
+#loginModal .input-group #togglePassword:focus,
+#loginModal .input-group #togglePassword:active {
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+#loginModal .form-check-label,
+#loginModal .modal-footer span {
+    color: #64748b !important;
+}
+
+#loginModal .btn-close {
+    filter: none !important;
+    opacity: 0.7;
+}
+
+#loginModal .modal-loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    border-radius: 0;
+    background: rgba(2, 6, 23, 0.58);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    align-items: center;
+    justify-content: center;
+}
+
+#loginModal .modal-loading-overlay.show {
+    display: flex;
+}
+
+#loginModal .modal-loading-overlay .modal-spinner {
+    width: 54px;
+    height: 54px;
+    border-width: 4px;
+    border-color: rgba(255, 255, 255, 0.52);
+    border-top-color: var(--primary);
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.45);
+}
+
+[data-theme="dark"] #loginModal .modal-content {
+    background: rgba(255, 255, 255, 0.30) !important;
+    color: #111827;
 }
 
 /* Responsive: fullscreen modal on small screens */
@@ -2648,21 +3200,17 @@ a:hover {
 
 /* SweetAlert2 Toast Modern & Adaptive */
 .swal2-popup.swal2-toast {
-    background-color: #1e293b !important;
-    /* Sesuaikan dengan tema dark kamu */
-    color: #f8fafc !important;
+    background-color: #1e293b !important; /* Latar putih untuk mode terang */
+    color: #ffffff !important;            /* Teks gelap agar terbaca */
+    border: 1px solid rgba(0, 0, 0, 0.05);
     border-radius: 12px !important;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3) !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
     padding: 0.75rem 1rem !important;
-    /* Padding lebih proporsional */
     display: flex !important;
     align-items: center !important;
     width: auto !important;
-    /* Biar lebar menyesuaikan konten */
     min-width: 250px !important;
-    /* Batas minimal agar tidak terlalu kecil */
     max-width: 350px !important;
-    /* Batas maksimal agar tidak terlalu lebar */
 }
 
 /* Mengatur container ikon agar tidak terpengaruh tinggi teks */
@@ -2677,17 +3225,25 @@ a:hover {
 }
 
 .swal2-popup.swal2-toast .swal2-title {
+    color: #ffffff !important; /* Pastikan judul berwarna gelap di mode terang */
     font-size: 0.875rem !important;
     font-weight: 500 !important;
     margin: 0 0 0 12px !important;
-    /* Jarak tetap dari ikon */
     padding: 0 !important;
     line-height: 1.2 !important;
     text-align: left !important;
     flex: 1 !important;
-    /* Memaksa teks mengisi ruang yang tersisa secara merata */
-    display: flex !important;
-    align-items: center !important;
+}
+
+[data-theme="dark"] .swal2-popup.swal2-toast {
+    background-color: #1e293b !important; /* Latar gelap */
+    color: #f8fafc !important;            /* Teks putih */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5) !important;
+}
+
+[data-theme="dark"] .swal2-popup.swal2-toast .swal2-title {
+    color: #f8fafc !important; /* Judul putih di mode gelap */
 }
 
 /* Hilangkan margin bawaan yang bikin gap aneh */
@@ -2709,16 +3265,21 @@ a:hover {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1;
+    z-index: 0;
     /* Di antara Body (0) dan Public Page (2) */
     pointer-events: none;
+    overflow: hidden;
 }
 
 .background-glow-container svg {
     width: 100%;
     height: 100%;
-    opacity: 0.4;
-    /* Atur kejelasan agar tidak terlalu mencolok */
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+[data-theme="dark"] .background-glow-container svg {
+    opacity: 1; 
 }
 
 /* KUNCI UTAMA: Konten harus lebih tinggi dari garis SVG */
@@ -2729,15 +3290,48 @@ a:hover {
 
 /* Tambahkan Glow pada garis agar terlihat nyata di atas gradient */
 .glowing-line {
-    filter: drop-shadow(0 0 10px var(--primary));
-    stroke-dasharray: 1000;
-    stroke-dashoffset: 1000;
-    animation: drawLine 8s ease-in-out infinite alternate;
+    /* Gunakan filter drop-shadow yang lebih kuat */
+    filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.45));
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
 }
 
-@keyframes drawLine {
-    to {
+.glowing-line-solid {
+    opacity: 0.95;
+}
+
+.glowing-line-dashed {
+    stroke-dasharray: 20 26;
+    animation: moveDashedLine 12s linear infinite;
+    opacity: 0.82;
+}
+
+[data-theme="dark"] .glowing-line {
+    filter: drop-shadow(0 0 12px rgba(96, 165, 250, 0.68));
+}
+
+[data-theme="dark"] .glowing-line-solid {
+    stroke-width: 4.5;
+}
+
+[data-theme="dark"] .glowing-line-dashed {
+    opacity: 1;
+    stroke-width: 3.5;
+}
+
+@keyframes moveDashedLine {
+    from {
         stroke-dashoffset: 0;
+    }
+    to {
+        stroke-dashoffset: -92;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .glowing-line-dashed {
+        animation: none;
     }
 }
 
@@ -2751,6 +3345,8 @@ a:hover {
     /* Pastikan footer menyesuaikan dengan lebar konten utama (main-content) */
     margin-left: var(--sidebar-width); 
     transition: var(--transition);
+    position: relative;
+    z-index: 1;
 }
 
 .public-footer {
@@ -2770,11 +3366,16 @@ a:hover {
 
 .footer-content {
     display: flex;
-    justify-content: space-between;
+    /* Ubah space-between menjadi center */
+    justify-content: center; 
+    /* Tambahkan flex-direction jika ada dua baris teks agar bertumpuk vertikal */
+    flex-direction: column; 
     align-items: center;
     padding: 0 30px;
     max-width: 1400px;
     margin: 0 auto;
+    /* Memastikan teks di dalam elemen inner juga rata tengah */
+    text-align: center; 
 }
 
 .brand-name {
@@ -2791,4 +3392,3 @@ a:hover {
 .separator {
     color: rgba(255, 255, 255, 0.1);
 }
-

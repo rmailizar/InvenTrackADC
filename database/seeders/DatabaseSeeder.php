@@ -3,145 +3,202 @@
 namespace Database\Seeders;
 
 use App\Models\Item;
+use App\Models\StockRequest;
+use App\Models\StuffRequest;
 use App\Models\Transaction;
 use App\Models\User;
-use Illuminate\Database\Seeder;
 use Carbon\Carbon;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // ======================
-        // USERS (ANTI DUPLIKAT)
-        // ======================
-        $admin = User::firstOrCreate(
-            ['email' => 'admin@inventory.com'],
-            [
-                'name' => 'Administrator',
-                'password' => Hash::make('password'),
-                'role' => 'admin',
-                'no_hp' => '081234567890',
-                'account_status' => 'approved',
-            ]
-        );
-
-        $manager = User::firstOrCreate(
-            ['email' => 'manager@inventory.com'],
-            [
-                'name' => 'Manager Gudang',
-                'password' => Hash::make('password'),
-                'role' => 'manajer',
-                'no_hp' => '081234567891',
-                'account_status' => 'approved',
-            ]
-        );
-
-        $staff1 = User::firstOrCreate(
-            ['email' => 'budi@inventory.com'],
-            [
-                'name' => 'Budi Santoso',
-                'password' => Hash::make('password'),
-                'role' => 'staf',
-                'no_hp' => '081234567892',
-                'account_status' => 'approved',
-            ]
-        );
-
-        $staff2 = User::firstOrCreate(
-            ['email' => 'siti@inventory.com'],
-            [
-                'name' => 'Siti Nurhaliza',
-                'password' => Hash::make('password'),
-                'role' => 'staf',
-                'no_hp' => '081234567893',
-                'account_status' => 'approved',
-            ]
-        );
-
-        User::firstOrCreate(
-            ['email' => 'andi@inventory.com'],
-            [
-                'name' => 'Andi Prasetyo',
-                'password' => Hash::make('password'),
-                'role' => 'staf',
-                'no_hp' => '081234567894',
-                'account_status' => 'pending',
-            ]
-        );
-
-        // ======================
-        // ITEMS (ANTI DUPLIKAT)
-        // ======================
-        $items = [
-            ['name' => 'Kertas HVS A4 70gr', 'category' => 'ATK', 'unit' => 'Rim', 'min_stock' => 10],
-            ['name' => 'Tinta Printer HP Black', 'category' => 'ATK', 'unit' => 'Botol', 'min_stock' => 5],
-            ['name' => 'Pulpen Pilot BPS-GP', 'category' => 'ATK', 'unit' => 'Lusin', 'min_stock' => 3],
-            ['name' => 'Spidol Snowman Board Marker', 'category' => 'ATK', 'unit' => 'Pcs', 'min_stock' => 10],
-            ['name' => 'Map Plastik L Folder', 'category' => 'ATK', 'unit' => 'Pcs', 'min_stock' => 20],
-            ['name' => 'Monitor LED 24 inch', 'category' => 'Elektronik', 'unit' => 'Unit', 'min_stock' => 2],
-            ['name' => 'Keyboard Logitech K120', 'category' => 'Elektronik', 'unit' => 'Unit', 'min_stock' => 5],
-            ['name' => 'Mouse Wireless Logitech', 'category' => 'Elektronik', 'unit' => 'Unit', 'min_stock' => 5],
-            ['name' => 'Kabel LAN Cat6 305m', 'category' => 'Elektronik', 'unit' => 'Box', 'min_stock' => 2],
-            ['name' => 'Meja Kerja 120x60cm', 'category' => 'Furnitur', 'unit' => 'Unit', 'min_stock' => 2],
-            ['name' => 'Kursi Kantor Ergonomis', 'category' => 'Furnitur', 'unit' => 'Unit', 'min_stock' => 3],
-            ['name' => 'Rak Besi Serbaguna', 'category' => 'Furnitur', 'unit' => 'Unit', 'min_stock' => 2],
-            ['name' => 'Sabun Cuci Tangan 500ml', 'category' => 'Kebersihan', 'unit' => 'Botol', 'min_stock' => 10],
-            ['name' => 'Tisu Gulung Besar', 'category' => 'Kebersihan', 'unit' => 'Roll', 'min_stock' => 15],
-            ['name' => 'Sapu Lantai', 'category' => 'Kebersihan', 'unit' => 'Pcs', 'min_stock' => 5],
-        ];
-
-        foreach ($items as $itemData) {
-            Item::firstOrCreate(
-                ['name' => $itemData['name']],
-                $itemData
-            );
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0');
+        }
+        DB::table('stock_request_lines')->truncate();
+        DB::table('stock_requests')->truncate();
+        DB::table('stuff_request_items')->truncate();
+        DB::table('stuff_requests')->truncate();
+        DB::table('transactions')->truncate();
+        DB::table('items')->truncate();
+        DB::table('users')->truncate();
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1');
         }
 
-        // ======================
-        // TRANSAKSI (OPSIONAL ANTI DUPLIKAT)
-        // ======================
-        $allItems = Item::all();
-        $staffUsers = [$staff1, $staff2];
+        $users = $this->seedUsers();
+        $items = $this->seedItems();
+        $this->seedTransactions($users, $items);
+        $this->seedStuffRequests($users, $items);
+        $this->seedStockRequests($users, $items);
+    }
+
+    private function seedUsers(): array
+    {
+        $password = Hash::make('password');
+        $rows = [
+            ['name' => 'Superadmin Inventory', 'email' => 'superadmin@inventory.com', 'role' => 'superadmin', 'bidang' => null, 'no_hp' => '081200000000'],
+            ['name' => 'Admin Umum', 'email' => 'admin.umum@inventory.com', 'role' => 'admin', 'bidang' => 'umum', 'no_hp' => '081200000101'],
+            ['name' => 'Manajer Umum', 'email' => 'manager.umum@inventory.com', 'role' => 'manajer', 'bidang' => 'umum', 'no_hp' => '081200000102'],
+            ['name' => 'Staf Umum', 'email' => 'staf.umum@inventory.com', 'role' => 'staf', 'bidang' => 'umum', 'no_hp' => '081200000103'],
+            ['name' => 'Admin Teknik', 'email' => 'admin.teknik@inventory.com', 'role' => 'admin', 'bidang' => 'teknik', 'no_hp' => '081200000201'],
+            ['name' => 'Manajer Teknik', 'email' => 'manager.teknik@inventory.com', 'role' => 'manajer', 'bidang' => 'teknik', 'no_hp' => '081200000202'],
+            ['name' => 'Calon Staf Umum', 'email' => 'pending.umum@inventory.com', 'role' => 'staf', 'bidang' => 'umum', 'no_hp' => '081200000104', 'account_status' => 'pending'],
+        ];
+
+        $users = [];
+        foreach ($rows as $row) {
+            $users[$row['email']] = User::create($row + [
+                'password' => $password,
+                'account_status' => $row['account_status'] ?? 'approved',
+            ]);
+        }
+
+        return $users;
+    }
+
+    private function seedItems(): array
+    {
+        $rows = [
+            ['name' => 'Kertas HVS A4 70gr', 'category' => 'ATK', 'unit' => 'Rim', 'bidang' => 'umum', 'min_stock' => 10],
+            ['name' => 'Pulpen Pilot BPS-GP', 'category' => 'ATK', 'unit' => 'Lusin', 'bidang' => 'umum', 'min_stock' => 4],
+            ['name' => 'Tinta Printer Black', 'category' => 'ATK', 'unit' => 'Botol', 'bidang' => 'umum', 'min_stock' => 5],
+            ['name' => 'Map L Folder', 'category' => 'Arsip', 'unit' => 'Pcs', 'bidang' => 'umum', 'min_stock' => 30],
+            ['name' => 'Sabun Cuci Tangan 500ml', 'category' => 'Kebersihan', 'unit' => 'Botol', 'bidang' => 'umum', 'min_stock' => 12],
+            ['name' => 'Kabel LAN Cat6 305m', 'no_normalisasi' => 'SU-01-LAN-001', 'category' => 'Jaringan', 'unit' => 'Box', 'bidang' => 'teknik', 'lokasi' => 'Gudang Teknik A1', 'ship_unloader' => '1,2', 'min_stock' => 2],
+            ['name' => 'RJ45 Connector', 'no_normalisasi' => 'SU-02-RJ45-002', 'category' => 'Jaringan', 'unit' => 'Pack', 'bidang' => 'teknik', 'lokasi' => 'Rak Komponen B2', 'ship_unloader' => '1,3', 'min_stock' => 5],
+            ['name' => 'Switch 24 Port Gigabit', 'no_normalisasi' => 'SU-03-SW24-003', 'category' => 'Jaringan', 'unit' => 'Unit', 'bidang' => 'teknik', 'lokasi' => 'Panel Room C1', 'ship_unloader' => '3,4', 'min_stock' => 2],
+            ['name' => 'Hard Disk External 2TB', 'no_normalisasi' => 'SU-04-HDD-004', 'category' => 'Perangkat IT', 'unit' => 'Unit', 'bidang' => 'teknik', 'lokasi' => 'Lemari IT D1', 'ship_unloader' => '2,4', 'min_stock' => 3],
+            ['name' => 'Obeng Set Presisi', 'no_normalisasi' => 'SU-01-TOOLS-005', 'category' => 'Tools', 'unit' => 'Set', 'bidang' => 'teknik', 'lokasi' => 'Toolbox Teknik', 'ship_unloader' => '1', 'min_stock' => 4],
+        ];
+
+        $items = [];
+        foreach ($rows as $row) {
+            $items[$row['name']] = Item::create($row);
+        }
+
+        return $items;
+    }
+
+    private function seedTransactions(array $users, array $items): void
+    {
         $now = Carbon::now();
+        $departments = [
+            'umum' => [
+                'staff' => $users['staf.umum@inventory.com'],
+                'admin' => $users['admin.umum@inventory.com'],
+                'items' => collect($items)->where('bidang', 'umum')->values(),
+            ],
+            'teknik' => [
+                'staff' => $users['admin.teknik@inventory.com'],
+                'admin' => $users['admin.teknik@inventory.com'],
+                'items' => collect($items)->where('bidang', 'teknik')->values(),
+            ],
+        ];
 
-        for ($month = 5; $month >= 0; $month--) {
-            $date = $now->copy()->subMonths($month);
+        foreach ($departments as $bidang => $data) {
+            foreach ($data['items'] as $index => $item) {
+                $date = $now->copy()->subDays(20 - $index);
+                $inQuantity = 35 + ($index * 6);
+                $outQuantity = 4 + $index;
 
-            foreach ($allItems->random(rand(5, 10)) as $item) {
-                $trxDate = $date->copy()->addDays(rand(1, 28));
-
-                Transaction::firstOrCreate([
+                Transaction::create([
                     'item_id' => $item->id,
-                    'date' => $trxDate->format('Y-m-d'), // ✅ FIX
+                    'user_id' => $data['staff']->id,
+                    'bidang' => $bidang,
+                    'no_normalisasi' => $item->no_normalisasi,
+                    'lokasi' => $item->lokasi,
+                    'volume' => $bidang === 'teknik' ? $inQuantity : null,
+                    'ship_unloader' => $item->ship_unloader,
+                    'date' => $date->toDateString(),
                     'type' => 'in',
-                ], [
-                    'user_id' => $staffUsers[array_rand($staffUsers)]->id,
-                    'quantity' => rand(10, 100),
-                    'description' => 'Pengadaan rutin bulan ' . $date->translatedFormat('F Y'),
+                    'quantity' => $inQuantity,
+                    'price' => 15000 + ($index * 2500),
+                    'description' => 'Stok awal Bidang ' . ucfirst($bidang),
                     'status' => 'approved',
-                    'approved_by' => $admin->id,
-                    'approved_at' => $trxDate->copy()->addDays(rand(1, 5)),
+                    'approved_by' => $data['admin']->id,
+                    'approved_at' => $date->copy()->addHour(),
                 ]);
-            }
 
-            foreach ($allItems->random(rand(3, 7)) as $item) {
-                $trxDate = $date->copy()->addDays(rand(1, 28));
-
-                Transaction::firstOrCreate([
+                Transaction::create([
                     'item_id' => $item->id,
-                    'date' => $trxDate->format('Y-m-d'), // ✅ FIX
+                    'user_id' => $data['staff']->id,
+                    'bidang' => $bidang,
+                    'no_normalisasi' => $item->no_normalisasi,
+                    'lokasi' => $item->lokasi,
+                    'volume' => $bidang === 'teknik' ? $outQuantity : null,
+                    'ship_unloader' => $item->ship_unloader,
+                    'date' => $date->copy()->addDays(5)->toDateString(),
                     'type' => 'out',
-                ], [
-                    'user_id' => $staffUsers[array_rand($staffUsers)]->id,
-                    'quantity' => rand(2, 30),
-                    'description' => 'Pemakaian operasional bulan ' . $date->translatedFormat('F Y'),
+                    'quantity' => $outQuantity,
+                    'price' => 0,
+                    'description' => 'Pemakaian operasional Bidang ' . ucfirst($bidang),
                     'status' => 'approved',
-                    'approved_by' => $admin->id,
-                    'approved_at' => $trxDate->copy()->addDays(rand(1, 5)),
+                    'approved_by' => $data['admin']->id,
+                    'approved_at' => $date->copy()->addDays(5)->addHour(),
                 ]);
             }
+        }
+    }
+
+    private function seedStuffRequests(array $users, array $items): void
+    {
+        $samples = [
+            [
+                'bidang' => 'umum',
+                'admin' => $users['admin.umum@inventory.com'],
+                'request' => ['requester_name' => 'Rina Administrasi', 'nip' => '198801012020012001', 'jabatan' => 'Administrasi', 'notes' => 'Kebutuhan rapat mingguan.'],
+                'lines' => ['Kertas HVS A4 70gr' => 2, 'Pulpen Pilot BPS-GP' => 1],
+            ],
+            [
+                'bidang' => 'teknik',
+                'admin' => $users['admin.teknik@inventory.com'],
+                'request' => ['requester_name' => 'Dimas Teknisi', 'nip' => '199002022021021002', 'jabatan' => 'Teknisi Jaringan', 'notes' => 'Penggantian perangkat jaringan lantai 2.'],
+                'lines' => ['Kabel LAN Cat6 305m' => 1, 'RJ45 Connector' => 2],
+            ],
+        ];
+
+        foreach ($samples as $sample) {
+            $stuffRequest = StuffRequest::create($sample['request'] + [
+                'bidang' => $sample['bidang'],
+                'status' => 'pending',
+            ]);
+
+            foreach ($sample['lines'] as $itemName => $quantity) {
+                $stuffRequest->lines()->create([
+                    'item_id' => $items[$itemName]->id,
+                    'quantity' => $quantity,
+                ]);
+            }
+        }
+    }
+
+    private function seedStockRequests(array $users, array $items): void
+    {
+        $samples = [
+            ['user' => $users['staf.umum@inventory.com'], 'item' => $items['Map L Folder'], 'quantity' => 50, 'price' => 1800],
+            ['user' => $users['admin.teknik@inventory.com'], 'item' => $items['Switch 24 Port Gigabit'], 'quantity' => 2, 'price' => 1450000],
+        ];
+
+        foreach ($samples as $sample) {
+            $stockRequest = StockRequest::create([
+                'user_id' => $sample['user']->id,
+                'bidang' => $sample['user']->bidang,
+                'category' => $sample['item']->category,
+                'status' => 'pending',
+            ]);
+
+            $stockRequest->lines()->create([
+                'item_id' => $sample['item']->id,
+                'quantity' => $sample['quantity'],
+                'price' => $sample['price'],
+                'category' => $sample['item']->category,
+                'description' => 'Permintaan stok ulang Bidang ' . ucfirst($sample['user']->bidang),
+            ]);
         }
     }
 }

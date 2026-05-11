@@ -4,29 +4,48 @@
 @section('subtitle', 'Daftar transaksi barang masuk & keluar')
 
 @section('content')
+    @php
+        $isTeknik = auth()->user()->bidang === 'teknik';
+        $transactionDetailData = [];
+        foreach ($transactions as $txRow) {
+            $transactionDetailData[$txRow->id] = [
+                'date' => $txRow->date->format('d/m/Y'),
+                'type' => $txRow->type_label,
+                'no_normalisasi' => $txRow->no_normalisasi ?: ($txRow->item->no_normalisasi ?? '-'),
+                'name' => $txRow->item->name ?? '-',
+                'category' => $txRow->item->category ?? '-',
+                'ship_unloader' => $txRow->ship_unloader_label,
+                'lokasi' => $txRow->lokasi ?: ($txRow->item->lokasi ?? '-'),
+                'volume' => $txRow->quantity,
+                'quantity' => $txRow->quantity,
+                'unit' => $txRow->item->unit ?? '-',
+                'user' => $txRow->user->name ?? '-',
+                'status' => $txRow->bidang === 'teknik' ? 'Approve' : ($txRow->status === 'pending' ? 'Menunggu Approval' : ucfirst($txRow->status)),
+                'description' => $txRow->description ?: '-',
+            ];
+        }
+    @endphp
     <div class="animate-fade-in">
-        <!-- Filter Bar -->
         <div class="filter-bar">
             <form method="GET" action="{{ route('transactions.index') }}">
                 <div class="row align-items-end g-3">
                     <div class="col-lg-3 col-md-6">
                         <label class="form-label">Cari Barang</label>
-                        <input type="text" name="search" class="form-control" placeholder="Nama barang..."
-                            value="{{ request('search') }}">
+                        <input type="text" name="search" class="form-control" placeholder="Nama barang..." value="{{ request('search') }}">
                     </div>
                     <div class="col-lg-2 col-md-6">
                         <label class="form-label">Jenis</label>
                         <select name="type" class="form-select">
                             <option value="">Semua</option>
-                            <option value="in" {{ request('type') == 'in' ? 'selected' : '' }}>In</option>
-                            <option value="out" {{ request('type') == 'out' ? 'selected' : '' }}>Out</option>
+                            <option value="in" {{ request('type') == 'in' ? 'selected' : '' }}>{{ $isTeknik ? 'Goods Receipt' : 'In' }}</option>
+                            <option value="out" {{ request('type') == 'out' ? 'selected' : '' }}>{{ $isTeknik ? 'Goods Issue' : 'Out' }}</option>
                         </select>
                     </div>
                     <div class="col-lg-2 col-md-6">
                         <label class="form-label">Status</label>
                         <select name="status" class="form-select">
                             <option value="">Semua</option>
-                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Menunggu Approval</option>
                             <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
                             <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                         </select>
@@ -40,103 +59,126 @@
                         <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
                     </div>
                     <div class="col-lg-2 col-md-6">
+                        <label class="form-label">Urutkan</label>
+                        <select name="sort" class="form-select">
+                            <option value="latest" {{ request('sort', 'latest') == 'latest' ? 'selected' : '' }}>Terbaru</option>
+                            <option value="oldest" {{ request('sort') == 'oldest' ? 'selected' : '' }}>Terlama</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-6">
                         <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-search"></i>
-                                Cari</button>
-                            <a href="{{ route('transactions.index') }}" class="btn btn-outline-secondary flex-fill"><i
-                                    class="bi bi-x-lg"></i> Reset</a>
+                            <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-search"></i> Cari</button>
+                            <a href="{{ route('transactions.index') }}" class="btn btn-outline-secondary flex-fill"><i class="bi bi-x-lg"></i> Reset</a>
                         </div>
                     </div>
                 </div>
             </form>
         </div>
 
-        <!-- Action buttons -->
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <div class="text-muted" style="font-size:13px;">
-                Total: {{ $transactions->total() }} transaksi
-            </div>
+            <div class="text-muted" style="font-size:13px;">Total: {{ $transactions->total() }} transaksi</div>
             <button type="button" class="btn btn-primary" onclick="openTransactionModal()">
                 <i class="bi bi-plus-lg"></i> Input Transaksi
             </button>
         </div>
 
-        <!-- Table -->
         <div class="card">
             <div class="card-body p-0">
                 <div class="table-container">
                     <table class="table" id="transactions-table">
                         <thead>
-                            <tr>
-                                <th style="width:50px;">No</th>
-                                <th>Tanggal</th>
-                                <th>Barang</th>
-                                <th>Kategori</th>
-                                <th>Jenis</th>
-                                <th>Jumlah</th>
-                                <th>Harga Satuan</th>
-                                <th>Satuan</th>
-                                <th>User</th>
-                                <th>Status</th>
-                                @if(auth()->user()->isAdmin())
-                                    <th style="width:110px;">Aksi</th>
-                                @endif
-                            </tr>
+                            @if($isTeknik)
+                                <tr>
+                                    <th style="width:50px;">No</th>
+                                    <th>Tanggal</th>
+                                    <th>Jenis</th>
+                                    <th>No Normalisasi</th>
+                                    <th>Nama Barang</th>
+                                    <th>Komponen</th>
+                                    <th>Ship Unloader</th>
+                                    <th>Lokasi</th>
+                                    <th class="text-center">Volume</th>
+                                    <th>Satuan</th>
+                                    <th>User</th>
+                                    <th>Status</th>
+                                    <th class="text-center" style="width:72px;">Aksi</th>
+                                </tr>
+                            @else
+                                <tr>
+                                    <th style="width:50px;">No</th>
+                                    <th>Tanggal</th>
+                                    <th>Jenis</th>
+                                    <th>Barang</th>
+                                    <th>Kategori</th>
+                                    <th>Jumlah</th>
+                                    <th>Satuan</th>
+                                    <th>User</th>
+                                    <th>Status</th>
+                                    <th>Keterangan</th>
+                                    <th class="text-center" style="width:72px;">Aksi</th>
+                                </tr>
+                            @endif
                         </thead>
                         <tbody>
                             @forelse($transactions as $index => $tx)
                                 <tr>
                                     <td>{{ $transactions->firstItem() + $index }}</td>
                                     <td>{{ $tx->date->format('d/m/Y') }}</td>
-                                    <td class="fw-600">{{ $tx->item->name ?? 'Barang Terhapus' }}</td>
-                                    <td>{{ $tx->item->category ?? 'Barang Terhapus' }}</td>
                                     <td>
                                         <span class="badge-status badge-{{ $tx->type }}">
-                                            <i class="bi bi-arrow-{{ $tx->type === 'in' ? 'down' : 'up' }}-circle-fill"
-                                                style="font-size:10px;"></i>
-                                            {{ strtoupper($tx->type) }}
+                                            <i class="bi bi-arrow-{{ $tx->type === 'in' ? 'down' : 'up' }}-circle-fill" style="font-size:10px;"></i>
+                                            {{ $tx->type_label }}
                                         </span>
                                     </td>
-                                    <td class="fw-700">{{ number_format($tx->quantity) }}</td>
-                                    <td>{{ $tx->price }}</td>
-                                    <td>{{ $tx->item->unit ?? '-' }}</td>
-                                    <td>{{ $tx->user->name ?? '-' }}</td>
-                                    <td>
-                                        <span class="badge-status badge-{{ $tx->status }}">{{ ucfirst($tx->status) }}</span>
-                                        @if($tx->status !== 'pending' && $tx->approver)
-                                            <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">
-                                                oleh {{ $tx->approver->name }}
-                                            </div>
-                                        @endif
-                                    </td>
-                                    @if(auth()->user()->isAdmin())
+                                    @if($isTeknik)
+                                        <td class="fw-600">{{ $tx->no_normalisasi ?? $tx->item->no_normalisasi ?? '-' }}</td>
+                                        <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
+                                        <td>{{ $tx->item->category ?? '-' }}</td>
+                                        <td>{{ $tx->ship_unloader_label }}</td>
+                                        <td>{{ $tx->lokasi ?? $tx->item->lokasi ?? '-' }}</td>
+                                        <td class="text-center fw-700">{{ number_format($tx->quantity) }}</td>
+                                        <td>{{ $tx->item->unit ?? '-' }}</td>
+                                        <td>{{ $tx->user->name ?? '-' }}</td>
                                         <td>
-                                            @if($tx->status === 'pending')
-                                                <div class="action-buttons">
-                                                    <button type="button" class="btn-action edit" title="Edit"
-                                                        onclick="openTransactionModal({{ $tx->id }})">
-                                                        <i class="bi bi-pencil-fill"></i>
-                                                    </button>
-                                                    <form action="{{ route('transactions.destroy', $tx) }}" method="POST"
-                                                        id="deleteTxIdx-{{ $tx->id }}">
-                                                        @csrf @method('DELETE')
-                                                        <button type="button" class="btn-action delete" title="Hapus"
-                                                            onclick="swalConfirm('Hapus Transaksi', 'Hapus transaksi pending ini?', 'warning', 'Ya, Hapus', '#deleteTxIdx-{{ $tx->id }}')">
-                                                            <i class="bi bi-trash-fill"></i>
-                                                        </button>
-                                                    </form>
-                                                </div>
-                                            @else
-                                                <span class="text-muted" style="font-size:11px;">—</span>
+                                            <span class="badge-status badge-approved">
+                                                <i class="bi bi-check-circle-fill"></i> Approve
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-sm btn-outline-primary btn-transaction-detail-open"
+                                                title="Lihat Detail" data-transaction-id="{{ $tx->id }}">
+                                                <i class="bi bi-eye-fill"></i>
+                                            </button>
+                                        </td>
+                                    @else
+                                        <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
+                                        <td>{{ $tx->item->category ?? '-' }}</td>
+                                        <td class="fw-700">{{ number_format($tx->quantity) }}</td>
+                                        <td>{{ $tx->item->unit ?? '-' }}</td>
+                                        <td>{{ $tx->user->name ?? '-' }}</td>
+                                        <td>
+                                            <span class="badge-status badge-{{ $tx->status }}">
+                                                {{ $tx->status === 'pending' ? 'Menunggu Approval' : ucfirst($tx->status) }}
+                                            </span>
+                                            @if($tx->status !== 'pending' && $tx->approver)
+                                                <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">oleh {{ $tx->approver->name }}</div>
                                             @endif
+                                        </td>
+                                        <td style="max-width:220px; font-size:12px; color:var(--text-secondary);">
+                                            {{ \Illuminate\Support\Str::limit($tx->description, 60) }}
+                                        </td>
+                                        <td class="text-center">
+                                            <button type="button" class="btn btn-sm btn-outline-primary btn-transaction-detail-open"
+                                                title="Lihat Detail" data-transaction-id="{{ $tx->id }}">
+                                                <i class="bi bi-eye-fill"></i>
+                                            </button>
                                         </td>
                                     @endif
                                 </tr>
                             @empty
                                 <tr class="no-data-row">
-                                    <td colspan="{{ auth()->user()->isAdmin() ? 11 : 10 }}">
-                                        <i class="bi bi-inbox"
-                                            style="font-size:40px;display:block;margin-bottom:8px;opacity:0.3;"></i>
+                                    <td colspan="{{ $isTeknik ? 13 : 11 }}">
+                                        <i class="bi bi-inbox" style="font-size:40px;display:block;margin-bottom:8px;opacity:0.3;"></i>
                                         Belum ada data transaksi
                                     </td>
                                 </tr>
@@ -154,17 +196,29 @@
         @endif
     </div>
 
-    {{-- Transaction Modal (Create/Edit) --}}
+    <div class="modal fade inventrack-modal" id="transactionDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-eye-fill me-2"></i>Detail Transaksi</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3" id="transactionDetailGrid"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade inventrack-modal" id="transactionModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content" style="position:relative;">
-                <div class="modal-loading-overlay" id="txLoading">
-                    <div class="modal-spinner"></div>
-                </div>
+                <div class="modal-loading-overlay" id="txLoading"><div class="modal-spinner"></div></div>
                 <div class="modal-header">
-                    <h5 class="modal-title" id="txModalTitle">
-                        <i class="bi bi-plus-circle-fill"></i> <span>Input Transaksi</span>
-                    </h5>
+                    <h5 class="modal-title" id="txModalTitle"><i class="bi bi-plus-circle-fill"></i> <span>Input Transaksi</span></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -179,26 +233,31 @@
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Tanggal <span class="text-danger">*</span></label>
-                                <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required
-                                    id="txDate">
+                                <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required id="txDate">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Jenis Transaksi <span class="text-danger">*</span></label>
                                 <select name="type" class="form-select" required id="txType">
                                     <option value="">-- Pilih Jenis --</option>
-                                    <option value="in">📥 Barang Masuk</option>
-                                    <option value="out">📤 Barang Keluar</option>
+                                    <option value="in">{{ $isTeknik ? 'Goods Receipt' : 'Barang Masuk' }}</option>
+                                    <option value="out">{{ $isTeknik ? 'Goods Issue' : 'Barang Keluar' }}</option>
                                 </select>
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Nama Barang <span class="text-danger">*</span></label>
+                            <label class="form-label">Barang <span class="text-danger">*</span></label>
                             <select name="item_id" class="form-select" required id="txItemSelect">
                                 <option value="">-- Pilih Barang --</option>
                                 @foreach($items as $item)
-                                    <option value="{{ $item->id }}" data-category="{{ $item->category }}"
-                                        data-unit="{{ $item->unit }}" data-stock="{{ $item->current_stock }}">
+                                    <option value="{{ $item->id }}"
+                                        data-category="{{ $item->category }}"
+                                        data-unit="{{ $item->unit }}"
+                                        data-stock="{{ $item->current_stock }}"
+                                        data-no-normalisasi="{{ $item->no_normalisasi }}"
+                                        data-lokasi="{{ $item->lokasi }}"
+                                        data-volume="{{ $item->current_stock }}"
+                                        data-ship-unloader="{{ $item->ship_unloader }}">
                                         {{ $item->name }}
                                     </option>
                                 @endforeach
@@ -207,7 +266,7 @@
 
                         <div class="row g-3 mb-3">
                             <div class="col-md-4">
-                                <label class="form-label">Kategori</label>
+                                <label class="form-label">{{ $isTeknik ? 'Komponen' : 'Kategori' }}</label>
                                 <input type="text" class="form-control" id="txItemCategory" readonly>
                             </div>
                             <div class="col-md-4">
@@ -220,19 +279,46 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Jumlah <span class="text-danger">*</span></label>
-                            <input type="number" name="quantity" class="form-control" min="1" placeholder="Masukkan jumlah"
-                                required id="txQuantity">
-                            <div id="txStockWarning" class="text-danger mt-1" style="font-size:12px;display:none;">
-                                <i class="bi bi-exclamation-triangle-fill"></i> Jumlah melebihi stok yang tersedia!
+                        @if($isTeknik)
+                            <div class="row g-3 mb-3" id="txTechnicalInfo">
+                                <div class="col-md-4">
+                                    <label class="form-label">No Normalisasi</label>
+                                    <input type="text" class="form-control" id="txNoNormalisasi" readonly>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Lokasi</label>
+                                    <input type="text" class="form-control" id="txLokasi" readonly>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Volume</label>
+                                    <input type="text" class="form-control" id="txVolume" readonly>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label">Ship Unloader <span class="text-danger">*</span></label>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach([1, 2, 3, 4] as $ship)
+                                            <label class="form-check form-check-inline mb-0">
+                                                <input class="form-check-input tx-ship-checkbox" type="checkbox" name="ship_unloader[]" value="{{ $ship }}">
+                                                <span class="form-check-label">Ship {{ $ship }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        @endif
 
-                        <div class="mb-3">
-                            <label class="form-label">Harga Satuan</label>
-                            <input type="number" name="price" class="form-control" min="0" step="1"
-                                placeholder="Kosongkan Jika Input Barang Keluar" id="txPrice">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Jumlah <span class="text-danger">*</span></label>
+                                <input type="number" name="quantity" class="form-control" min="1" required id="txQuantity">
+                                <div id="txStockWarning" class="text-danger mt-1" style="font-size:12px;display:none;">
+                                    <i class="bi bi-exclamation-triangle-fill"></i> Jumlah melebihi stok yang tersedia!
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Harga Satuan</label>
+                                <input type="number" name="price" class="form-control" min="0" step="1" placeholder="0" id="txPrice">
+                            </div>
                         </div>
 
                         <div class="mb-3" id="txUserRow">
@@ -242,17 +328,19 @@
 
                         <div class="mb-3">
                             <label class="form-label">Keterangan</label>
-                            <textarea name="description" class="form-control" rows="3"
-                                placeholder="Keterangan tambahan (opsional)" id="txDescription"></textarea>
+                            <textarea name="description" class="form-control" rows="3" placeholder="Keterangan tambahan (opsional)" id="txDescription"></textarea>
                         </div>
 
-                        <div class="p-3 rounded-3" id="txPendingInfo"
-                            style="background:var(--warning-bg); border: 1px solid rgba(255,159,28,0.2);">
-                            <div class="d-flex align-items-center gap-2"
-                                style="font-size:13px; color: var(--warning-dark);">
+                        <div class="p-3 rounded-3" id="txPendingInfo" style="background:var(--warning-bg); border: 1px solid rgba(255,159,28,0.2);">
+                            <div class="d-flex align-items-center gap-2" style="font-size:13px; color: var(--warning-dark);">
                                 <i class="bi bi-info-circle-fill"></i>
-                                <span>Transaksi akan berstatus <strong>pending</strong> dan memerlukan approval dari
-                                    Admin/Manager.</span>
+                                <span>
+                                    @if($isTeknik)
+                                        Transaksi Teknik akan berstatus <strong>Auto Approve</strong> dan langsung masuk riwayat approved.
+                                    @else
+                                        Transaksi akan berstatus <strong>pending</strong> dan memerlukan approval dari Admin/Manager.
+                                    @endif
+                                </span>
                             </div>
                         </div>
                     </form>
@@ -270,73 +358,129 @@
 
 @push('scripts')
     <script>
+        window.__transactionDetailData = @json($transactionDetailData);
         const txModalEl = document.getElementById('transactionModal');
         const txModal = new bootstrap.Modal(txModalEl);
-
-        // Item select → auto-fill info
+        const txDetailModalEl = document.getElementById('transactionDetailModal');
+        const txDetailModal = new bootstrap.Modal(txDetailModalEl);
+        const txTypeSelect = document.getElementById('txType');
         const txItemSelect = document.getElementById('txItemSelect');
         const txCategoryInput = document.getElementById('txItemCategory');
         const txUnitInput = document.getElementById('txItemUnit');
         const txStockInput = document.getElementById('txItemStock');
         const txQuantityInput = document.getElementById('txQuantity');
-        const txTypeSelect = document.getElementById('txType');
+        const txPriceInput = document.getElementById('txPrice');
         const txStockWarning = document.getElementById('txStockWarning');
+        const txNoNormalisasi = document.getElementById('txNoNormalisasi');
+        const txLokasi = document.getElementById('txLokasi');
+        const txVolume = document.getElementById('txVolume');
+        const isTeknikTransaction = @json($isTeknik);
 
-        txItemSelect.addEventListener('change', function () {
-            const selected = this.options[this.selectedIndex];
-            if (this.value) {
+        function appendTransactionDetail(container, label, value) {
+            const wrap = document.createElement('div');
+            wrap.className = 'col-sm-6';
+            const muted = document.createElement('div');
+            muted.className = 'text-muted';
+            muted.style.fontSize = '12px';
+            muted.textContent = label;
+            const strong = document.createElement('div');
+            strong.className = 'fw-700';
+            strong.textContent = value || '-';
+            wrap.appendChild(muted);
+            wrap.appendChild(strong);
+            container.appendChild(wrap);
+        }
+
+        document.querySelectorAll('.btn-transaction-detail-open').forEach(function(button) {
+            button.addEventListener('click', function() {
+                const data = window.__transactionDetailData[this.dataset.transactionId];
+                if (!data) return;
+                const grid = document.getElementById('transactionDetailGrid');
+                grid.replaceChildren();
+                appendTransactionDetail(grid, 'Tanggal', data.date);
+                appendTransactionDetail(grid, 'Jenis', data.type);
+                if (isTeknikTransaction) {
+                    appendTransactionDetail(grid, 'No Normalisasi', data.no_normalisasi);
+                    appendTransactionDetail(grid, 'Nama Barang', data.name);
+                    appendTransactionDetail(grid, 'Komponen', data.category);
+                    appendTransactionDetail(grid, 'Ship Unloader', data.ship_unloader);
+                    appendTransactionDetail(grid, 'Lokasi', data.lokasi);
+                    appendTransactionDetail(grid, 'Volume', data.volume);
+                } else {
+                    appendTransactionDetail(grid, 'Barang', data.name);
+                    appendTransactionDetail(grid, 'Kategori', data.category);
+                    appendTransactionDetail(grid, 'Jumlah', data.quantity);
+                    appendTransactionDetail(grid, 'Keterangan', data.description);
+                }
+                appendTransactionDetail(grid, 'Satuan', data.unit);
+                appendTransactionDetail(grid, 'User', data.user);
+                appendTransactionDetail(grid, 'Status', data.status);
+                txDetailModal.show();
+            });
+        });
+
+        function refreshItemInfo() {
+            const selected = txItemSelect.options[txItemSelect.selectedIndex];
+            if (txItemSelect.value) {
                 txCategoryInput.value = selected.dataset.category || '';
                 txUnitInput.value = selected.dataset.unit || '';
                 txStockInput.value = selected.dataset.stock || '0';
+                if (isTeknikTransaction) {
+                    txNoNormalisasi.value = selected.dataset.noNormalisasi || '';
+                    txLokasi.value = selected.dataset.lokasi || '';
+                    txVolume.value = txQuantityInput.value || '0';
+                    const ships = (selected.dataset.shipUnloader || '').split(',').filter(Boolean);
+                    document.querySelectorAll('.tx-ship-checkbox').forEach(el => el.checked = ships.includes(el.value));
+                }
             } else {
                 txCategoryInput.value = '';
                 txUnitInput.value = '';
                 txStockInput.value = '';
+                if (isTeknikTransaction) {
+                    txNoNormalisasi.value = '';
+                    txLokasi.value = '';
+                    txVolume.value = '';
+                    document.querySelectorAll('.tx-ship-checkbox').forEach(el => el.checked = false);
+                }
             }
             checkTxStock();
-        });
-
-        txQuantityInput.addEventListener('input', checkTxStock);
-        txTypeSelect.addEventListener('change', checkTxStock);
-
-        function checkTxStock() {
-            if (txTypeSelect.value === 'out' && txItemSelect.value) {
-                const stock = parseInt(txStockInput.value) || 0;
-                const qty = parseInt(txQuantityInput.value) || 0;
-                txStockWarning.style.display = qty > stock ? 'block' : 'none';
-            } else {
-                txStockWarning.style.display = 'none';
-            }
         }
-
-        const txPriceInput = document.getElementById('txPrice');
 
         function togglePriceInput() {
-            const type = txTypeSelect.value;
-
-            if (type === 'out') {
-                txPriceInput.value = '';
-                txPriceInput.disabled = true;
-            } else {
-                txPriceInput.disabled = false;
-            }
+            const disabled = txTypeSelect.value === 'out';
+            if (disabled) txPriceInput.value = '';
+            txPriceInput.disabled = disabled;
+            checkTxStock();
         }
 
-        // trigger saat dropdown berubah
+        function checkTxStock() {
+            const stock = parseInt(txStockInput.value || '0') || 0;
+            const qty = parseInt(txQuantityInput.value || '0') || 0;
+            if (isTeknikTransaction) {
+                txVolume.value = qty ? qty : '0';
+            }
+            txStockWarning.style.display = txTypeSelect.value === 'out' && txItemSelect.value && qty > stock ? 'block' : 'none';
+        }
+
+        txItemSelect.addEventListener('change', refreshItemInfo);
+        txQuantityInput.addEventListener('input', checkTxStock);
         txTypeSelect.addEventListener('change', togglePriceInput);
 
         window.openTransactionModal = function (id = null) {
-            // Reset form
             document.getElementById('txForm').reset();
             document.getElementById('txError').style.display = 'none';
-            document.querySelectorAll('#txForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
             txCategoryInput.value = '';
             txUnitInput.value = '';
             txStockInput.value = '';
             txStockWarning.style.display = 'none';
+            if (isTeknikTransaction) {
+                txNoNormalisasi.value = '';
+                txLokasi.value = '';
+                txVolume.value = '';
+                document.querySelectorAll('.tx-ship-checkbox').forEach(el => el.checked = false);
+            }
 
             if (id) {
-                // Edit mode
                 document.getElementById('txModalTitle').innerHTML = '<i class="bi bi-pencil-fill"></i> <span>Edit Transaksi</span>';
                 document.getElementById('txId').value = id;
                 document.getElementById('txMethod').value = 'PUT';
@@ -356,16 +500,18 @@
                         loading.classList.remove('show');
                         document.getElementById('txDate').value = data.date;
                         document.getElementById('txType').value = data.type;
-                        document.getElementById('txItemSelect').value = data.item_id;
-                        document.getElementById('txQuantity').value = data.quantity;
-                        document.getElementById('txPrice').value = data.price || '';
+                        txItemSelect.value = data.item_id;
+                        txQuantityInput.value = data.quantity;
+                        txPriceInput.value = data.price || '';
                         document.getElementById('txDescription').value = data.description || '';
-
-                        // Fill item info
-                        txCategoryInput.value = data.item?.category || '';
-                        txUnitInput.value = data.item?.unit || '';
-                        txStockInput.value = data.item?.current_stock || '0';
-                        togglePriceInput(); // Penting: Cek status readonly untuk mode edit juga
+                        if (isTeknikTransaction) {
+                            txNoNormalisasi.value = data.no_normalisasi || data.item.no_normalisasi || '';
+                            txLokasi.value = data.lokasi || data.item.lokasi || '';
+                            txVolume.value = data.quantity || '';
+                            document.querySelectorAll('.tx-ship-checkbox').forEach(el => el.checked = (data.ship_unloader || []).includes(el.value));
+                        }
+                        refreshItemInfo();
+                        togglePriceInput();
                     })
                     .catch(() => {
                         loading.classList.remove('show');
@@ -373,7 +519,6 @@
                         document.getElementById('txError').style.display = 'block';
                     });
             } else {
-                // Create mode
                 document.getElementById('txModalTitle').innerHTML = '<i class="bi bi-plus-circle-fill"></i> <span>Input Transaksi</span>';
                 document.getElementById('txId').value = '';
                 document.getElementById('txMethod').value = 'POST';
@@ -381,7 +526,7 @@
                 document.getElementById('txPendingInfo').style.display = 'block';
                 document.getElementById('txUserRow').style.display = 'block';
                 document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
-                togglePriceInput(); // Panggil ini saat buka modal baru
+                togglePriceInput();
                 txModal.show();
             }
         }
@@ -396,17 +541,12 @@
             const method = document.getElementById('txMethod').value;
 
             errorDiv.style.display = 'none';
-            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-
             loading.classList.add('show');
             submitBtn.disabled = true;
 
             const formData = new FormData(form);
             const url = txId ? `{{ url('transactions') }}/${txId}` : '{{ route("transactions.store") }}';
-
-            if (method === 'PUT') {
-                formData.append('_method', 'PUT');
-            }
+            if (method === 'PUT') formData.append('_method', 'PUT');
 
             fetch(url, {
                 method: 'POST',
@@ -418,7 +558,7 @@
                 body: formData
             })
                 .then(res => res.json().then(data => ({ status: res.status, data })))
-                .then(({ status, data }) => {
+                .then(({ data }) => {
                     loading.classList.remove('show');
                     submitBtn.disabled = false;
 
@@ -428,13 +568,7 @@
                         setTimeout(() => location.reload(), 1000);
                     } else {
                         let messages = [];
-                        if (data.errors) {
-                            Object.keys(data.errors).forEach(key => {
-                                messages.push(data.errors[key][0]);
-                                const input = form.querySelector(`[name="${key}"]`);
-                                if (input) input.classList.add('is-invalid');
-                            });
-                        }
+                        if (data.errors) Object.keys(data.errors).forEach(key => messages.push(data.errors[key][0]));
                         if (data.message && !data.errors) messages.push(data.message);
                         errorMsg.innerHTML = messages.join('<br>');
                         errorDiv.style.display = 'block';
@@ -447,17 +581,5 @@
                     errorDiv.style.display = 'block';
                 });
         }
-
-        // Reset on close
-        txModalEl.addEventListener('hidden.bs.modal', function () {
-            document.getElementById('txForm').reset();
-            document.getElementById('txError').style.display = 'none';
-            document.querySelectorAll('#txForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
-            txCategoryInput.value = '';
-            txUnitInput.value = '';
-            txStockInput.value = '';
-            txStockWarning.style.display = 'none';
-            txPriceInput.disabled = false;
-        });
     </script>
 @endpush
