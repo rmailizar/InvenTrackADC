@@ -318,6 +318,7 @@
                                         <th>Ship Unloader</th>
                                         <th>Lokasi</th>
                                         <th class="text-center">Volume</th>
+                                        <th class="text-end">Harga Satuan</th>
                                         <th>Satuan</th>
                                         <th>User</th>
                                         <th>Status</th>
@@ -356,9 +357,10 @@
                                             <td>{{ $tx->ship_unloader_label }}</td>
                                             <td>{{ $tx->lokasi ?? $tx->item->lokasi ?? '-' }}</td>
                                             <td class="text-center fw-700">{{ number_format($tx->quantity) }}</td>
+                                            <td class="text-end">{{ $tx->price === null ? '-' : 'Rp ' . number_format($tx->price, 0, ',', '.') }}</td>
                                             <td>{{ $tx->item->unit ?? '-' }}</td>
                                             <td>{{ $tx->user->name ?? '-' }}</td>
-                                            <td><span class="badge-status badge-approved">Auto Approve</span></td>
+                                            <td><span class="badge-status badge-approved">Approved</span></td>
                                         @else
                                             <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
                                             <td>{{ $tx->item->category ?? '-' }}</td>
@@ -380,7 +382,7 @@
                                     </tr>
                                 @empty
                                     <tr class="no-data-row">
-                                        <td colspan="{{ $isTeknik ? 12 : 10 }}">
+                                        <td colspan="{{ $isTeknik ? 13 : 10 }}">
                                             <i class="bi bi-inbox"
                                                 style="font-size:40px;display:block;margin-bottom:8px;opacity:0.3;"></i>
                                             Tidak ada data untuk filter ini

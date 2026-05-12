@@ -170,12 +170,15 @@
                                                 title="Rincian barang & selesai"
                                                 data-req-id="{{ $req->id }}"
                                                 data-scenario="admin_teknik_pending"
-                                                data-form-complete="#completeReq-{{ $req->id }}">
+                                                data-form-complete="#completeReq-{{ $req->id }}"
+                                                data-form-cancel="#cancelReq-{{ $req->id }}">
                                                 <i class="bi bi-box-seam"></i>
                                             </button>
                                             <div class="d-none" aria-hidden="true">
                                                 <form method="POST" action="{{ route('stuff-requests.complete', $req) }}"
                                                     id="completeReq-{{ $req->id }}">@csrf</form>
+                                                <form method="POST" action="{{ route('stuff-requests.cancel', $req) }}"
+                                                    id="cancelReq-{{ $req->id }}">@csrf</form>
                                             </div>
                                         @elseif($req->status === 'pending' && auth()->user()->isAdmin())
                                             <button type="button"
@@ -397,8 +400,9 @@
 
                     hideAllActionButtons();
                     if (scenario === 'admin_teknik_pending') {
-                        titleTextEl.textContent = 'Rincian permintaan - selesai admin';
+                        titleTextEl.textContent = 'Rincian permintaan - tindakan admin Teknik';
                         btnComplete.classList.remove('d-none');
+                        btnCancel.classList.remove('d-none');
                     } else if (scenario === 'admin_pending') {
                         titleTextEl.textContent = 'Rincian permintaan — persetujuan admin';
                         btnApprove.classList.remove('d-none');

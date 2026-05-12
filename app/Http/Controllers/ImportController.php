@@ -108,8 +108,8 @@ class ImportController extends Controller
         } else {
             $sheet->setTitle('Template Transaksi');
             if ($isTeknik) {
-                $headers = ['tanggal', 'jenis', 'no_normalisasi', 'nama_barang', 'ship_unloader', 'lokasi', 'volume', 'satuan', 'keterangan'];
-                $sample = ['17/04/2026', 'in', 'SU-01-LAN-001', 'Kabel LAN Cat6 305m', '1,2', 'Gudang Teknik A1', 5, 'Box', 'Goods receipt teknik'];
+                $headers = ['tanggal', 'jenis', 'no_normalisasi', 'nama_barang', 'ship_unloader', 'lokasi', 'volume', 'satuan', 'harga', 'keterangan'];
+                $sample = ['17/04/2026', 'in', 'SU-01-LAN-001', 'Kabel LAN Cat6 305m', '1,2', 'Gudang Teknik A1', 5, 'Box', 125000, 'Goods receipt teknik'];
             } else {
                 $headers = ['tanggal', 'nama_barang', 'jenis', 'jumlah', 'harga', 'keterangan'];
                 $sample = ['17/04/2026', 'Kertas HVS A4', 'in', 50, 55000, 'Pembelian bulanan'];

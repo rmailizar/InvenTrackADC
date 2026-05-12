@@ -40,6 +40,9 @@ class TransactionImport implements ToModel, WithHeadingRow, WithValidation, Skip
         $date = $this->parseDate($row['tanggal']);
         $isTeknik = $item->bidang === 'teknik';
         $quantity = (int) ($row['jumlah'] ?? $row['volume']);
+        $price = $this->cellString($row['harga'] ?? '') === ''
+            ? null
+            : (int) $row['harga'];
         $shipUnloader = $isTeknik
             ? ($this->normalizeShipUnloader($row['ship_unloader'] ?? '') ?: $item->ship_unloader)
             : null;
@@ -57,7 +60,7 @@ class TransactionImport implements ToModel, WithHeadingRow, WithValidation, Skip
             'date'        => $date,
             'type'        => strtolower($this->cellString($row['jenis'] ?? '')),
             'quantity'    => $quantity,
-            'price'       => (int) ($row['harga'] ?? 0),
+            'price'       => $price,
             'description' => $this->cellString($row['keterangan'] ?? ''),
             'status'      => $item->bidang === 'teknik' ? 'approved' : 'pending',
             'approved_by' => $item->bidang === 'teknik' ? ($this->user?->id ?? auth()->id()) : null,

@@ -11,7 +11,7 @@
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <link href="{{ asset('css/custom.css') }}?v={{ filemtime(public_path('css/custom.css')) }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/png" href="{{ asset('images/logo-web.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo-web-top.png') }}">
     <script>
         (function() {
             const theme = localStorage.getItem('inventrack-theme') || 'light';

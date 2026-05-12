@@ -119,7 +119,7 @@ class StuffRequestController extends Controller
         });
 
         return redirect()->route('public.stuff-request', ['bidang' => $validated['bidang']])
-            ->with('success', 'Stuff Request berhasil dikirim! Permintaan Anda akan ditinjau oleh Admin.');
+            ->with('success', 'Permintaan barang berhasil dikirim! Permintaan Anda akan ditinjau oleh Admin.');
     }
 
     /**
@@ -168,7 +168,7 @@ class StuffRequestController extends Controller
     public function approve(StuffRequest $stuffRequest)
     {
         $this->authorizeRequestDepartment($stuffRequest);
-        abort_if($stuffRequest->bidang === 'teknik', 403, 'Stuff Request Teknik langsung diselesaikan tanpa tahap approve/reject.');
+        abort_if($stuffRequest->bidang === 'teknik', 403, 'Permintaan barang Teknik langsung diselesaikan tanpa tahap approve/reject.');
 
         if ($stuffRequest->status !== 'pending') {
             return back()->with('error', 'Request ini sudah diproses.');
@@ -266,18 +266,24 @@ class StuffRequestController extends Controller
             return back()->with('error', $e->getMessage());
         }
 
-        return back()->with('success', "Stuff Request dari {$stuffRequest->requester_name} telah diselesaikan dan transaksi OUT approved otomatis dibuat.");
+        return back()->with('success', "Permintaan barang dari {$stuffRequest->requester_name} telah diselesaikan dan transaksi OUT approved otomatis dibuat.");
     }
 
     /**
-     * Cancel an approved stock request.
+     * Cancel an approved stock request, or a pending Teknik request by admin.
      */
     public function cancel(StuffRequest $stuffRequest)
     {
         $this->authorizeRequestDepartment($stuffRequest);
 
-        if ($stuffRequest->status !== 'approved') {
-            return back()->with('error', 'Hanya request yang sudah disetujui yang bisa dibatalkan.');
+        $user = auth()->user();
+        $canCancelPendingTeknik = $stuffRequest->bidang === 'teknik'
+            && $stuffRequest->status === 'pending'
+            && $user->isAdmin()
+            && $user->isTeknik();
+
+        if ($stuffRequest->status !== 'approved' && !$canCancelPendingTeknik) {
+            return back()->with('error', 'Hanya request yang sudah disetujui, atau request pending Bidang Teknik oleh admin Teknik, yang bisa dibatalkan.');
         }
 
         $stuffRequest->update([
@@ -286,7 +292,7 @@ class StuffRequestController extends Controller
             'completed_at' => now(),
         ]);
 
-        return back()->with('success', "Stuff Request dari {$stuffRequest->requester_name} telah dibatalkan.");
+        return back()->with('success', "Permintaan barang dari {$stuffRequest->requester_name} telah dibatalkan.");
     }
 
     private function authorizeRequestDepartment(StuffRequest $stuffRequest): void

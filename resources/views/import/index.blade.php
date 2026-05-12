@@ -318,14 +318,12 @@
                                                     </td>
                                                 </tr>
                                             @endunless
-                                            @unless($isTeknik)
-                                                <tr>
-                                                    <td><code>harga</code></td>
-                                                    <td>Harga satuan</td>
-                                                    <td><span class="badge-status" style="color:var(--warning);">Opsional</span>
-                                                    </td>
-                                                </tr>
-                                            @endunless
+                                            <tr>
+                                                <td><code>harga</code></td>
+                                                <td>Harga satuan</td>
+                                                <td><span class="badge-status" style="color:var(--warning);">Opsional</span>
+                                                </td>
+                                            </tr>
                                             <tr>
                                                 <td><code>keterangan</code></td>
                                                 <td>Catatan</td>

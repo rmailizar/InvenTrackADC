@@ -8,6 +8,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
+use App\Support\InventoryMail;
 
 class DailyStockAlertDigest extends Mailable
 {
@@ -28,7 +29,7 @@ class DailyStockAlertDigest extends Mailable
     {
         $totalItems = $this->outOfStockItems->count() + $this->lowStockItems->count();
         return new Envelope(
-            subject: "[InvenTrack] Peringatan Stok ({$totalItems} barang) - " . $this->dateLabel,
+            subject: '[' . InventoryMail::appName() . "] Peringatan Stok Umum ({$totalItems} barang) - " . $this->dateLabel,
         );
     }
 

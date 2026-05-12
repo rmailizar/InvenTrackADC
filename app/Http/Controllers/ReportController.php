@@ -129,11 +129,13 @@ class ReportController extends Controller
                     $sub->select('t2.id')
                         ->from('transactions as t2')
                         ->whereYear('t2.date', $request->year)
+                        ->whereNotNull('t2.price')
                         ->whereColumn('t2.item_id', 'transactions.item_id')
                         ->whereRaw("t2.price = (
                             SELECT {$operator}(t3.price)
                             FROM transactions t3
                             WHERE t3.item_id = t2.item_id
+                            AND t3.price IS NOT NULL
                             AND YEAR(t3.date) = ?
                         )", [$request->year]);
                 });

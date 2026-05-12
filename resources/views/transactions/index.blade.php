@@ -19,6 +19,7 @@
                 'volume' => $txRow->quantity,
                 'quantity' => $txRow->quantity,
                 'unit' => $txRow->item->unit ?? '-',
+                'price' => $txRow->price === null ? '-' : 'Rp ' . number_format($txRow->price, 0, ',', '.'),
                 'user' => $txRow->user->name ?? '-',
                 'status' => $txRow->bidang === 'teknik' ? 'Approve' : ($txRow->status === 'pending' ? 'Menunggu Approval' : ucfirst($txRow->status)),
                 'description' => $txRow->description ?: '-',
@@ -98,6 +99,7 @@
                                     <th>Ship Unloader</th>
                                     <th>Lokasi</th>
                                     <th class="text-center">Volume</th>
+                                    <th class="text-end">Harga Satuan</th>
                                     <th>Satuan</th>
                                     <th>User</th>
                                     <th>Status</th>
@@ -137,11 +139,12 @@
                                         <td>{{ $tx->ship_unloader_label }}</td>
                                         <td>{{ $tx->lokasi ?? $tx->item->lokasi ?? '-' }}</td>
                                         <td class="text-center fw-700">{{ number_format($tx->quantity) }}</td>
+                                        <td class="text-end">{{ $tx->price === null ? '-' : 'Rp ' . number_format($tx->price, 0, ',', '.') }}</td>
                                         <td>{{ $tx->item->unit ?? '-' }}</td>
                                         <td>{{ $tx->user->name ?? '-' }}</td>
                                         <td>
                                             <span class="badge-status badge-approved">
-                                                <i class="bi bi-check-circle-fill"></i> Approve
+                                                <i class="bi bi-check-circle-fill"></i> Approved
                                             </span>
                                         </td>
                                         <td class="text-center">
@@ -177,7 +180,7 @@
                                 </tr>
                             @empty
                                 <tr class="no-data-row">
-                                    <td colspan="{{ $isTeknik ? 13 : 11 }}">
+                                    <td colspan="{{ $isTeknik ? 14 : 11 }}">
                                         <i class="bi bi-inbox" style="font-size:40px;display:block;margin-bottom:8px;opacity:0.3;"></i>
                                         Belum ada data transaksi
                                     </td>
@@ -406,6 +409,7 @@
                     appendTransactionDetail(grid, 'Ship Unloader', data.ship_unloader);
                     appendTransactionDetail(grid, 'Lokasi', data.lokasi);
                     appendTransactionDetail(grid, 'Volume', data.volume);
+                    appendTransactionDetail(grid, 'Harga Satuan', data.price);
                 } else {
                     appendTransactionDetail(grid, 'Barang', data.name);
                     appendTransactionDetail(grid, 'Kategori', data.category);

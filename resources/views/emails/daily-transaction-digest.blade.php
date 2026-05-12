@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <body style="font-family: Arial, sans-serif; background: #f5f5f5; padding: 20px; margin: 0;">
+    @php($appName = \App\Support\InventoryMail::appName())
     <div style="max-width: 680px; margin: 0 auto; background: white; border-radius: 12px; padding: 0; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden;">
         {{-- Header --}}
         <div style="background: linear-gradient(135deg, #10b981, #059669); padding: 28px 30px; color: white;">
@@ -10,7 +11,7 @@
 
         <div style="padding: 28px 30px;">
             <p style="color: #333; font-size: 14px; margin: 0 0 6px;">Halo Admin,</p>
-            <p style="color: #333; font-size: 14px; margin: 0 0 20px;">Berikut adalah <strong>{{ $transactions->count() }} transaksi</strong> yang menunggu approval hari ini:</p>
+            <p style="color: #333; font-size: 14px; margin: 0 0 20px;">Berikut adalah <strong>{{ $transactions->count() }} transaksi bidang umum</strong> di {{ $appName }} yang menunggu approval hari ini:</p>
 
             {{-- Table --}}
             <table style="width: 100%; border-collapse: collapse; margin: 0 0 20px; font-size: 13px;">
@@ -45,11 +46,11 @@
             </table>
 
             <p style="color: #333; font-size: 14px; margin: 0 0 20px;">
-                Silakan login ke <a href="{{ url('/dashboard') }}" style="color: #10b981; font-weight: 600;">InvenTrack</a> untuk melakukan review dan approval.
+                Silakan login ke <a href="{{ url('/dashboard') }}" style="color: #10b981; font-weight: 600;">{{ $appName }}</a> untuk melakukan review dan approval.
             </p>
 
             <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
-            <p style="color: #999; font-size: 12px; margin: 0;">Email ini dikirim otomatis oleh sistem InvenTrack setiap hari pukul 15:00.</p>
+            <p style="color: #999; font-size: 12px; margin: 0;">Email ini dikirim otomatis oleh sistem {{ $appName }} setiap hari pukul 15:00 WIB.</p>
         </div>
     </div>
 </body>

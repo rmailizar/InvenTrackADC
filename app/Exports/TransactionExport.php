@@ -74,11 +74,13 @@ class TransactionExport implements FromQuery, WithHeadings, WithMapping, WithSty
                     $sub->select('t2.id')
                         ->from('transactions as t2')
                         ->whereYear('t2.date', $this->year)
+                        ->whereNotNull('t2.price')
                         ->whereColumn('t2.item_id', 'transactions.item_id')
                         ->whereRaw('t2.price = (
                             SELECT MAX(t3.price)
                             FROM transactions t3
                             WHERE t3.item_id = t2.item_id
+                            AND t3.price IS NOT NULL
                             AND YEAR(t3.date) = ?
                         )', [$this->year]);
                 });
@@ -89,11 +91,13 @@ class TransactionExport implements FromQuery, WithHeadings, WithMapping, WithSty
                     $sub->select('t2.id')
                         ->from('transactions as t2')
                         ->whereYear('t2.date', $this->year)
+                        ->whereNotNull('t2.price')
                         ->whereColumn('t2.item_id', 'transactions.item_id')
                         ->whereRaw('t2.price = (
                             SELECT MIN(t3.price)
                             FROM transactions t3
                             WHERE t3.item_id = t2.item_id
+                            AND t3.price IS NOT NULL
                             AND YEAR(t3.date) = ?
                         )', [$this->year]);
                 });
@@ -121,6 +125,7 @@ class TransactionExport implements FromQuery, WithHeadings, WithMapping, WithSty
                 'Ship Unloader',
                 'Lokasi',
                 'Volume',
+                'Harga Satuan',
                 'Satuan',
                 'User',
                 'Status',
@@ -160,6 +165,7 @@ class TransactionExport implements FromQuery, WithHeadings, WithMapping, WithSty
                 $transaction->ship_unloader_label,
                 $transaction->lokasi ?: ($transaction->item->lokasi ?? '-'),
                 $transaction->quantity,
+                $transaction->price === null ? '-' : 'Rp ' . number_format($transaction->price, 0, ',', '.'),
                 $transaction->item->unit ?? '-',
                 $transaction->user->name ?? '-',
                 'Auto Approve',
@@ -174,7 +180,7 @@ class TransactionExport implements FromQuery, WithHeadings, WithMapping, WithSty
             strtoupper($transaction->type),
             $transaction->quantity,
             $transaction->item->unit ?? '-',
-            'Rp ' . number_format($transaction->price ?? 0, 0, ',', '.'),
+            $transaction->price === null ? '-' : 'Rp ' . number_format($transaction->price, 0, ',', '.'),
             $transaction->user->name ?? '-',
             $transaction->description ?? '-',
             strtoupper($transaction->status),

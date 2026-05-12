@@ -56,7 +56,7 @@ class GoogleSheetController extends Controller
         $this->ensureGoogleServicesAutoloaded();
 
         $client = new Client();
-        $client->setApplicationName('InvenTrack');
+        $client->setApplicationName((string) config('app.name', 'nextlogistic'));
         $client->setScopes([Sheets::SPREADSHEETS]);
 
         $path = storage_path('app/google/service-account.json');
@@ -120,42 +120,26 @@ class GoogleSheetController extends Controller
             $transactions->load(['item', 'user', 'approver']);
         }
 
-        $rows = [];
-        foreach ($transactions as $tx) {
-            $rows[] = [
-                $tx->id,
-                $tx->date->format('d/m/Y'),
-                $tx->item->name ?? '-',
-                $tx->item->category ?? '-',
-                strtoupper($tx->type),
-                $tx->quantity,
-                $tx->item->unit ?? '-',
-                $tx->user->name ?? '-',
-                $tx->description ?? '-',
-                strtoupper($tx->status),
-                $tx->approver->name ?? '-',
-                $tx->approved_at ? $tx->approved_at->format('d/m/Y H:i') : '-',
-            ];
+        $this->ensureDepartmentSheets($service, $spreadsheetId);
+
+        foreach ($this->departmentSheetConfig() as $bidang => $config) {
+            $rows = collect($transactions)
+                ->where('bidang', $bidang)
+                ->map(fn(Transaction $tx) => $this->mapTransactionRow($tx, $bidang))
+                ->values()
+                ->all();
+
+            if ($rows === []) {
+                continue;
+            }
+
+            $service->spreadsheets_values->append(
+                $spreadsheetId,
+                $this->quotedSheetRange($config['title'], $config['range']),
+                new ValueRange(['values' => $rows]),
+                ['valueInputOption' => 'USER_ENTERED']
+            );
         }
-
-        if (empty($rows)) {
-            return;
-        }
-
-        $body = new ValueRange([
-            'values' => $rows,
-        ]);
-
-        $params = [
-            'valueInputOption' => 'USER_ENTERED',
-        ];
-
-        $service->spreadsheets_values->append(
-            $spreadsheetId,
-            'Sheet1!A:L',
-            $body,
-            $params
-        );
     }
 
     /**
@@ -171,39 +155,22 @@ class GoogleSheetController extends Controller
             throw new \Exception('Spreadsheet ID not configured.');
         }
 
-        // Clear existing data
-        $service->spreadsheets_values->clear(
-            $spreadsheetId,
-            'Sheet1!A:L',
-            new \Google\Service\Sheets\ClearValuesRequest()
-        );
+        $this->ensureDepartmentSheets($service, $spreadsheetId);
 
-        // Add headers (include internal Transaction ID for easier tracking)
-        $headers = new ValueRange([
-            'values' => [
-                [
-                    'ID',
-                    'Tanggal',
-                    'Nama Barang',
-                    'Kategori',
-                    'Jenis',
-                    'Jumlah',
-                    'Satuan',
-                    'User',
-                    'Keterangan',
-                    'Status',
-                    'Disetujui Oleh',
-                    'Tanggal Approval',
-                ]
-            ],
-        ]);
+        foreach ($this->departmentSheetConfig() as $config) {
+            $service->spreadsheets_values->clear(
+                $spreadsheetId,
+                $this->quotedSheetRange($config['title'], $config['range']),
+                new \Google\Service\Sheets\ClearValuesRequest()
+            );
 
-        $service->spreadsheets_values->update(
-            $spreadsheetId,
-            'Sheet1!A1:L1',
-            $headers,
-            ['valueInputOption' => 'USER_ENTERED']
-        );
+            $service->spreadsheets_values->update(
+                $spreadsheetId,
+                $this->quotedSheetRange($config['title'], $config['headerRange']),
+                new ValueRange(['values' => [$config['headers']]]),
+                ['valueInputOption' => 'USER_ENTERED']
+            );
+        }
 
         $transactions = Transaction::approved()
             ->with(['item', 'user', 'approver'])
@@ -213,6 +180,167 @@ class GoogleSheetController extends Controller
         $this->syncTransactions($transactions);
 
         return $transactions->count();
+    }
+
+    private function ensureDepartmentSheets(Sheets $service, string $spreadsheetId): void
+    {
+        $spreadsheet = $service->spreadsheets->get($spreadsheetId);
+        $sheets = collect($spreadsheet->getSheets() ?? []);
+        $sheetByTitle = $sheets->mapWithKeys(function ($sheet) {
+            $properties = $sheet->getProperties();
+            return [$properties->getTitle() => $properties];
+        });
+
+        $requests = [];
+        foreach ($this->departmentSheetConfig() as $config) {
+            $title = $config['title'];
+            $legacyTitle = $config['legacyTitle'];
+            $index = $config['index'];
+
+            if ($sheetByTitle->has($title)) {
+                $requests[] = new \Google\Service\Sheets\Request([
+                    'updateSheetProperties' => [
+                        'properties' => [
+                            'sheetId' => $sheetByTitle[$title]->getSheetId(),
+                            'index' => $index,
+                        ],
+                        'fields' => 'index',
+                    ],
+                ]);
+                continue;
+            }
+
+            if ($sheetByTitle->has($legacyTitle)) {
+                $requests[] = new \Google\Service\Sheets\Request([
+                    'updateSheetProperties' => [
+                        'properties' => [
+                            'sheetId' => $sheetByTitle[$legacyTitle]->getSheetId(),
+                            'title' => $title,
+                            'index' => $index,
+                        ],
+                        'fields' => 'title,index',
+                    ],
+                ]);
+                continue;
+            }
+
+            $requests[] = new \Google\Service\Sheets\Request([
+                'addSheet' => [
+                    'properties' => [
+                        'title' => $title,
+                        'index' => $index,
+                    ],
+                ],
+            ]);
+        }
+
+        if ($requests !== []) {
+            $service->spreadsheets->batchUpdate(
+                $spreadsheetId,
+                new \Google\Service\Sheets\BatchUpdateSpreadsheetRequest([
+                    'requests' => $requests,
+                ])
+            );
+        }
+    }
+
+    private function departmentSheetConfig(): array
+    {
+        return [
+            'umum' => [
+                'title' => 'Umum',
+                'legacyTitle' => 'Sheet1',
+                'index' => 0,
+                'range' => 'A:M',
+                'headerRange' => 'A1:M1',
+                'headers' => [
+                    'ID',
+                    'Tanggal',
+                    'Nama Barang',
+                    'Kategori',
+                    'Jenis',
+                    'Jumlah',
+                    'Satuan',
+                    'Harga Satuan',
+                    'User',
+                    'Keterangan',
+                    'Status',
+                    'Disetujui Oleh',
+                    'Tanggal Approval',
+                ],
+            ],
+            'teknik' => [
+                'title' => 'Teknik',
+                'legacyTitle' => 'Sheet2',
+                'index' => 1,
+                'range' => 'A:N',
+                'headerRange' => 'A1:N1',
+                'headers' => [
+                    'ID',
+                    'Tanggal',
+                    'Jenis',
+                    'No Normalisasi',
+                    'Nama Barang',
+                    'Komponen',
+                    'Ship Unloader',
+                    'Lokasi',
+                    'Volume',
+                    'Satuan',
+                    'Harga Satuan',
+                    'User',
+                    'Status',
+                    'Tanggal Approval',
+                ],
+            ],
+        ];
+    }
+
+    private function mapTransactionRow(Transaction $tx, string $bidang): array
+    {
+        if ($bidang === 'teknik') {
+            return [
+                $tx->id,
+                $tx->date->format('d/m/Y'),
+                $tx->type_label,
+                $tx->no_normalisasi ?: ($tx->item->no_normalisasi ?? '-'),
+                $tx->item->name ?? '-',
+                $tx->item->category ?? '-',
+                $tx->ship_unloader_label,
+                $tx->lokasi ?: ($tx->item->lokasi ?? '-'),
+                $tx->quantity,
+                $tx->item->unit ?? '-',
+                $this->blankIfNull($tx->price),
+                $tx->user->name ?? '-',
+                'APPROVED',
+                $tx->approved_at ? $tx->approved_at->format('d/m/Y H:i') : '-',
+            ];
+        }
+
+        return [
+            $tx->id,
+            $tx->date->format('d/m/Y'),
+            $tx->item->name ?? '-',
+            $tx->item->category ?? '-',
+            strtoupper($tx->type),
+            $tx->quantity,
+            $tx->item->unit ?? '-',
+            $this->blankIfNull($tx->price),
+            $tx->user->name ?? '-',
+            $tx->description ?? '-',
+            strtoupper($tx->status),
+            $tx->approver->name ?? '-',
+            $tx->approved_at ? $tx->approved_at->format('d/m/Y H:i') : '-',
+        ];
+    }
+
+    private function quotedSheetRange(string $sheetTitle, string $range): string
+    {
+        return "'" . str_replace("'", "''", $sheetTitle) . "'!" . $range;
+    }
+
+    private function blankIfNull($value)
+    {
+        return $value === null ? '' : $value;
     }
 
     /**

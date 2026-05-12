@@ -8,6 +8,7 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
+use App\Support\InventoryMail;
 
 class DailyTransactionDigest extends Mailable
 {
@@ -25,7 +26,7 @@ class DailyTransactionDigest extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '[InvenTrack] Ringkasan Transaksi Pending - ' . $this->dateLabel,
+            subject: '[' . InventoryMail::appName() . '] Ringkasan Transaksi Pending Admin Umum - ' . $this->dateLabel,
         );
     }
 

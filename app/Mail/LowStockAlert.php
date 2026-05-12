@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\Item;
+use App\Support\InventoryMail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
@@ -23,7 +24,7 @@ class LowStockAlert extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '[InvenTrack] Peringatan Stok Rendah: ' . $this->item->name,
+            subject: '[' . InventoryMail::appName() . '] Peringatan Stok Rendah: ' . $this->item->name,
         );
     }
 

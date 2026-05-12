@@ -7,6 +7,11 @@ use Illuminate\Support\Collection;
 
 final class InventoryMail
 {
+    public static function appName(): string
+    {
+        return (string) config('app.name', 'nextlogistic');
+    }
+
     /**
      * Alamat unik untuk notifikasi admin (role admin + opsional INVENTORY_ALERT_MAIL).
      *

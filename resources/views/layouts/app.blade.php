@@ -17,7 +17,7 @@
     <!-- Custom CSS -->
     <link href="{{ asset('css/custom.css') }}?v={{ filemtime(public_path('css/custom.css')) }}" rel="stylesheet">
     <!-- Logo  -->
-    <link rel="icon" type="image/png" href="{{ asset('images/logo-web.png') }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/logo-web-top.png') }}">
 
     <!-- Prevent flash: apply theme before render -->
     <script>

@@ -102,7 +102,7 @@ class TransactionController extends Controller
         $validated['status'] = $item->bidang === 'teknik' ? 'approved' : 'pending';
         $validated['approved_by'] = $item->bidang === 'teknik' ? auth()->id() : null;
         $validated['approved_at'] = $item->bidang === 'teknik' ? now() : null;
-        $validated['price'] = $validated['price'] ?? 0;
+        $validated['price'] = $validated['price'] ?? null;
 
         Transaction::create($validated);
 
@@ -193,7 +193,7 @@ class TransactionController extends Controller
             }
         }
 
-        $validated['price'] = $validated['price'] ?? 0;
+        $validated['price'] = $validated['price'] ?? null;
         $validated['bidang'] = $item->bidang;
         $validated['no_normalisasi'] = $item->no_normalisasi;
         $validated['lokasi'] = $item->lokasi;

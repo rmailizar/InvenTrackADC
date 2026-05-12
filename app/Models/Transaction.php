@@ -94,7 +94,7 @@ class Transaction extends Model
     public function getTypeLabelAttribute(): string
     {
         if ($this->bidang === 'teknik') {
-            return $this->type === 'in' ? 'Goods Receipt (IN)' : 'Goods Issue (OUT)';
+            return $this->type === 'in' ? 'Goods Receipt (GR)' : 'Goods Issue (GI)';
         }
 
         return strtoupper($this->type);
