@@ -55,6 +55,12 @@
     --accent-indigo: rgba(99, 102, 241, 0.18);
     --accent-emerald: rgba(45, 212, 191, 0.25);
     --accent-blue: rgba(59, 130, 246, 0.20);
+    --nexus-bg-color: #eef8f5;
+    --nexus-ambient-primary: rgba(42, 166, 137, 0.34);
+    --nexus-ambient-secondary: rgba(83, 192, 226, 0.34);
+    --nexus-ambient-center: rgba(255, 255, 255, 0.88);
+    --nexus-ambient-wash: rgba(209, 250, 229, 0.48);
+    --nexus-burst-bg: url("data:image/svg+xml,%3Csvg width='500' height='500' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cstyle%3E.g%7Bstroke:%23e2e8f0;stroke-width:3;fill:%23f8fafc;opacity:.9%7D.c%7Bstroke:%23cbd5e1;stroke-width:1;fill:none;stroke-dasharray:2 6%7D.cp%7Bstroke:%2334d399;stroke-width:1.5;fill:none;stroke-dasharray:10 400;animation:mv 15s linear infinite%7D@keyframes mv%7Bto%7Bstroke-dashoffset:400%7D%7D%3C/style%3E%3Cpath class='g' d='M200 0 L400 115 L400 285 L200 400 L0 285 L0 115 Z'/%3E%3Cline class='g' x1='0' y1='115' x2='400' y2='285'/%3E%3Cline class='g' x1='0' y1='285' x2='400' y2='115'/%3E%3Cline class='g' x1='200' y1='0' x2='200' y2='400'/%3E%3Cpath class='c' d='M100 57 L150 57 L200 115 L200 200'/%3E%3Cpath class='c' d='M300 342 L250 342 L200 285 L200 200'/%3E%3Cpath class='c' d='M100 342 L150 342 L200 285'/%3E%3Cpath class='c' d='M300 57 L250 57 L200 115'/%3E%3Cpath class='cp' d='M100 57 L150 57 L200 115 L200 200'/%3E%3Cpath class='cp' d='M300 342 L250 342 L200 285 L200 200' style='animation-delay:-5s'/%3E%3Cpath class='cp' d='M100 342 L150 342 L200 285' style='animation-delay:-10s'/%3E%3Cpath class='cp' d='M300 57 L250 57 L200 115' style='animation-delay:-15s'/%3E%3C/svg%3E");
 }
 
 /* ---------- Dark Mode Variables ---------- */
@@ -87,6 +93,12 @@
     --accent-indigo: rgba(79, 70, 229, 0.25);
     --accent-emerald: rgba(16, 185, 129, 0.28);
     --accent-blue: rgba(59, 130, 246, 0.22);
+    --nexus-bg-color: #040914;
+    --nexus-ambient-primary: rgba(16, 185, 129, 0.18);
+    --nexus-ambient-secondary: rgba(14, 165, 233, 0.16);
+    --nexus-ambient-center: rgba(15, 23, 42, 0.18);
+    --nexus-ambient-wash: rgba(6, 78, 59, 0.22);
+    --nexus-burst-bg: url("data:image/svg+xml,%3Csvg width='500' height='500' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cstyle%3E.g%7Bstroke:%231e293b;stroke-width:3;fill:%23060b19;opacity:.8%7D.c%7Bstroke:%23334155;stroke-width:1;fill:none;stroke-dasharray:2 8;opacity:.6%7D.cp%7Bstroke:%230ea5e9;stroke-width:1.5;fill:none;stroke-dasharray:10 400;animation:mv 15s linear infinite;filter:drop-shadow(0 0 4px %230ea5e9);opacity:.6%7D@keyframes mv%7Bto%7Bstroke-dashoffset:400%7D%7D%3C/style%3E%3Cpath class='g' d='M200 0 L400 115 L400 285 L200 400 L0 285 L0 115 Z'/%3E%3Cline class='g' x1='0' y1='115' x2='400' y2='285'/%3E%3Cline class='g' x1='0' y1='285' x2='400' y2='115'/%3E%3Cline class='g' x1='200' y1='0' x2='200' y2='400'/%3E%3Cpath class='c' d='M100 57 L150 57 L200 115 L200 200'/%3E%3Cpath class='c' d='M300 342 L250 342 L200 285 L200 200'/%3E%3Cpath class='c' d='M100 342 L150 342 L200 285'/%3E%3Cpath class='c' d='M300 57 L250 57 L200 115'/%3E%3Cpath class='cp' d='M100 57 L150 57 L200 115 L200 200'/%3E%3Cpath class='cp' d='M300 342 L250 342 L200 285 L200 200' style='animation-delay:-5s'/%3E%3Cpath class='cp' d='M100 342 L150 342 L200 285' style='animation-delay:-10s'/%3E%3Cpath class='cp' d='M300 57 L250 57 L200 115' style='animation-delay:-15s'/%3E%3C/svg%3E");
 }
 
 /* ---------- Reset & Base ---------- */
@@ -103,7 +115,7 @@ body {
     position: relative;
 
     /* Vibrant Mesh Gradient — magenta → indigo → teal */
-    background-color: var(--bg-gradient-1);
+    background-color: var(--nexus-bg-color);
     background-image:
         /* Emerald Utama (Pusat pendaran) */
         radial-gradient(ellipse 80% 70% at 50% 50%, rgba(16, 185, 129, 0.15), transparent),
@@ -119,7 +131,7 @@ body {
     background-attachment: fixed;
     min-height: 100vh;
     color: var(--text-primary);
-    transition: background 0.5s ease, color 0.4s ease;
+    transition: background-color 0.5s ease, color 0.4s ease;
     overflow-x: hidden;
     isolation: isolate;
 }
@@ -3286,76 +3298,138 @@ a:hover {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     z-index: 0;
-    /* Di antara Body (0) dan Public Page (2) */
     pointer-events: none;
     overflow: hidden;
 }
 
-.background-glow-container svg {
-    width: 100%;
-    height: 100%;
-    opacity: 0.7;
-    transition: opacity 0.3s ease;
+.nexus-bg,
+.nexus-grid {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    overflow: hidden;
 }
 
-[data-theme="dark"] .background-glow-container svg {
-    opacity: 1;
+.nexus-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+
+    background:
+        /* HIJAU KIRI */
+        radial-gradient(
+            circle at 0% 50%,
+            rgba(16, 185, 129, 0.45) 0%,
+            rgba(16, 185, 129, 0.28) 22%,
+            rgba(16, 185, 129, 0.12) 42%,
+            transparent 68%
+        ),
+
+        /* BIRU KANAN */
+        radial-gradient(
+            circle at 100% 50%,
+            rgba(59, 130, 246, 0.42) 0%,
+            rgba(59, 130, 246, 0.24) 24%,
+            rgba(59, 130, 246, 0.10) 44%,
+            transparent 68%
+        ),
+
+        /* GLOW TENGAH */
+        radial-gradient(
+            circle at 50% 50%,
+            rgba(255,255,255,0.34) 0%,
+            rgba(255,255,255,0.10) 35%,
+            transparent 70%
+        ),
+
+        /* BASE */
+        linear-gradient(
+            135deg,
+            #edfdf7 0%,
+            #f6fffd 45%,
+            #eef8ff 100%
+        );
 }
 
-/* KUNCI UTAMA: Konten harus lebih tinggi dari garis SVG */
+[data-theme="dark"] .nexus-bg {
+    background:
+        /* HIJAU KIRI - redup agar dark mode tetap dominan gelap */
+        radial-gradient(
+            circle at 0% 50%,
+            rgba(16, 185, 129, 0.20) 0%,
+            rgba(16, 185, 129, 0.13) 22%,
+            rgba(16, 185, 129, 0.06) 42%,
+            transparent 68%
+        ),
+
+        /* BIRU KANAN - tetap terlihat, tapi lebih kalem */
+        radial-gradient(
+            circle at 100% 50%,
+            rgba(59, 130, 246, 0.18) 0%,
+            rgba(59, 130, 246, 0.11) 24%,
+            rgba(59, 130, 246, 0.05) 44%,
+            transparent 68%
+        ),
+
+        /* GLOW TENGAH GELAP */
+        radial-gradient(
+            circle at 50% 50%,
+            rgba(15, 23, 42, 0.22) 0%,
+            rgba(15, 23, 42, 0.12) 35%,
+            transparent 70%
+        ),
+
+        /* BASE DARK */
+        linear-gradient(
+            135deg,
+            #03130f 0%,
+            #040914 45%,
+            #06111f 100%
+        );
+}
+
+.nexus-grid {
+    z-index: 1;
+    background-image: var(--nexus-burst-bg);
+    background-size: 500px 500px;
+    background-position: center;
+    mask-image: radial-gradient(ellipse at center, black 10%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 10%, transparent 80%);
+    opacity: 0.72;
+    transition: background-image 0.25s ease, opacity 0.25s ease;
+}
+
+body {
+    background-color: var(--nexus-bg-color);
+    background-image: none !important;
+}
+
+body::before,
+[data-theme="dark"] body::before {
+    display: none;
+}
+
+.main-content,
 .public-page {
     position: relative;
     z-index: 2;
 }
 
-/* Tambahkan Glow pada garis agar terlihat nyata di atas gradient */
-.glowing-line {
-    /* Gunakan filter drop-shadow yang lebih kuat */
-    filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.45));
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    vector-effect: non-scaling-stroke;
-}
-
-.glowing-line-solid {
-    opacity: 0.95;
-}
-
-.glowing-line-dashed {
-    stroke-dasharray: 20 26;
-    animation: moveDashedLine 12s linear infinite;
-    opacity: 0.82;
-}
-
-[data-theme="dark"] .glowing-line {
-    filter: drop-shadow(0 0 12px rgba(96, 165, 250, 0.68));
-}
-
-[data-theme="dark"] .glowing-line-solid {
-    stroke-width: 4.5;
-}
-
-[data-theme="dark"] .glowing-line-dashed {
-    opacity: 1;
-    stroke-width: 3.5;
-}
-
-@keyframes moveDashedLine {
-    from {
-        stroke-dashoffset: 0;
+@media (max-width: 767.98px) {
+    body,
+    .nexus-bg,
+    .nexus-grid {
+        transition: none;
     }
 
-    to {
-        stroke-dashoffset: -92;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .glowing-line-dashed {
-        animation: none;
+    .nexus-grid {
+        opacity: 0.55;
     }
 }
 

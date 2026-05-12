@@ -21,28 +21,10 @@
 
 </head>
 <body>
-    <!-- Hero Background -->
+    <!-- Animated Nexus Background -->
     <div class="background-glow-container">
-        <svg viewBox="0 0 1440 400" preserveAspectRatio="none">
-            <path class="glowing-line glowing-line-solid"
-                d="M-60 255 C 120 300, 275 295, 405 240 C 555 178, 665 170, 780 210 C 925 260, 1030 262, 1165 228 C 1300 195, 1390 200, 1500 178"
-                stroke="url(#line_gradient)" stroke-width="4" fill="none" />
-            <path class="glowing-line glowing-line-dashed"
-                d="M-60 212 C 110 255, 260 250, 405 220 C 555 188, 685 205, 820 235 C 965 268, 1055 220, 1185 195 C 1320 170, 1405 190, 1500 220"
-                stroke="url(#line_gradient_dashed)" stroke-width="3" fill="none" />
-            <defs>
-                <linearGradient id="line_gradient" x1="0" y1="0" x2="1440" y2="0"
-                    gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stop-color="#a855f7" />
-                    <stop offset="100%" stop-color="#10b981" />
-                </linearGradient>
-                <linearGradient id="line_gradient_dashed" x1="0" y1="0" x2="1440" y2="0"
-                    gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stop-color="#60a5fa" />
-                    <stop offset="100%" stop-color="#34d399" />
-                </linearGradient>
-            </defs>
-        </svg>
+        <div class="nexus-bg"></div>
+        <div class="nexus-grid"></div>
     </div>
     
     <div class="public-page">
