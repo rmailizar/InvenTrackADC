@@ -20,7 +20,7 @@
     </script>
 
 </head>
-<body>
+<body class="public-layout">
     <!-- Animated Nexus Background -->
     <div class="background-glow-container">
         <div class="nexus-bg"></div>
@@ -560,6 +560,7 @@
     const errorMsg = document.getElementById('loginErrorMsg');
     const loading = document.getElementById('loginLoading');
     const submitBtn = document.getElementById('loginSubmitBtn');
+    const invalidLoginMessage = @json(\App\Http\Controllers\AuthController::INVALID_LOGIN_MESSAGE);
 
     if (!loginForm) return;
 
@@ -577,17 +578,20 @@
         submitBtn.disabled = true;
 
         try {
+            const formData = new FormData(loginForm);
+            const csrfToken = formData.get('_token') || document.querySelector('meta[name="csrf-token"]').getAttribute('content');
             const response = await fetch('{{ url("/login") }}', {
                 method: 'POST',
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'X-CSRF-TOKEN': csrfToken,
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: new FormData(loginForm)
+                body: formData
             });
 
-            const data = await response.json();
+            const contentType = response.headers.get('content-type') || '';
+            const data = contentType.includes('application/json') ? await response.json() : {};
 
             loading.classList.remove('show');
             submitBtn.disabled = false;
@@ -599,7 +603,9 @@
 
             let messages = [];
 
-            if (data.errors) {
+            if (response.status === 419) {
+                messages.push(invalidLoginMessage);
+            } else if (data.errors) {
                 Object.keys(data.errors).forEach(key => {
                     messages.push(data.errors[key][0]);
 
@@ -608,13 +614,14 @@
                 });
             }
 
-            if (data.message) {
-                messages.push(data.message);
+            if (data.message && response.status !== 419) {
+                const message = String(data.message);
+                messages.push(message.toLowerCase().includes('csrf') ? invalidLoginMessage : message);
             }
 
             errorMsg.innerHTML = messages.length
                 ? messages.join('<br>')
-                : 'Email atau password salah.';
+                : invalidLoginMessage;
 
             errorDiv.style.display = 'block';
 

@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
+    public const INVALID_LOGIN_MESSAGE = 'Email atau password salah.';
+
     public function showLogin()
     {
         if (Auth::check()) {
@@ -65,12 +67,12 @@ class AuthController extends Controller
         if ($isAjax) {
             return response()->json([
                 'success' => false,
-                'message' => 'Email atau password salah.',
+                'message' => self::INVALID_LOGIN_MESSAGE,
             ], 422);
         }
 
         return back()->withErrors([
-            'email' => 'Email atau password salah.',
+            'email' => self::INVALID_LOGIN_MESSAGE,
         ])->onlyInput('email');
     }
 
