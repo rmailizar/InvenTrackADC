@@ -56,8 +56,18 @@ class TransactionController extends Controller
 
         // Pass items for modal dropdown
         $items = Item::visibleFor(auth()->user())->orderBy('name')->get();
+        $transactionDetailData = $this->transactionDetailData($transactions);
 
-        return view('transactions.index', compact('transactions', 'items'));
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'html' => view('transactions.partials.table', compact('transactions'))->render(),
+                'detailData' => $transactionDetailData,
+                'total' => $transactions->total(),
+                'sort' => $request->input('sort', 'latest') === 'oldest' ? 'oldest' : 'latest',
+            ]);
+        }
+
+        return view('transactions.index', compact('transactions', 'items', 'transactionDetailData'));
     }
 
     public function create()
@@ -294,5 +304,31 @@ class TransactionController extends Controller
             ->values();
 
         return $normalized->isEmpty() ? null : $normalized->implode(',');
+    }
+
+    private function transactionDetailData($transactions): array
+    {
+        $data = [];
+
+        foreach ($transactions as $txRow) {
+            $data[$txRow->id] = [
+                'date' => $txRow->date->format('d/m/Y'),
+                'type' => $txRow->type_label,
+                'no_normalisasi' => $txRow->no_normalisasi ?: ($txRow->item->no_normalisasi ?? '-'),
+                'name' => $txRow->item->name ?? '-',
+                'category' => $txRow->item->category ?? '-',
+                'ship_unloader' => $txRow->ship_unloader_label,
+                'lokasi' => $txRow->lokasi ?: ($txRow->item->lokasi ?? '-'),
+                'volume' => $txRow->quantity,
+                'quantity' => $txRow->quantity,
+                'unit' => $txRow->item->unit ?? '-',
+                'price' => $txRow->price === null ? '-' : 'Rp ' . number_format($txRow->price, 0, ',', '.'),
+                'user' => $txRow->user->name ?? '-',
+                'status' => $txRow->bidang === 'teknik' ? 'Approve' : ($txRow->status === 'pending' ? 'Menunggu Approval' : ucfirst($txRow->status)),
+                'description' => $txRow->description ?: '-',
+            ];
+        }
+
+        return $data;
     }
 }

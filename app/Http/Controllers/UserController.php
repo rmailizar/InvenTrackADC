@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -47,8 +48,18 @@ class UserController extends Controller
         $pendingUsersCount = User::visibleFor(auth()->user())->where('account_status', 'pending')->count();
 
         $defaultPassword = self::DEFAULT_PASSWORD;
+        $onlineUserIds = collect();
 
-        return view('users.index', compact('users', 'pendingUsersCount', 'defaultPassword'));
+        if (auth()->user()->isAdmin() || auth()->user()->isSuperAdmin()) {
+            $onlineUserIds = DB::table(config('session.table', 'sessions'))
+                ->whereNotNull('user_id')
+                ->where('last_activity', '>=', now()->subMinutes(5)->timestamp)
+                ->pluck('user_id')
+                ->map(fn($id) => (int) $id)
+                ->flip();
+        }
+
+        return view('users.index', compact('users', 'pendingUsersCount', 'defaultPassword', 'onlineUserIds'));
     }
 
     public function create()

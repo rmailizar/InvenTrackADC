@@ -14,7 +14,7 @@
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;margin:0 auto;">
                     <tr>
                         <td align="center" style="padding:8px 0 22px;">
-                            <img src="{{ $logoUrl }}" alt="Next Logistic" width="180" style="display:block;width:180px;max-width:70%;height:auto;border:0;">
+                        <img src="{{ $message->embed(public_path('images/logo-web.png')) }}" alt="Next Logistic" width="180" style="display:block;width:180px;max-width:70%;height:auto;border:0;">
                         </td>
                     </tr>
                     <tr>

@@ -92,6 +92,9 @@
                                 <th>Bidang</th>
                                 <th>No HP</th>
                                 <th>Persetujuan</th>
+                                @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
+                                <th>Status</th>
+                                @endif
                                 <th>Terdaftar</th>
                                 @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
                                 <th>Terakhir Login</th>
@@ -137,6 +140,15 @@
                                         <span
                                             class="badge-status badge-{{ $user->account_status }}">{{ ucfirst($user->account_status) }}</span>
                                     </td>
+                                    @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
+                                        @php $isOnline = $onlineUserIds->has($user->id); @endphp
+                                        <td>
+                                            <span class="badge-status {{ $isOnline ? 'badge-online' : 'badge-offline' }}">
+                                                <i class="bi bi-circle-fill" style="font-size:7px;"></i>
+                                                {{ $isOnline ? 'Online' : 'Offline' }}
+                                            </span>
+                                        </td>
+                                    @endif
                                     <td style="font-size:12px; color:var(--text-secondary);">
                                         {{ $user->created_at->format('d/m/Y') }}
                                     </td>
@@ -189,7 +201,7 @@
                                 </tr>
                             @empty
                                 <tr class="no-data-row">
-                                    <td colspan="{{ (auth()->user()->isAdmin() || auth()->user()->isSuperAdmin()) ? 11 : 10 }}">
+                                    <td colspan="{{ (auth()->user()->isAdmin() || auth()->user()->isSuperAdmin()) ? 12 : 10 }}">
                                         <i class="bi bi-people"
                                             style="font-size:40px;display:block;margin-bottom:8px;opacity:0.3;"></i>
                                         {{ auth()->user()->isManager() ? 'Tidak ada user menunggu approval' : 'Belum ada data user' }}

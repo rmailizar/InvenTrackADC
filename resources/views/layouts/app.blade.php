@@ -307,6 +307,25 @@
             updateChartTheme();
         }
 
+        const desktopSidebarMedia = window.matchMedia('(min-width: 992px)');
+
+        function isDesktopSidebar() {
+            return desktopSidebarMedia.matches;
+        }
+
+        function rememberSidebarHoverOpen(open) {
+            if (open) {
+                sessionStorage.setItem('inventrack-sidebar-hover-open', '1');
+                return;
+            }
+
+            sessionStorage.removeItem('inventrack-sidebar-hover-open');
+        }
+
+        function shouldRestoreSidebarHoverOpen() {
+            return sessionStorage.getItem('inventrack-sidebar-hover-open') === '1';
+        }
+
         function setDesktopSidebarCollapsed(collapsed) {
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.querySelector('.main-content');
@@ -321,25 +340,28 @@
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
-            const isMobile = window.innerWidth < 992;
-
-            if (isMobile) {
+            if (!isDesktopSidebar()) {
                 sidebar.classList.remove('collapsed');
                 sidebar.classList.toggle('show');
                 overlay.classList.toggle('show');
-            } else {
-                setDesktopSidebarCollapsed(!sidebar.classList.contains('collapsed'));
             }
+        }
+
+        function syncDesktopSidebarHoverState() {
+            if (!isDesktopSidebar()) return;
+
+            const sidebar = document.getElementById('sidebar');
+            setDesktopSidebarCollapsed(!(sidebar.matches(':hover') || shouldRestoreSidebarHoverOpen()));
         }
 
         function normalizeSidebarForViewport() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
 
-            if (window.innerWidth >= 992) {
+            if (isDesktopSidebar()) {
                 sidebar.classList.remove('show');
                 overlay.classList.remove('show');
-                setDesktopSidebarCollapsed(true);
+                syncDesktopSidebarHoverState();
             } else {
                 sidebar.classList.remove('collapsed');
                 document.querySelector('.main-content').classList.remove('sidebar-collapsed');
@@ -350,32 +372,23 @@
 
         normalizeSidebarForViewport();
 
-        document.getElementById('sidebar').addEventListener('click', (event) => {
-            if (window.innerWidth < 992) return;
+        const sidebarEl = document.getElementById('sidebar');
 
-            const sidebar = event.currentTarget;
-            const clickedLink = event.target.closest('.sidebar-link');
-            const clickedControl = event.target.closest('button, form, input, select, textarea');
-
-            if (clickedControl) return;
-
-            if (sidebar.classList.contains('collapsed')) {
-                if (!clickedLink) {
-                    setDesktopSidebarCollapsed(false);
-                }
-                return;
+        sidebarEl.addEventListener('mouseenter', () => {
+            if (isDesktopSidebar()) {
+                rememberSidebarHoverOpen(true);
+                setDesktopSidebarCollapsed(false);
             }
+        });
 
-            if (clickedLink && clickedLink.classList.contains('active')) {
-                event.preventDefault();
-                setDesktopSidebarCollapsed(true);
-                return;
-            }
-
-            if (!clickedLink) {
+        sidebarEl.addEventListener('mouseleave', () => {
+            if (isDesktopSidebar()) {
+                rememberSidebarHoverOpen(false);
                 setDesktopSidebarCollapsed(true);
             }
         });
+
+        requestAnimationFrame(syncDesktopSidebarHoverState);
 
         // SweetAlert2 Toast Configuration
         const Toast = Swal.mixin({
@@ -437,15 +450,34 @@
             });
         }
 
-        // Close sidebar on link click (mobile); desktop closes naturally after page navigation.
+        // Close sidebar on link click (mobile); desktop stays open while hovered.
         document.querySelectorAll('.sidebar-link').forEach(link => {
             link.addEventListener('click', () => {
-                if (window.innerWidth < 992) {
+                if (!isDesktopSidebar()) {
                     document.getElementById('sidebar').classList.remove('show');
                     document.getElementById('sidebarOverlay').classList.remove('show');
+                    return;
                 }
+
+                rememberSidebarHoverOpen(true);
             });
         });
+
+        document.addEventListener('mousemove', (event) => {
+            if (!isDesktopSidebar() || !shouldRestoreSidebarHoverOpen()) return;
+
+            const sidebarRect = sidebarEl.getBoundingClientRect();
+            const isInsideExpandedSidebar =
+                event.clientX >= sidebarRect.left &&
+                event.clientX <= sidebarRect.left + parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width')) &&
+                event.clientY >= sidebarRect.top &&
+                event.clientY <= sidebarRect.bottom;
+
+            if (!isInsideExpandedSidebar) {
+                rememberSidebarHoverOpen(false);
+                setDesktopSidebarCollapsed(true);
+            }
+        }, { passive: true });
 
         // Handle window resize: reset mobile state and keep desktop pages collapsed by default.
         window.addEventListener('resize', () => {

@@ -79,7 +79,7 @@ class ForgotPasswordController extends Controller
             Password::RESET_LINK_SENT => 'Link reset password sudah dikirim ke email Anda.',
             Password::PASSWORD_RESET => 'Password berhasil diubah.',
             Password::INVALID_USER => 'Email tidak ditemukan.',
-            Password::INVALID_TOKEN => 'Token reset password tidak valid atau sudah kedaluwarsa.',
+            Password::INVALID_TOKEN => 'Link reset password tidak valid atau sudah kedaluwarsa.',
             Password::RESET_THROTTLED => 'Terlalu banyak permintaan. Silakan coba lagi nanti.',
             default => 'Permintaan reset password tidak dapat diproses.',
         };

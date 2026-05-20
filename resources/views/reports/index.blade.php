@@ -61,7 +61,7 @@
                         </div>
 
                         <div class="col-md-3 d-flex gap-2">
-                            <button type="submit" class="btn btn-success"><i class="bi bi-search"></i> Filter</button>
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Filter</button>
                             <a href="{{ route('reports.index', ['table' => 'stock']) }}" class="btn btn-outline-secondary">
                                 <i class="bi bi-x-lg"></i> Reset
                             </a>
@@ -124,20 +124,8 @@
                         </div>
 
                         <div class="col-lg-2 col-md-6">
-                            <label class="form-label">Urutkan</label>
-                            <select name="sort" class="form-select">
-                                <option value="latest" {{ request('sort', 'latest') == 'latest' ? 'selected' : '' }}>
-                                    &#8595; Terbaru
-                                </option>
-                                <option value="oldest" {{ request('sort') == 'oldest' ? 'selected' : '' }}>
-                                    &#8593; Terlama
-                                </option>
-                            </select>
-                        </div>
-
-                        <div class="col-lg-2 col-md-6">
                             <div class="d-grid">
-                                <button type="submit" class="btn btn-success">
+                                <button type="submit" class="btn btn-primary">
                                     <i class="bi bi-search"></i> Filter
                                 </button>
                             </div>
@@ -157,12 +145,12 @@
         </div>
 
         <!-- Summary Cards + Export Button -->
-        <div class="row g-3 mb-4">
+        <div class="row g-3 mb-4 report-summary-cards">
             <div class="col-sm-6 col-lg-3">
                 <div class="stats-card success">
                     <div class="d-flex align-items-center gap-3">
                         <div class="stats-icon"><i class="bi bi-arrow-down-circle-fill"></i></div>
-                        <div>
+                        <div class="stats-copy">
                             <div class="stats-value" style="font-size:22px;">{{ number_format($totalMasuk) }}</div>
                             <div class="stats-label">{{ $isTeknik ? 'Total Goods Receipt' : 'Total Masuk' }}</div>
                         </div>
@@ -173,7 +161,7 @@
                 <div class="stats-card danger">
                     <div class="d-flex align-items-center gap-3">
                         <div class="stats-icon"><i class="bi bi-arrow-up-circle-fill"></i></div>
-                        <div>
+                        <div class="stats-copy">
                             <div class="stats-value" style="font-size:22px;">{{ number_format($totalKeluar) }}</div>
                             <div class="stats-label">{{ $isTeknik ? 'Total Goods Issue' : 'Total Keluar' }}</div>
                         </div>
@@ -184,7 +172,7 @@
                 <div class="stats-card warning">
                     <div class="d-flex align-items-center gap-3">
                         <div class="stats-icon"><i class="bi bi-calculator-fill"></i></div>
-                        <div>
+                        <div class="stats-copy">
                             <div class="stats-value" style="font-size:22px;">{{ number_format($totalAkhir) }}</div>
                             <div class="stats-label">{{ $isStock ? 'Stok Akhir' : 'Selisih' }}</div>
                         </div>
@@ -192,13 +180,13 @@
                 </div>
             </div>
             <div class="col-sm-6 col-lg-3">
-                <a href="{{ route('reports.export', $exportParams) }}" class="text-decoration-none">
+                <a href="{{ route('reports.export', $exportParams) }}" class="text-decoration-none" id="reportExportLink">
                     <div class="stats-card primary" style="cursor:pointer;">
                         <div class="d-flex align-items-center gap-3">
                             <div class="stats-icon">
                                 <i class="bi bi-file-earmark-excel-fill"></i>
                             </div>
-                            <div>
+                            <div class="stats-copy">
                                 <div class="stats-value" style="font-size:22px; color:var(--primary);">
                                     Export
                                 </div>
@@ -211,6 +199,7 @@
         </div>
 
         <!-- Table -->
+        @if($isStock)
         <div class="card">
             <div class="card-header">
                 <span>
@@ -400,10 +389,69 @@
             <div class="d-flex justify-content-center mt-3">
                 {{ $stockItems->links('pagination.custom') }}
             </div>
-        @elseif(!$isStock && $transactions->hasPages())
-            <div class="d-flex justify-content-center mt-3">
-                {{ $transactions->links('pagination.custom') }}
-            </div>
+        @endif
+        @else
+            @include('reports.partials.transactions-table', ['transactions' => $transactions])
         @endif
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        function updateReportExportLink(url) {
+            const exportLink = document.getElementById('reportExportLink');
+            if (!exportLink) return;
+
+            const exportUrl = new URL(exportLink.href);
+            const currentUrl = new URL(url.toString());
+            const sort = currentUrl.searchParams.get('sort');
+
+            if (sort) {
+                exportUrl.searchParams.set('sort', sort);
+            } else {
+                exportUrl.searchParams.delete('sort');
+            }
+
+            exportLink.href = exportUrl.toString();
+        }
+
+        function bindReportDateSort() {
+            document.querySelectorAll('.js-report-date-sort').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('table', 'transactions');
+                    url.searchParams.set('sort', this.dataset.sort || 'latest');
+                    url.searchParams.delete('page');
+                    loadReportTransactionsTable(url);
+                });
+            });
+        }
+
+        function loadReportTransactionsTable(url) {
+            const region = document.getElementById('reportTransactionsTableRegion');
+            if (!region) return;
+
+            region.classList.add('table-ajax-loading');
+
+            fetch(url.toString(), {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    region.outerHTML = data.html;
+                    window.history.pushState({}, '', url.toString());
+                    updateReportExportLink(url);
+                    bindReportDateSort();
+                })
+                .catch(() => {
+                    Toast.fire({ icon: 'error', title: 'Gagal mengurutkan data laporan.' });
+                    region.classList.remove('table-ajax-loading');
+                });
+        }
+
+        bindReportDateSort();
+    </script>
+@endpush

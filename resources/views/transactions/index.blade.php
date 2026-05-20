@@ -6,25 +6,6 @@
 @section('content')
     @php
         $isTeknik = auth()->user()->bidang === 'teknik';
-        $transactionDetailData = [];
-        foreach ($transactions as $txRow) {
-            $transactionDetailData[$txRow->id] = [
-                'date' => $txRow->date->format('d/m/Y'),
-                'type' => $txRow->type_label,
-                'no_normalisasi' => $txRow->no_normalisasi ?: ($txRow->item->no_normalisasi ?? '-'),
-                'name' => $txRow->item->name ?? '-',
-                'category' => $txRow->item->category ?? '-',
-                'ship_unloader' => $txRow->ship_unloader_label,
-                'lokasi' => $txRow->lokasi ?: ($txRow->item->lokasi ?? '-'),
-                'volume' => $txRow->quantity,
-                'quantity' => $txRow->quantity,
-                'unit' => $txRow->item->unit ?? '-',
-                'price' => $txRow->price === null ? '-' : 'Rp ' . number_format($txRow->price, 0, ',', '.'),
-                'user' => $txRow->user->name ?? '-',
-                'status' => $txRow->bidang === 'teknik' ? 'Approve' : ($txRow->status === 'pending' ? 'Menunggu Approval' : ucfirst($txRow->status)),
-                'description' => $txRow->description ?: '-',
-            ];
-        }
     @endphp
     <div class="animate-fade-in">
         <div class="filter-bar">
@@ -60,13 +41,6 @@
                         <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
                     </div>
                     <div class="col-lg-2 col-md-6">
-                        <label class="form-label">Urutkan</label>
-                        <select name="sort" class="form-select">
-                            <option value="latest" {{ request('sort', 'latest') == 'latest' ? 'selected' : '' }}>Terbaru</option>
-                            <option value="oldest" {{ request('sort') == 'oldest' ? 'selected' : '' }}>Terlama</option>
-                        </select>
-                    </div>
-                    <div class="col-lg-2 col-md-6">
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-search"></i> Cari</button>
                             <a href="{{ route('transactions.index') }}" class="btn btn-outline-secondary flex-fill"><i class="bi bi-x-lg"></i> Reset</a>
@@ -76,127 +50,7 @@
             </form>
         </div>
 
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <div class="text-muted" style="font-size:13px;">Total: {{ $transactions->total() }} transaksi</div>
-            <button type="button" class="btn btn-primary" onclick="openTransactionModal()">
-                <i class="bi bi-plus-lg"></i> Input Transaksi
-            </button>
-        </div>
-
-        <div class="card">
-            <div class="card-body p-0">
-                <div class="table-container">
-                    <table class="table" id="transactions-table">
-                        <thead>
-                            @if($isTeknik)
-                                <tr>
-                                    <th style="width:50px;">No</th>
-                                    <th>Tanggal</th>
-                                    <th>Jenis</th>
-                                    <th>No Normalisasi</th>
-                                    <th>Nama Barang</th>
-                                    <th>Komponen</th>
-                                    <th>Ship Unloader</th>
-                                    <th>Lokasi</th>
-                                    <th class="text-center">Volume</th>
-                                    <th class="text-end">Harga Satuan</th>
-                                    <th>Satuan</th>
-                                    <th>User</th>
-                                    <th>Status</th>
-                                    <th class="text-center" style="width:72px;">Aksi</th>
-                                </tr>
-                            @else
-                                <tr>
-                                    <th style="width:50px;">No</th>
-                                    <th>Tanggal</th>
-                                    <th>Jenis</th>
-                                    <th>Barang</th>
-                                    <th>Kategori</th>
-                                    <th>Jumlah</th>
-                                    <th>Satuan</th>
-                                    <th>User</th>
-                                    <th>Status</th>
-                                    <th>Keterangan</th>
-                                    <th class="text-center" style="width:72px;">Aksi</th>
-                                </tr>
-                            @endif
-                        </thead>
-                        <tbody>
-                            @forelse($transactions as $index => $tx)
-                                <tr>
-                                    <td>{{ $transactions->firstItem() + $index }}</td>
-                                    <td>{{ $tx->date->format('d/m/Y') }}</td>
-                                    <td>
-                                        <span class="badge-status badge-{{ $tx->type }}">
-                                            <i class="bi bi-arrow-{{ $tx->type === 'in' ? 'down' : 'up' }}-circle-fill" style="font-size:10px;"></i>
-                                            {{ $tx->type_label }}
-                                        </span>
-                                    </td>
-                                    @if($isTeknik)
-                                        <td class="fw-600">{{ $tx->no_normalisasi ?? $tx->item->no_normalisasi ?? '-' }}</td>
-                                        <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
-                                        <td>{{ $tx->item->category ?? '-' }}</td>
-                                        <td>{{ $tx->ship_unloader_label }}</td>
-                                        <td>{{ $tx->lokasi ?? $tx->item->lokasi ?? '-' }}</td>
-                                        <td class="text-center fw-700">{{ number_format($tx->quantity) }}</td>
-                                        <td class="text-end">{{ $tx->price === null ? '-' : 'Rp ' . number_format($tx->price, 0, ',', '.') }}</td>
-                                        <td>{{ $tx->item->unit ?? '-' }}</td>
-                                        <td>{{ $tx->user->name ?? '-' }}</td>
-                                        <td>
-                                            <span class="badge-status badge-approved">
-                                                <i class="bi bi-check-circle-fill"></i> Approved
-                                            </span>
-                                        </td>
-                                        <td class="text-center">
-                                            <button type="button" class="btn btn-sm btn-outline-primary btn-transaction-detail-open"
-                                                title="Lihat Detail" data-transaction-id="{{ $tx->id }}">
-                                                <i class="bi bi-eye-fill"></i>
-                                            </button>
-                                        </td>
-                                    @else
-                                        <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
-                                        <td>{{ $tx->item->category ?? '-' }}</td>
-                                        <td class="fw-700">{{ number_format($tx->quantity) }}</td>
-                                        <td>{{ $tx->item->unit ?? '-' }}</td>
-                                        <td>{{ $tx->user->name ?? '-' }}</td>
-                                        <td>
-                                            <span class="badge-status badge-{{ $tx->status }}">
-                                                {{ $tx->status === 'pending' ? 'Menunggu Approval' : ucfirst($tx->status) }}
-                                            </span>
-                                            @if($tx->status !== 'pending' && $tx->approver)
-                                                <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">oleh {{ $tx->approver->name }}</div>
-                                            @endif
-                                        </td>
-                                        <td style="max-width:220px; font-size:12px; color:var(--text-secondary);">
-                                            {{ \Illuminate\Support\Str::limit($tx->description, 60) }}
-                                        </td>
-                                        <td class="text-center">
-                                            <button type="button" class="btn btn-sm btn-outline-primary btn-transaction-detail-open"
-                                                title="Lihat Detail" data-transaction-id="{{ $tx->id }}">
-                                                <i class="bi bi-eye-fill"></i>
-                                            </button>
-                                        </td>
-                                    @endif
-                                </tr>
-                            @empty
-                                <tr class="no-data-row">
-                                    <td colspan="{{ $isTeknik ? 14 : 11 }}">
-                                        <i class="bi bi-inbox" style="font-size:40px;display:block;margin-bottom:8px;opacity:0.3;"></i>
-                                        Belum ada data transaksi
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        @if($transactions->hasPages())
-            <div class="d-flex justify-content-center mt-3">
-                {{ $transactions->links('pagination.custom') }}
-            </div>
-        @endif
+        @include('transactions.partials.table', ['transactions' => $transactions])
     </div>
 
     <div class="modal fade inventrack-modal" id="transactionDetailModal" tabindex="-1" aria-hidden="true">
@@ -394,8 +248,9 @@
             container.appendChild(wrap);
         }
 
-        document.querySelectorAll('.btn-transaction-detail-open').forEach(function(button) {
-            button.addEventListener('click', function() {
+        function bindTransactionDetailButtons() {
+            document.querySelectorAll('.btn-transaction-detail-open').forEach(function(button) {
+                button.addEventListener('click', function() {
                 const data = window.__transactionDetailData[this.dataset.transactionId];
                 if (!data) return;
                 const grid = document.getElementById('transactionDetailGrid');
@@ -421,7 +276,48 @@
                 appendTransactionDetail(grid, 'Status', data.status);
                 txDetailModal.show();
             });
-        });
+            });
+        }
+
+        function bindTransactionDateSort() {
+            document.querySelectorAll('.js-date-sort').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('sort', this.dataset.sort || 'latest');
+                    url.searchParams.delete('page');
+                    loadTransactionsTable(url);
+                });
+            });
+        }
+
+        function loadTransactionsTable(url) {
+            const region = document.getElementById('transactionsTableRegion');
+            if (!region) return;
+
+            region.classList.add('table-ajax-loading');
+
+            fetch(url.toString(), {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    region.outerHTML = data.html;
+                    window.__transactionDetailData = data.detailData || {};
+                    window.history.pushState({}, '', url.toString());
+                    bindTransactionDetailButtons();
+                    bindTransactionDateSort();
+                })
+                .catch(() => {
+                    Toast.fire({ icon: 'error', title: 'Gagal mengurutkan data transaksi.' });
+                    region.classList.remove('table-ajax-loading');
+                });
+        }
+
+        bindTransactionDetailButtons();
+        bindTransactionDateSort();
 
         function refreshItemInfo() {
             const selected = txItemSelect.options[txItemSelect.selectedIndex];

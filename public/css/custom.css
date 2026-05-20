@@ -211,7 +211,7 @@ a:hover {
     flex-direction: column;
     overflow-y: auto;
     overflow-x: hidden;
-    cursor: pointer;
+    cursor: default;
 }
 
 [data-theme="dark"] .sidebar {
@@ -650,6 +650,108 @@ a:hover {
     font-size: 12px;
 }
 
+@media (min-width: 992px) {
+    .sidebar.collapsed:hover {
+        width: var(--sidebar-width);
+    }
+
+    .sidebar.collapsed:hover .brand-text,
+    .sidebar.collapsed:hover .brand-sub,
+    .sidebar.collapsed:hover .sidebar-label,
+    .sidebar.collapsed:hover .sidebar-link span,
+    .sidebar.collapsed:hover .sidebar-link .badge,
+    .sidebar.collapsed:hover .sidebar-user .user-info,
+    .sidebar.collapsed:hover .sidebar-user form,
+    .sidebar.collapsed:hover .sidebar-brand .logo-container {
+        display: revert;
+    }
+
+    .sidebar.collapsed:hover .sidebar-brand {
+        padding: 10px 10px 0;
+        min-height: auto;
+    }
+
+    .sidebar.collapsed:hover .sidebar-brand .brand-wrapper {
+        width: auto;
+    }
+
+    .sidebar.collapsed:hover .sidebar-brand .brand-icon {
+        width: 150px;
+        height: 150px;
+        padding: 4px;
+    }
+
+    .sidebar.collapsed:hover .sidebar-brand .sidebar-logo-bottom {
+        display: block !important;
+    }
+
+    .sidebar.collapsed:hover .sidebar-brand .sidebar-logo-stack {
+        height: 100%;
+    }
+
+    .sidebar.collapsed:hover .sidebar-brand .sidebar-logo-top {
+        flex: 1 1 0;
+        width: 100%;
+        height: auto;
+        max-height: none;
+        object-position: center bottom;
+    }
+
+    .sidebar.collapsed:hover .sidebar-nav {
+        padding: 4px 12px;
+        margin-top: -25px;
+    }
+
+    .sidebar.collapsed:hover .sidebar-link {
+        justify-content: flex-start;
+        width: auto;
+        height: auto;
+        padding: 11px 16px;
+        margin: 0 0 2px;
+        border-radius: var(--radius-sm);
+    }
+
+    .sidebar.collapsed:hover .sidebar-link i {
+        font-size: 18px;
+        width: 22px;
+    }
+
+    .sidebar.collapsed:hover .sidebar-link::before {
+        inset: 1px;
+        border-radius: calc(var(--radius-sm) - 1px);
+    }
+
+    .sidebar.collapsed:hover .sidebar-link::after {
+        inset: -18px;
+        border-radius: 999px;
+        background: radial-gradient(circle at 50% 50%, rgba(52, 211, 153, 0.26), transparent 64%);
+        filter: blur(16px);
+    }
+
+    .sidebar.collapsed:hover .sidebar-footer {
+        padding: 16px 20px;
+    }
+
+    .sidebar.collapsed:hover .sidebar-user {
+        justify-content: flex-start;
+    }
+
+    .sidebar.collapsed:hover .sidebar-user .user-avatar {
+        width: 38px;
+        height: 38px;
+        font-size: 14px;
+    }
+
+    .sidebar.collapsed:hover~.main-content {
+        margin-left: var(--sidebar-width);
+    }
+
+    .sidebar.collapsed:hover~.main-footer,
+    .sidebar.collapsed:hover~.main-content+.main-footer {
+        margin-left: var(--sidebar-width);
+    }
+}
+
 /* ---------- Main Content ---------- */
 .main-content {
     margin-left: var(--sidebar-width);
@@ -684,7 +786,7 @@ body.public-layout .public-page {
 
 .public-header {
     /* Menggunakan warna dasar yang sama dengan sidebar (Hitam Keabuan Gelap) */
-    background: rgba(15, 18, 20, 0.80);
+    background: rgba(15, 18, 20, 0.70);
 
     /* Efek Glassmorphism yang diselaraskan dengan sidebar */
     /* Menggunakan blur 20px dan saturasi 160% agar identik */
@@ -1428,10 +1530,64 @@ body.public-layout .public-body {
     letter-spacing: 0.5px;
 }
 
+@media (min-width: 1400px) {
+    .report-summary-cards .stats-card .stats-copy,
+    .dashboard-summary-cards .stats-card .stats-copy {
+        display: flex;
+        align-items: baseline;
+        gap: 14px;
+        min-width: 0;
+    }
+
+    .report-summary-cards .stats-card .stats-value,
+    .dashboard-summary-cards .stats-card .stats-value {
+        margin-bottom: 0;
+        flex: 0 0 auto;
+    }
+
+    .report-summary-cards .stats-card .stats-label,
+    .dashboard-summary-cards .stats-card .stats-label {
+        white-space: nowrap;
+        line-height: 1.2;
+    }
+}
+
 /* ---------- Tables ---------- */
 .table-container {
     overflow-x: auto;
     border-radius: var(--radius);
+}
+
+.date-sort-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+}
+
+.btn-date-sort {
+    width: 28px;
+    height: 28px;
+    border: 0;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    background: transparent;
+    transition: var(--transition);
+}
+
+.btn-date-sort:hover,
+.btn-date-sort:focus {
+    color: var(--primary);
+    background: var(--primary-bg);
+    outline: none;
+}
+
+.table-ajax-loading {
+    opacity: 0.55;
+    pointer-events: none;
 }
 
 .table {
@@ -1569,6 +1725,16 @@ body.public-layout .public-body {
     background: var(--danger);
 }
 
+.badge-online {
+    background: var(--success-bg);
+    color: var(--success-dark);
+}
+
+.badge-offline {
+    background: rgba(100, 116, 139, 0.12);
+    color: #64748b;
+}
+
 .badge-in {
     background: var(--success-bg);
     color: var(--success-dark);
@@ -1630,7 +1796,7 @@ body.public-layout .public-body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    background: linear-gradient(135deg, #0f3b32, var(--primary-dark));
     color: white;
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
 }

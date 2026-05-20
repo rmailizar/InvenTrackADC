@@ -15,14 +15,14 @@
     @endphp
     <div class="animate-fade-in">
         <!-- Stats Cards -->
-        <div class="row g-3 mb-4">
+        <div class="row g-3 mb-4 dashboard-summary-cards">
             <div class="col-sm-6 col-lg-3">
                 <div class="stats-card primary">
                     <div class="d-flex align-items-center gap-3">
                         <div class="stats-icon">
                             <i class="bi bi-box-seam-fill"></i>
                         </div>
-                        <div>
+                        <div class="stats-copy">
                             <div class="stats-value" style="font-size:22px;">{{ number_format($totalItems) }}</div>
                             <div class="stats-label">Total Barang</div>
                         </div>
@@ -35,7 +35,7 @@
                         <div class="stats-icon">
                             <i class="bi bi-arrow-down-circle-fill"></i>
                         </div>
-                        <div>
+                        <div class="stats-copy">
                             <div class="stats-value" style="font-size:22px;">{{ number_format($masukBulanIni) }}</div>
                             <div class="stats-label">{{ $receiptLabel }} (Bulan Ini)</div>
                         </div>
@@ -48,7 +48,7 @@
                         <div class="stats-icon">
                             <i class="bi bi-arrow-up-circle-fill"></i>
                         </div>
-                        <div>
+                        <div class="stats-copy">
                             <div class="stats-value" style="font-size:22px;">{{ number_format($keluarBulanIni) }}</div>
                             <div class="stats-label">{{ $issueLabel }} (Bulan Ini)</div>
                         </div>
@@ -61,7 +61,7 @@
                         <div class="stats-icon">
                             <i class="bi bi-clock-history"></i>
                         </div>
-                        <div>
+                        <div class="stats-copy">
                             <div class="stats-value" style="font-size:22px;">{{ number_format($pendingCount) }}</div>
                             <div class="stats-label">{{ $pendingApprovalLabel }}</div>
                         </div>
