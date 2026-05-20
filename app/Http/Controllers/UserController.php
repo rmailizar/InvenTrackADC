@@ -9,6 +9,8 @@ use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
+    private const DEFAULT_PASSWORD = 'adc.password';
+
     public function index(Request $request)
     {
         $query = User::query()->visibleFor(auth()->user());
@@ -22,6 +24,7 @@ class UserController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('username', 'like', "%{$search}%")
                     ->orWhere('email', 'like', "%{$search}%");
             });
         }
@@ -43,7 +46,9 @@ class UserController extends Controller
         // Count pending users for badge
         $pendingUsersCount = User::visibleFor(auth()->user())->where('account_status', 'pending')->count();
 
-        return view('users.index', compact('users', 'pendingUsersCount'));
+        $defaultPassword = self::DEFAULT_PASSWORD;
+
+        return view('users.index', compact('users', 'pendingUsersCount', 'defaultPassword'));
     }
 
     public function create()
@@ -58,7 +63,7 @@ class UserController extends Controller
     {
         $this->authorizeUserDepartment($user);
 
-        return response()->json($user->only(['id', 'name', 'email', 'role', 'bidang', 'no_hp']));
+        return response()->json($this->userFormPayload($user));
     }
 
     public function store(Request $request)
@@ -70,6 +75,7 @@ class UserController extends Controller
         $allowedRoles = $this->allowedRolesForBidang($requestedBidang, $actor->isSuperAdmin());
 
         $validated = $request->validate([
+            'username' => ['required', 'string', 'max:255', 'regex:/^[A-Za-z0-9._-]+$/', 'unique:users,username'],
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:6|confirmed',
@@ -85,6 +91,8 @@ class UserController extends Controller
         $this->ensureRoleAllowedForBidang($validated['role'], $validated['bidang']);
 
         $validated['account_status'] = ($actor->isSuperAdmin() || $actor->isTeknik()) ? 'approved' : 'pending';
+
+        $validated['visible_password'] = $validated['password'];
 
         User::create($validated);
 
@@ -105,7 +113,7 @@ class UserController extends Controller
 
         // AJAX request returns JSON data for modal pre-fill
         if ($request->ajax() || $request->wantsJson()) {
-            return response()->json($user->only(['id', 'name', 'email', 'role', 'bidang', 'no_hp']));
+            return response()->json($this->userFormPayload($user));
         }
 
         return redirect()->route('users.index');
@@ -121,6 +129,7 @@ class UserController extends Controller
         $allowedRoles = $this->allowedRolesForBidang($requestedBidang, $actor->isSuperAdmin());
 
         $validated = $request->validate([
+            'username' => ['required', 'string', 'max:255', 'regex:/^[A-Za-z0-9._-]+$/', 'unique:users,username,' . $user->id],
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'role' => ['required', Rule::in($allowedRoles)],
@@ -137,6 +146,7 @@ class UserController extends Controller
         if ($request->filled('password')) {
             $request->validate(['password' => 'string|min:6|confirmed']);
             $validated['password'] = $request->password;
+            $validated['visible_password'] = $request->password;
         }
 
         $user->update($validated);
@@ -230,5 +240,13 @@ class UserController extends Controller
                 'role' => 'Bidang Teknik hanya boleh memiliki role Admin atau Manajer.',
             ]);
         }
+    }
+
+    private function userFormPayload(User $user): array
+    {
+        return $user->only(['id', 'username', 'name', 'email', 'role', 'bidang', 'no_hp']) + [
+            'visible_password' => $user->visible_password ?: self::DEFAULT_PASSWORD,
+            'default_password' => self::DEFAULT_PASSWORD,
+        ];
     }
 }

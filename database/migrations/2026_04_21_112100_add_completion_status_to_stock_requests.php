@@ -11,7 +11,7 @@ return new class extends Migration
     {
         // SQLite used by tests does not support MySQL enum modification syntax.
         if (DB::getDriverName() === 'mysql') {
-            DB::statement("ALTER TABLE stock_requests MODIFY COLUMN status ENUM('pending', 'approved', 'rejected', 'completed', 'cancelled') DEFAULT 'pending'");
+            DB::statement("ALTER TABLE stock_requests MODIFY COLUMN status ENUM('pending', 'approved', 'rejected', 'completed', 'cancel') DEFAULT 'pending'");
         }
 
         Schema::table('stock_requests', function (Blueprint $table) {

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\ResetPasswordNotification;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -13,9 +14,11 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     protected $fillable = [
+        'username',
         'name',
         'email',
         'password',
+        'visible_password',
         'role',
         'bidang',
         'no_hp',
@@ -25,6 +28,7 @@ class User extends Authenticatable
 
     protected $hidden = [
         'password',
+        'visible_password',
         'remember_token',
     ];
 
@@ -104,5 +108,10 @@ class User extends Authenticatable
     public function approvedTransactions()
     {
         return $this->hasMany(Transaction::class, 'approved_by');
+    }
+
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 }

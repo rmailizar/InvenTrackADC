@@ -47,7 +47,7 @@
                             @endunless
                             <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Done
                             </option>
-                            <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Cancelled
+                            <option value="cancel" {{ request('status') == 'cancel' ? 'selected' : '' }}>Cancel
                             </option>
                         </select>
                     </div>
@@ -143,9 +143,9 @@
                                                     oleh {{ $req->completer->name }}
                                                 </div>
                                             @endif
-                                        @elseif($req->status === 'cancelled')
+                                        @elseif($req->status === 'cancel')
                                             <span class="badge-status" style="background:#fef2f2;color:#991b1b;">
-                                                <i class="bi bi-slash-circle-fill"></i> Cancelled
+                                                <i class="bi bi-slash-circle-fill"></i> Cancel
                                             </span>
                                             @if($req->completer)
                                                 <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">

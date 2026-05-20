@@ -39,7 +39,7 @@
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
     <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
+    <aside class="sidebar collapsed" id="sidebar">
         <div class="sidebar-brand">
             <div class="brand-wrapper">
                 <div class="brand-icon">
@@ -210,11 +210,11 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <main class="main-content sidebar-collapsed">
         <!-- Topbar -->
         <header class="topbar">
             <div class="topbar-left">
-                <button class="btn-sidebar-toggle" onclick="toggleSidebar()">
+                <button class="btn-sidebar-toggle" onclick="toggleSidebar()" aria-label="Buka menu">
                     <i class="bi bi-list"></i>
                 </button>
                 <div>
@@ -258,7 +258,7 @@
     </main>
 
 
-        <footer class="main-footer">
+        <footer class="main-footer sidebar-collapsed">
             <div class="footer-content">
                 <div class="copyright">
                     &copy; 2026 Port Management Unit Suralaya
@@ -307,33 +307,75 @@
             updateChartTheme();
         }
 
-        // Sidebar toggle (desktop: collapse, mobile: slide)
-        function toggleSidebar() {
+        function setDesktopSidebarCollapsed(collapsed) {
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.querySelector('.main-content');
+            const footer = document.querySelector('.main-footer');
+
+            sidebar.classList.toggle('collapsed', collapsed);
+            mainContent.classList.toggle('sidebar-collapsed', collapsed);
+            if (footer) footer.classList.toggle('sidebar-collapsed', collapsed);
+        }
+
+        // Sidebar toggle (desktop: collapsed/expanded, mobile: slide)
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
             const isMobile = window.innerWidth < 992;
 
             if (isMobile) {
+                sidebar.classList.remove('collapsed');
                 sidebar.classList.toggle('show');
                 overlay.classList.toggle('show');
             } else {
-                sidebar.classList.toggle('collapsed');
-                mainContent.classList.toggle('sidebar-collapsed');
-                localStorage.setItem('inventrack-sidebar', sidebar.classList.contains('collapsed') ? 'collapsed' : 'expanded');
+                setDesktopSidebarCollapsed(!sidebar.classList.contains('collapsed'));
             }
         }
 
-        // Restore sidebar state on load (desktop only)
-        (function () {
+        function normalizeSidebarForViewport() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+
             if (window.innerWidth >= 992) {
-                const sidebarState = localStorage.getItem('inventrack-sidebar');
-                if (sidebarState === 'collapsed') {
-                    document.getElementById('sidebar').classList.add('collapsed');
-                    document.querySelector('.main-content').classList.add('sidebar-collapsed');
-                }
+                sidebar.classList.remove('show');
+                overlay.classList.remove('show');
+                setDesktopSidebarCollapsed(true);
+            } else {
+                sidebar.classList.remove('collapsed');
+                document.querySelector('.main-content').classList.remove('sidebar-collapsed');
+                const footer = document.querySelector('.main-footer');
+                if (footer) footer.classList.remove('sidebar-collapsed');
             }
-        })();
+        }
+
+        normalizeSidebarForViewport();
+
+        document.getElementById('sidebar').addEventListener('click', (event) => {
+            if (window.innerWidth < 992) return;
+
+            const sidebar = event.currentTarget;
+            const clickedLink = event.target.closest('.sidebar-link');
+            const clickedControl = event.target.closest('button, form, input, select, textarea');
+
+            if (clickedControl) return;
+
+            if (sidebar.classList.contains('collapsed')) {
+                if (!clickedLink) {
+                    setDesktopSidebarCollapsed(false);
+                }
+                return;
+            }
+
+            if (clickedLink && clickedLink.classList.contains('active')) {
+                event.preventDefault();
+                setDesktopSidebarCollapsed(true);
+                return;
+            }
+
+            if (!clickedLink) {
+                setDesktopSidebarCollapsed(true);
+            }
+        });
 
         // SweetAlert2 Toast Configuration
         const Toast = Swal.mixin({
@@ -395,7 +437,7 @@
             });
         }
 
-        // Close sidebar on link click (mobile)
+        // Close sidebar on link click (mobile); desktop closes naturally after page navigation.
         document.querySelectorAll('.sidebar-link').forEach(link => {
             link.addEventListener('click', () => {
                 if (window.innerWidth < 992) {
@@ -405,12 +447,25 @@
             });
         });
 
-        // Handle window resize: reset mobile state
+        // Handle window resize: reset mobile state and keep desktop pages collapsed by default.
         window.addEventListener('resize', () => {
-            if (window.innerWidth >= 992) {
-                document.getElementById('sidebar').classList.remove('show');
-                document.getElementById('sidebarOverlay').classList.remove('show');
+            normalizeSidebarForViewport();
+        });
+
+        function relocateInventrackModal(modal) {
+            if (!modal || !modal.classList.contains('inventrack-modal')) return;
+            if (modal.parentElement !== document.body) {
+                document.body.appendChild(modal);
             }
+        }
+
+        // Keep Bootstrap modals outside page stacking contexts so the backdrop never covers them.
+        document.querySelectorAll('.modal.inventrack-modal').forEach((modal) => {
+            relocateInventrackModal(modal);
+        });
+
+        document.addEventListener('show.bs.modal', (event) => {
+            relocateInventrackModal(event.target);
         });
 
     </script>

@@ -333,7 +333,7 @@
                         </div>
                         <div class="logo-container">
                             <div class="next-logistic">
-                                NEXT LOGISTIC
+                                NEXTLOGISTIC
                             </div>
                         </div>
                     </div>
@@ -346,10 +346,10 @@
                         <form id="loginForm" novalidate>
                             @csrf
                             <div class="mb-3">
-                                <label class="form-label">Email</label>
-                                <input type="email" name="email" class="form-control" placeholder="nama@email.com" required autofocus id="loginEmail">
+                                <label class="form-label">Username</label>
+                                <input type="text" name="username" class="form-control" placeholder="Masukkan username" required autofocus id="loginUsername" autocomplete="username">
                             </div>
-                            <div class="mb-3">
+                            <div class="mb-3 pb-3">
                                 <label class="form-label">Password</label>
                                 <div class="input-group">
                                     <input type="password" name="password" class="form-control" placeholder="Masukkan password" required id="loginPassword" style="border-right: none;">
@@ -358,14 +358,25 @@
                                     </span>
                                 </div>
                             </div>
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <div class="form-check">
-                                    <input type="checkbox" class="form-check-input" name="remember" id="loginRemember">
-                                    <label class="form-check-label" for="loginRemember" style="font-size:13px;color:var(--text-secondary);">Ingat Saya</label>
-                                </div>
-                            </div>
                             <button type="submit" class="btn btn-primary w-30 mx-auto d-block" id="loginSubmitBtn">
                                 <i class="bi bi-box-arrow-in-right text-center"></i> Masuk
+                            </button>
+                            <button type="button" class="btn btn-link w-100 mt-2 p-0" id="showForgotPasswordBtn">
+                                Lupa password?
+                            </button>
+                        </form>
+
+                        <form id="forgotPasswordForm" class="d-none" novalidate>
+                            @csrf
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" name="email" class="form-control" placeholder="nama@email.com" required id="resetEmail" autocomplete="email">
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100" id="forgotPasswordSubmitBtn">
+                                <i class="bi bi-send"></i> Kirim Link Reset
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary w-100 mt-2" id="backToLoginBtn">
+                                <i class="bi bi-arrow-left"></i> Kembali
                             </button>
                         </form>
                     </div>
@@ -560,19 +571,45 @@
     const errorMsg = document.getElementById('loginErrorMsg');
     const loading = document.getElementById('loginLoading');
     const submitBtn = document.getElementById('loginSubmitBtn');
-    const invalidLoginMessage = @json(\App\Http\Controllers\AuthController::INVALID_LOGIN_MESSAGE);
+    const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+    const showForgotPasswordBtn = document.getElementById('showForgotPasswordBtn');
+    const backToLoginBtn = document.getElementById('backToLoginBtn');
+    const forgotPasswordSubmitBtn = document.getElementById('forgotPasswordSubmitBtn');
+    const invalidLoginMessage = @json(\App\Http\Controllers\LoginController::INVALID_LOGIN_MESSAGE);
 
     if (!loginForm) return;
+
+    function clearLoginModalState() {
+        errorDiv.style.display = 'none';
+        errorMsg.innerHTML = '';
+        document.querySelectorAll('#loginModal .is-invalid').forEach(el => el.classList.remove('is-invalid'));
+    }
+
+    function showLoginForm() {
+        clearLoginModalState();
+        forgotPasswordForm.classList.add('d-none');
+        loginForm.classList.remove('d-none');
+        if (loginModal && loginModal.classList.contains('show')) {
+            document.getElementById('loginUsername').focus();
+        }
+    }
+
+    function showForgotPasswordForm() {
+        clearLoginModalState();
+        loginForm.classList.add('d-none');
+        forgotPasswordForm.classList.remove('d-none');
+        if (loginModal && loginModal.classList.contains('show')) {
+            document.getElementById('resetEmail').focus();
+        }
+    }
+
+    showForgotPasswordBtn.addEventListener('click', showForgotPasswordForm);
+    backToLoginBtn.addEventListener('click', showLoginForm);
 
     loginForm.addEventListener('submit', async function (e) {
         e.preventDefault();
 
-        errorDiv.style.display = 'none';
-        errorMsg.innerHTML = '';
-
-        loginForm.querySelectorAll('.is-invalid').forEach(el => {
-            el.classList.remove('is-invalid');
-        });
+        clearLoginModalState();
 
         loading.classList.add('show');
         submitBtn.disabled = true;
@@ -634,12 +671,68 @@
         }
     });
 
+    forgotPasswordForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        clearLoginModalState();
+        loading.classList.add('show');
+        forgotPasswordSubmitBtn.disabled = true;
+
+        try {
+            const formData = new FormData(forgotPasswordForm);
+            const csrfToken = formData.get('_token') || document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const response = await fetch('{{ route("password.email") }}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+
+            const contentType = response.headers.get('content-type') || '';
+            const data = contentType.includes('application/json') ? await response.json() : {};
+
+            loading.classList.remove('show');
+            forgotPasswordSubmitBtn.disabled = false;
+
+            if (response.ok && data.success) {
+                Toast.fire({
+                    icon: 'success',
+                    title: data.message || 'Link reset password sudah dikirim.'
+                });
+                forgotPasswordForm.reset();
+                showLoginForm();
+                return;
+            }
+
+            let messages = [];
+            if (data.errors) {
+                Object.keys(data.errors).forEach(key => {
+                    messages.push(data.errors[key][0]);
+                    const input = forgotPasswordForm.querySelector(`[name="${key}"]`);
+                    if (input) input.classList.add('is-invalid');
+                });
+            }
+
+            if (data.message) messages.push(data.message);
+
+            errorMsg.innerHTML = messages.length ? messages.join('<br>') : 'Email tidak dapat diproses.';
+            errorDiv.style.display = 'block';
+        } catch (error) {
+            loading.classList.remove('show');
+            forgotPasswordSubmitBtn.disabled = false;
+            errorMsg.textContent = 'Terjadi kesalahan. Silakan coba lagi.';
+            errorDiv.style.display = 'block';
+        }
+    });
+
     if (loginModal) {
         loginModal.addEventListener('hidden.bs.modal', function () {
             loginForm.reset();
-            errorDiv.style.display = 'none';
-            errorMsg.innerHTML = '';
-            loginForm.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            forgotPasswordForm.reset();
+            showLoginForm();
         });
     }
 });
@@ -647,8 +740,11 @@
         // Reset login form when modal closes
         document.getElementById('loginModal').addEventListener('hidden.bs.modal', function() {
             document.getElementById('loginForm').reset();
+            document.getElementById('forgotPasswordForm').reset();
+            document.getElementById('forgotPasswordForm').classList.add('d-none');
+            document.getElementById('loginForm').classList.remove('d-none');
             document.getElementById('loginError').style.display = 'none';
-            document.querySelectorAll('#loginForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            document.querySelectorAll('#loginModal .is-invalid').forEach(el => el.classList.remove('is-invalid'));
         });
         
         // Toggle password visibility

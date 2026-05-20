@@ -69,7 +69,7 @@ class StuffRequest extends Model
 
     public function scopeCancelled($query)
     {
-        return $query->where('status', 'cancelled');
+        return $query->where('status', 'cancel');
     }
 
     public function scopeVisibleFor($query, ?User $user = null)

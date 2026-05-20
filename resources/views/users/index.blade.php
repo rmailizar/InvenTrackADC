@@ -16,7 +16,7 @@
                 <div class="row align-items-end g-3">
                     <div class="col-md-4">
                         <label class="form-label">Cari User</label>
-                        <input type="text" name="search" class="form-control" placeholder="Nama atau email..."
+                        <input type="text" name="search" class="form-control" placeholder="Nama, username, atau email..."
                             value="{{ request('search') }}">
                     </div>
                     <div class="col-md-3">
@@ -86,11 +86,12 @@
                             <tr>
                                 <th style="width:50px;">No</th>
                                 <th>Nama</th>
+                                <th>Username</th>
                                 <th>Email</th>
                                 <th>Role</th>
                                 <th>Bidang</th>
                                 <th>No HP</th>
-                                <th>Status Akun</th>
+                                <th>Persetujuan</th>
                                 <th>Terdaftar</th>
                                 @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
                                 <th>Terakhir Login</th>
@@ -119,6 +120,7 @@
                                             <span class="fw-600">{{ $user->name }}</span>
                                         </div>
                                     </td>
+                                    <td>{{ $user->username }}</td>
                                     <td>{{ $user->email }}</td>
                                     <td>
                                         @php
@@ -140,7 +142,7 @@
                                     </td>
                                     @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
                                     <td style="font-size:12px;">
-                                        {{ $user->last_login_at ? \Carbon\Carbon::parse($user->last_login_at)->format('d/m/Y H:i') : '-' }}
+                                        {{ $user->last_login_at ? \Carbon\Carbon::parse($user->last_login_at)->format('d/m/Y, H:i') : '-' }}
                                     </td>
                                     @endif
                                     <td>
@@ -187,7 +189,7 @@
                                 </tr>
                             @empty
                                 <tr class="no-data-row">
-                                    <td colspan="{{ (auth()->user()->isAdmin() || auth()->user()->isSuperAdmin()) ? 10 : 9 }}">
+                                    <td colspan="{{ (auth()->user()->isAdmin() || auth()->user()->isSuperAdmin()) ? 11 : 10 }}">
                                         <i class="bi bi-people"
                                             style="font-size:40px;display:block;margin-bottom:8px;opacity:0.3;"></i>
                                         {{ auth()->user()->isManager() ? 'Tidak ada user menunggu approval' : 'Belum ada data user' }}
@@ -238,10 +240,18 @@
 
                             <div class="row g-3 mb-3">
                                 <div class="col-md-6">
+                                    <label class="form-label">Username <span class="text-danger">*</span></label>
+                                    <input type="text" name="username" class="form-control" placeholder="username.login" required
+                                        id="userUsername" autocomplete="username">
+                                </div>
+                                <div class="col-md-6">
                                     <label class="form-label">Email <span class="text-danger">*</span></label>
                                     <input type="email" name="email" class="form-control" placeholder="nama@email.com" required
                                         id="userEmail">
                                 </div>
+                            </div>
+
+                            <div class="row g-3 mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label">No HP</label>
                                     <input type="text" name="no_hp" class="form-control" placeholder="08xxxxxxxxxx"
@@ -280,14 +290,37 @@
                                 <div class="col-md-6">
                                     <label class="form-label" id="userPasswordLabel">Password <span
                                             class="text-danger">*</span></label>
-                                    <input type="password" name="password" class="form-control" placeholder="Minimal 6 karakter"
-                                        id="userPassword">
+                                    <div class="input-group password-field-group">
+                                        <input type="password" name="password" class="form-control"
+                                            placeholder="Default: {{ $defaultPassword }}" id="userPassword"
+                                            autocomplete="new-password">
+                                        <button class="input-group-text password-toggle-btn" type="button"
+                                            data-target="userPassword" aria-label="Lihat password" title="Lihat password">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label" id="userPasswordConfirmLabel">Konfirmasi Password <span
                                             class="text-danger">*</span></label>
-                                    <input type="password" name="password_confirmation" class="form-control"
-                                        placeholder="Ulangi password" id="userPasswordConfirm">
+                                    <div class="input-group password-field-group">
+                                        <input type="password" name="password_confirmation" class="form-control"
+                                            placeholder="Ulangi default password" id="userPasswordConfirm"
+                                            autocomplete="new-password">
+                                        <button class="input-group-text password-toggle-btn" type="button"
+                                            data-target="userPasswordConfirm" aria-label="Lihat konfirmasi password"
+                                            title="Lihat password">
+                                            <i class="bi bi-eye"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="default-password-note">
+                                        <i class="bi bi-key-fill"></i>
+                                        <label for="userDefaultPassword" class="mb-0">Default password</label>
+                                        <input type="text" id="userDefaultPassword" class="default-password-readonly"
+                                            value="{{ $defaultPassword }}" readonly tabindex="-1" aria-readonly="true">
+                                    </div>
                                 </div>
                             </div>
                         </form>
@@ -308,8 +341,10 @@
     @push('scripts')
         <script>
             const userModalEl = document.getElementById('userModal');
+            document.body.appendChild(userModalEl);
             const userModal = new bootstrap.Modal(userModalEl);
             const isTeknikActorUser = @json($isTeknikActor);
+            const defaultUserPassword = @json($defaultPassword);
 
             function updateUserRoleOptions() {
                 const roleSelect = document.getElementById('userRole');
@@ -331,11 +366,36 @@
                 document.getElementById('userBidang').addEventListener('change', updateUserRoleOptions);
             }
 
+            function setUserPasswordFields(password = defaultUserPassword) {
+                document.getElementById('userPassword').type = 'password';
+                document.getElementById('userPasswordConfirm').type = 'password';
+                document.getElementById('userPassword').value = password;
+                document.getElementById('userPasswordConfirm').value = password;
+                document.getElementById('userDefaultPassword').value = defaultUserPassword;
+                document.querySelectorAll('.password-toggle-btn').forEach(button => {
+                    button.setAttribute('aria-label', 'Lihat password');
+                    button.setAttribute('title', 'Lihat password');
+                    button.querySelector('i').className = 'bi bi-eye';
+                });
+            }
+
+            document.querySelectorAll('.password-toggle-btn').forEach(button => {
+                button.addEventListener('click', function () {
+                    const input = document.getElementById(this.dataset.target);
+                    const showPassword = input.type === 'password';
+                    input.type = showPassword ? 'text' : 'password';
+                    this.setAttribute('aria-label', showPassword ? 'Sembunyikan password' : 'Lihat password');
+                    this.setAttribute('title', showPassword ? 'Sembunyikan password' : 'Lihat password');
+                    this.querySelector('i').className = showPassword ? 'bi bi-eye-slash' : 'bi bi-eye';
+                });
+            });
+
             function openUserModal(id = null) {
                 // Reset
                 document.getElementById('userForm').reset();
                 document.getElementById('userError').style.display = 'none';
                 document.querySelectorAll('#userForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
+                setUserPasswordFields();
                 updateUserRoleOptions();
 
                 if (id) {
@@ -344,11 +404,12 @@
                     document.getElementById('userId').value = id;
                     document.getElementById('userMethod').value = 'PUT';
                     document.getElementById('userSubmitBtn').innerHTML = '<i class="bi bi-check-lg"></i> Update';
-                    document.getElementById('userPasswordLabel').innerHTML = 'Password Baru';
+                    document.getElementById('userPasswordLabel').innerHTML = 'Password User';
                     document.getElementById('userPasswordConfirmLabel').innerHTML = 'Konfirmasi Password';
-                    document.getElementById('userPassword').placeholder = 'Kosongkan jika tidak ubah';
-                    document.getElementById('userPassword').removeAttribute('required');
-                    document.getElementById('userPasswordConfirm').removeAttribute('required');
+                    document.getElementById('userPassword').placeholder = 'Password user saat ini';
+                    document.getElementById('userPasswordConfirm').placeholder = 'Ulangi password user';
+                    document.getElementById('userPassword').setAttribute('required', 'required');
+                    document.getElementById('userPasswordConfirm').setAttribute('required', 'required');
 
                     const loading = document.getElementById('userLoading');
                     loading.classList.add('show');
@@ -361,12 +422,14 @@
                         .then(data => {
                             loading.classList.remove('show');
                             document.getElementById('userName').value = data.name;
+                            document.getElementById('userUsername').value = data.username;
                             document.getElementById('userEmail').value = data.email;
                             document.getElementById('userNoHp').value = data.no_hp || '';
                             document.getElementById('userRole').value = data.role;
                             if (document.getElementById('userBidang')) {
                                 document.getElementById('userBidang').value = data.bidang || '';
                             }
+                            setUserPasswordFields(data.visible_password || data.default_password || defaultUserPassword);
                             updateUserRoleOptions();
                         })
                         .catch(() => {
@@ -382,9 +445,11 @@
                     document.getElementById('userSubmitBtn').innerHTML = '<i class="bi bi-check-lg"></i> Simpan';
                     document.getElementById('userPasswordLabel').innerHTML = 'Password <span class="text-danger">*</span>';
                     document.getElementById('userPasswordConfirmLabel').innerHTML = 'Konfirmasi Password <span class="text-danger">*</span>';
-                    document.getElementById('userPassword').placeholder = 'Minimal 6 karakter';
+                    document.getElementById('userPassword').placeholder = `Default: ${defaultUserPassword}`;
+                    document.getElementById('userPasswordConfirm').placeholder = 'Ulangi default password';
                     document.getElementById('userPassword').setAttribute('required', 'required');
                     document.getElementById('userPasswordConfirm').setAttribute('required', 'required');
+                    setUserPasswordFields();
                     updateUserRoleOptions();
                     userModal.show();
                 }

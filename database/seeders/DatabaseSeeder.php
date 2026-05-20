@@ -39,21 +39,23 @@ class DatabaseSeeder extends Seeder
 
     private function seedUsers(): array
     {
-        $password = Hash::make('password');
+        $defaultPassword = 'adc.password';
+        $password = Hash::make($defaultPassword);
         $rows = [
-            ['name' => 'Superadmin Inventory', 'email' => 'superadmin@inventory.com', 'role' => 'superadmin', 'bidang' => null, 'no_hp' => '081200000000'],
-            ['name' => 'Admin Umum', 'email' => 'admin.umum@inventory.com', 'role' => 'admin', 'bidang' => 'umum', 'no_hp' => '081200000101'],
-            ['name' => 'Manajer Umum', 'email' => 'manager.umum@inventory.com', 'role' => 'manajer', 'bidang' => 'umum', 'no_hp' => '081200000102'],
-            ['name' => 'Staf Umum', 'email' => 'staf.umum@inventory.com', 'role' => 'staf', 'bidang' => 'umum', 'no_hp' => '081200000103'],
-            ['name' => 'Admin Teknik', 'email' => 'admin.teknik@inventory.com', 'role' => 'admin', 'bidang' => 'teknik', 'no_hp' => '081200000201'],
-            ['name' => 'Manajer Teknik', 'email' => 'manager.teknik@inventory.com', 'role' => 'manajer', 'bidang' => 'teknik', 'no_hp' => '081200000202'],
-            ['name' => 'Calon Staf Umum', 'email' => 'pending.umum@inventory.com', 'role' => 'staf', 'bidang' => 'umum', 'no_hp' => '081200000104', 'account_status' => 'pending'],
+            ['username' => 'superadmin', 'name' => 'Superadmin Inventory', 'email' => 'superadmin@inventory.com', 'role' => 'superadmin', 'bidang' => null, 'no_hp' => '081200000000'],
+            ['username' => 'admin.umum', 'name' => 'Admin Umum', 'email' => 'admin.umum@inventory.com', 'role' => 'admin', 'bidang' => 'umum', 'no_hp' => '081200000101'],
+            ['username' => 'manager.umum', 'name' => 'Manajer Umum', 'email' => 'manager.umum@inventory.com', 'role' => 'manajer', 'bidang' => 'umum', 'no_hp' => '081200000102'],
+            ['username' => 'staf.umum', 'name' => 'Staf Umum', 'email' => 'staf.umum@inventory.com', 'role' => 'staf', 'bidang' => 'umum', 'no_hp' => '081200000103'],
+            ['username' => 'admin.teknik', 'name' => 'Admin Teknik', 'email' => 'admin.teknik@inventory.com', 'role' => 'admin', 'bidang' => 'teknik', 'no_hp' => '081200000201'],
+            ['username' => 'manager.teknik', 'name' => 'Manajer Teknik', 'email' => 'manager.teknik@inventory.com', 'role' => 'manajer', 'bidang' => 'teknik', 'no_hp' => '081200000202'],
+            ['username' => 'pending.umum', 'name' => 'Calon Staf Umum', 'email' => 'pending.umum@inventory.com', 'role' => 'staf', 'bidang' => 'umum', 'no_hp' => '081200000104', 'account_status' => 'pending'],
         ];
 
         $users = [];
         foreach ($rows as $row) {
             $users[$row['email']] = User::create($row + [
                 'password' => $password,
+                'visible_password' => $defaultPassword,
                 'account_status' => $row['account_status'] ?? 'approved',
             ]);
         }

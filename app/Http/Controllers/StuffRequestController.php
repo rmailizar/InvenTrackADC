@@ -287,7 +287,7 @@ class StuffRequestController extends Controller
         }
 
         $stuffRequest->update([
-            'status' => 'cancelled',
+            'status' => 'cancel',
             'completed_by' => auth()->id(),
             'completed_at' => now(),
         ]);
