@@ -30,8 +30,13 @@ class TransactionController extends Controller
             });
         }
 
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
+        $typeFilter = $request->filled('type') ? $request->type : null;
+        if (auth()->user()->isTeknik()) {
+            $typeFilter = $typeFilter === 'out' ? 'out' : 'in';
+        }
+
+        if ($typeFilter) {
+            $query->where('type', $typeFilter);
         }
 
         if ($request->filled('status')) {
@@ -51,16 +56,19 @@ class TransactionController extends Controller
             ->orderBy('date', $sort)
             ->orderBy('created_at', $sort)
             ->orderBy('id', $sort)
-            ->paginate(15)
+            ->paginate(10)
             ->withQueryString();
 
         // Pass items for modal dropdown
         $items = Item::visibleFor(auth()->user())->orderBy('name')->get();
         $transactionDetailData = $this->transactionDetailData($transactions);
 
-        if ($request->ajax() || $request->wantsJson()) {
+        if (!$request->has('inventrack_section') && ($request->ajax() || $request->wantsJson())) {
             return response()->json([
-                'html' => view('transactions.partials.table', compact('transactions'))->render(),
+                'html' => view('transactions.partials.table', [
+                    'transactions' => $transactions,
+                    'showCreateButton' => !auth()->user()->isTeknik(),
+                ])->render(),
                 'detailData' => $transactionDetailData,
                 'total' => $transactions->total(),
                 'sort' => $request->input('sort', 'latest') === 'oldest' ? 'oldest' : 'latest',
@@ -129,7 +137,7 @@ class TransactionController extends Controller
 
     public function edit(Transaction $transaction, Request $request)
     {
-        if ($transaction->status !== 'pending') {
+        if ($transaction->status !== 'pending' && $transaction->bidang !== 'teknik') {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => 'Hanya transaksi berstatus pending yang bisa diubah.'], 422);
             }
@@ -169,7 +177,7 @@ class TransactionController extends Controller
 
     public function update(Request $request, Transaction $transaction)
     {
-        if ($transaction->status !== 'pending') {
+        if ($transaction->status !== 'pending' && $transaction->bidang !== 'teknik') {
             $errorMsg = 'Hanya transaksi berstatus pending yang bisa diubah.';
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['success' => false, 'message' => $errorMsg], 422);
@@ -193,9 +201,20 @@ class TransactionController extends Controller
         $item = Item::findOrFail($validated['item_id']);
         abort_unless(auth()->user()->canAccessBidang($item->bidang), 403, 'Anda tidak memiliki akses ke barang bidang ini.');
 
+        if ($transaction->status === 'approved') {
+            $stockError = $this->stockErrorForApprovedUpdate($transaction, $item, $validated['type'], (int) $validated['quantity']);
+            if ($stockError) {
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $stockError], 422);
+                }
+                return back()->withInput()->with('error', $stockError);
+            }
+        }
+
         if ($validated['type'] === 'out') {
-            if ($item->current_stock < $validated['quantity']) {
-                $errorMsg = 'Stok tidak mencukupi. Stok saat ini: ' . $item->current_stock . ' ' . $item->unit;
+            $availableStock = $this->availableStockForUpdate($transaction, $item);
+            if ($availableStock < $validated['quantity']) {
+                $errorMsg = 'Stok tidak mencukupi. Stok tersedia: ' . $availableStock . ' ' . $item->unit;
                 if ($request->ajax() || $request->wantsJson()) {
                     return response()->json(['success' => false, 'message' => $errorMsg], 422);
                 }
@@ -214,26 +233,36 @@ class TransactionController extends Controller
 
         $transaction->update($validated);
 
-        $successMsg = 'Transaksi pending berhasil diperbarui.';
+        $successMsg = $transaction->bidang === 'teknik'
+            ? 'Transaksi Teknik berhasil diperbarui.'
+            : 'Transaksi pending berhasil diperbarui.';
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true, 'message' => $successMsg]);
         }
 
-        return redirect()->route('dashboard')->with('success', $successMsg);
+        return redirect()->route('transactions.index', ['type' => $transaction->type])->with('success', $successMsg);
     }
 
     public function destroy(Transaction $transaction)
     {
         abort_unless(auth()->user()->canAccessBidang($transaction->bidang), 403, 'Anda tidak memiliki akses ke transaksi bidang ini.');
 
-        if ($transaction->status !== 'pending') {
+        if ($transaction->status !== 'pending' && $transaction->bidang !== 'teknik') {
             return redirect()->route('dashboard')->with('error', 'Hanya transaksi berstatus pending yang bisa dihapus.');
+        }
+
+        $type = $transaction->type;
+        if ($transaction->status === 'approved') {
+            $stockError = $this->stockErrorForApprovedDelete($transaction);
+            if ($stockError) {
+                return redirect()->route('transactions.index', ['type' => $type])->with('error', $stockError);
+            }
         }
 
         $transaction->delete();
 
-        return redirect()->route('dashboard')->with('success', 'Transaksi pending berhasil dihapus.');
+        return redirect()->route('transactions.index', ['type' => $type])->with('success', 'Transaksi berhasil dihapus.');
     }
 
     public function approve(Transaction $transaction)
@@ -304,6 +333,68 @@ class TransactionController extends Controller
             ->values();
 
         return $normalized->isEmpty() ? null : $normalized->implode(',');
+    }
+
+    private function availableStockForUpdate(Transaction $transaction, Item $item): int
+    {
+        $availableStock = (int) $item->current_stock;
+
+        if (
+            $transaction->status === 'approved'
+            && $transaction->type === 'out'
+            && (int) $transaction->item_id === (int) $item->id
+        ) {
+            $availableStock += (int) $transaction->quantity;
+        }
+
+        return $availableStock;
+    }
+
+    private function stockErrorForApprovedUpdate(Transaction $transaction, Item $newItem, string $newType, int $newQuantity): ?string
+    {
+        $affected = collect([$transaction->item_id, $newItem->id])->filter()->unique();
+
+        foreach ($affected as $itemId) {
+            $item = (int) $itemId === (int) $newItem->id ? $newItem : Item::find($itemId);
+            if (!$item) {
+                continue;
+            }
+
+            $finalStock = (int) $item->current_stock;
+
+            if ((int) $transaction->item_id === (int) $item->id) {
+                $finalStock -= $this->transactionStockEffect($transaction->type, (int) $transaction->quantity);
+            }
+
+            if ((int) $newItem->id === (int) $item->id) {
+                $finalStock += $this->transactionStockEffect($newType, $newQuantity);
+            }
+
+            if ($finalStock < 0) {
+                return "Perubahan ini akan membuat stok {$item->name} menjadi negatif.";
+            }
+        }
+
+        return null;
+    }
+
+    private function stockErrorForApprovedDelete(Transaction $transaction): ?string
+    {
+        $item = $transaction->item;
+        if (!$item) {
+            return null;
+        }
+
+        $finalStock = (int) $item->current_stock - $this->transactionStockEffect($transaction->type, (int) $transaction->quantity);
+
+        return $finalStock < 0
+            ? "Transaksi ini tidak bisa dihapus karena stok {$item->name} akan menjadi negatif."
+            : null;
+    }
+
+    private function transactionStockEffect(string $type, int $quantity): int
+    {
+        return $type === 'in' ? $quantity : -$quantity;
     }
 
     private function transactionDetailData($transactions): array

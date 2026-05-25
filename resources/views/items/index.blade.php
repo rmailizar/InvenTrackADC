@@ -1,11 +1,14 @@
 @extends('layouts.app')
 
-@section('title', 'Master Barang')
-@section('subtitle', 'Kelola daftar barang inventory')
+@section('title', auth()->user()->isTeknik() ? 'Master SOH' : 'Master Barang')
+@section('subtitle', auth()->user()->isTeknik() ? 'Kelola daftar spare part inventory' : 'Kelola daftar barang inventory')
 
 @section('content')
     @php
         $isTeknik = auth()->user()->bidang === 'teknik';
+        $itemLabel = $isTeknik ? 'Spare Part' : 'Barang';
+        $itemLowerLabel = $isTeknik ? 'spare part' : 'barang';
+        $componentLabel = $isTeknik ? 'Komponen' : 'Kategori';
         $itemDetailData = [];
         foreach ($items as $itemRow) {
             $itemDetailData[$itemRow->id] = [
@@ -28,14 +31,14 @@
             <form method="GET" action="{{ route('items.index') }}">
                 <div class="row align-items-end g-3">
                     <div class="col-md-4">
-                        <label class="form-label">Cari Barang</label>
-                        <input type="text" name="search" class="form-control" placeholder="Nama atau kategori..."
+                        <label class="form-label">Cari {{ $itemLabel }}</label>
+                        <input type="text" name="search" class="form-control" placeholder="Nama atau {{ strtolower($componentLabel) }}..."
                             value="{{ request('search') }}">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Kategori</label>
+                        <label class="form-label">{{ $componentLabel }}</label>
                         <select name="category" class="form-select">
-                            <option value="">Semua Kategori</option>
+                            <option value="">Semua {{ $componentLabel }}</option>
                             @foreach($categories as $cat)
                                 <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
                             @endforeach
@@ -68,10 +71,10 @@
                                 <tr>
                                     <th style="width:50px;">No</th>
                                     <th>No Normalisasi</th>
-                                    <th>Nama Barang</th>
+                                    <th>Nama Spare Part</th>
                                     <th>Komponen</th>
                                     <th>Lokasi</th>
-                                    <th class="text-center">Volume</th>
+                                    <th>Ship Unloader</th>
                                     <th>Satuan</th>
                                     <th>Min Stok</th>
                                     <th>Stok Saat Ini</th>
@@ -103,7 +106,7 @@
                                         <td class="fw-600">{{ $item->name }}</td>
                                         <td>{{ $item->category }}</td>
                                         <td>{{ $item->lokasi ?? '-' }}</td>
-                                        <td class="text-center fw-700">{{ $item->current_stock }}</td>
+                                        <td>{{ $item->ship_unloader_label }}</td>
                                         <td>{{ $item->unit }}</td>
                                     @else
                                         <td class="fw-600">{{ $item->name }}</td>
@@ -157,7 +160,7 @@
                                                 id="deleteItem-{{ $item->id }}">
                                                 @csrf @method('DELETE')
                                                 <button type="button" class="btn-action delete" title="Hapus"
-                                                    onclick="swalConfirm('Hapus Barang', 'Yakin hapus barang ini? Data yang sudah dihapus tidak bisa dikembalikan.', 'warning', 'Ya, Hapus', '#deleteItem-{{ $item->id }}')">
+                                                    onclick="swalConfirm('Hapus {{ $itemLabel }}', 'Yakin hapus {{ $itemLowerLabel }} ini? Data yang sudah dihapus tidak bisa dikembalikan.', 'warning', 'Ya, Hapus', '#deleteItem-{{ $item->id }}')">
                                                     <i class="bi bi-trash-fill"></i>
                                                 </button>
                                             </form>
@@ -169,7 +172,7 @@
                                     <td colspan="{{ $isTeknik ? 11 : (auth()->user()->isSuperAdmin() ? 9 : 8) }}">
                                         <i class="bi bi-inbox"
                                             style="font-size:40px;display:block;margin-bottom:8px;opacity:0.3;"></i>
-                                        Belum ada data barang
+                                        Belum ada data {{ $itemLowerLabel }}
                                     </td>
                                 </tr>
                             @endforelse
@@ -190,7 +193,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-eye-fill me-2"></i>Detail Barang</h5>
+                    <h5 class="modal-title"><i class="bi bi-eye-fill me-2"></i>Detail {{ $itemLabel }}</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
                 </div>
                 <div class="modal-body">
@@ -212,7 +215,7 @@
                 </div>
                 <div class="modal-header">
                     <h5 class="modal-title" id="itemModalTitle">
-                        <i class="bi bi-plus-circle-fill"></i> <span>Tambah Barang</span>
+                        <i class="bi bi-plus-circle-fill"></i> <span>Tambah {{ $itemLabel }}</span>
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -226,16 +229,16 @@
                         <input type="hidden" id="itemMethod" value="POST">
 
                         <div class="mb-3">
-                            <label class="form-label">Nama Barang <span class="text-danger">*</span></label>
-                            <input type="text" name="name" class="form-control" placeholder="Masukkan nama barang" required
+                            <label class="form-label">Nama {{ $itemLabel }} <span class="text-danger">*</span></label>
+                            <input type="text" name="name" class="form-control" placeholder="Masukkan nama {{ $itemLowerLabel }}" required
                                 id="itemName">
                         </div>
 
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">{{ $isTeknik ? 'Komponen' : 'Kategori' }} <span class="text-danger">*</span></label>
+                                <label class="form-label">{{ $componentLabel }} <span class="text-danger">*</span></label>
                                 <input type="text" name="category" list="category-list" class="form-control"
-                                    placeholder="Pilih atau ketik kategori" required id="itemCategory">
+                                    placeholder="Pilih atau ketik {{ strtolower($componentLabel) }}" required id="itemCategory">
                                 <datalist id="category-list">
                                     @foreach($categories as $cat)
                                         <option value="{{ $cat }}">
@@ -276,8 +279,8 @@
 
                                 <div class="row g-3 mb-3">
                                     <div class="col-md-6">
-                                        <label class="form-label">Volume</label>
-                                        <input type="text" class="form-control" id="itemVolume" readonly>
+                                        <label class="form-label">Stok Saat Ini</label>
+                                        <input type="number" name="current_stock" class="form-control" min="0" required id="itemCurrentStock" value="0">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Ship Unloader</label>
@@ -285,7 +288,7 @@
                                             @foreach([1, 2, 3, 4] as $ship)
                                                 <label class="form-check form-check-inline mb-0">
                                                     <input class="form-check-input item-ship-checkbox" type="checkbox" name="ship_unloader[]" value="{{ $ship }}">
-                                                    <span class="form-check-label">Ship {{ $ship }}</span>
+                                                    <span class="form-check-label">SU - {{ $ship }}</span>
                                                 </label>
                                             @endforeach
                                         </div>
@@ -321,6 +324,9 @@
     <script>
         window.__itemDetailData = @json($itemDetailData);
         const isTeknikItem = @json($isTeknik);
+        const itemLabel = @json($itemLabel);
+        const itemLowerLabel = @json($itemLowerLabel);
+        const componentLabel = @json($componentLabel);
         const itemModalEl = document.getElementById('itemModal');
         const itemModal = new bootstrap.Modal(itemModalEl);
         const itemDetailModalEl = document.getElementById('itemDetailModal');
@@ -349,10 +355,9 @@
                 grid.replaceChildren();
                 if (isTeknikItem) {
                     appendDetailCell(grid, 'No Normalisasi', data.no_normalisasi);
-                    appendDetailCell(grid, 'Nama Barang', data.name);
-                    appendDetailCell(grid, 'Komponen', data.category);
+                    appendDetailCell(grid, 'Nama Spare Part', data.name);
+                    appendDetailCell(grid, componentLabel, data.category);
                     appendDetailCell(grid, 'Lokasi', data.lokasi);
-                    appendDetailCell(grid, 'Volume', data.volume);
                     appendDetailCell(grid, 'Ship Unloader', data.ship_unloader);
                 } else {
                     appendDetailCell(grid, 'Nama Barang', data.name);
@@ -372,12 +377,15 @@
             document.getElementById('itemError').style.display = 'none';
             document.querySelectorAll('#itemForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
             document.getElementById('itemMinStock').value = '0';
+            if (document.getElementById('itemCurrentStock')) {
+                document.getElementById('itemCurrentStock').value = '0';
+            }
             document.querySelectorAll('.item-ship-checkbox').forEach(el => el.checked = false);
             toggleTechnicalItemFields();
 
             if (id) {
                 // Edit mode — load data
-                document.getElementById('itemModalTitle').innerHTML = '<i class="bi bi-pencil-fill"></i> <span>Edit Barang</span>';
+                document.getElementById('itemModalTitle').innerHTML = '<i class="bi bi-pencil-fill"></i> <span>Edit ' + itemLabel + '</span>';
                 document.getElementById('itemId').value = id;
                 document.getElementById('itemMethod').value = 'PUT';
                 document.getElementById('itemSubmitBtn').innerHTML = '<i class="bi bi-check-lg"></i> Update';
@@ -399,7 +407,7 @@
                         if (document.getElementById('itemNoNormalisasi')) {
                             document.getElementById('itemNoNormalisasi').value = data.no_normalisasi || '';
                             document.getElementById('itemLokasi').value = data.lokasi || '';
-                            document.getElementById('itemVolume').value = data.current_stock || 0;
+                            document.getElementById('itemCurrentStock').value = data.current_stock || 0;
                             const ships = (data.ship_unloader || '').split(',').filter(Boolean);
                             document.querySelectorAll('.item-ship-checkbox').forEach(el => el.checked = ships.includes(el.value));
                         }
@@ -410,12 +418,12 @@
                     })
                     .catch(() => {
                         loading.classList.remove('show');
-                        document.getElementById('itemErrorMsg').textContent = 'Gagal memuat data barang.';
+                        document.getElementById('itemErrorMsg').textContent = 'Gagal memuat data ' + itemLowerLabel + '.';
                         document.getElementById('itemError').style.display = 'block';
                     });
             } else {
                 // Create mode
-                document.getElementById('itemModalTitle').innerHTML = '<i class="bi bi-plus-circle-fill"></i> <span>Tambah Barang</span>';
+                document.getElementById('itemModalTitle').innerHTML = '<i class="bi bi-plus-circle-fill"></i> <span>Tambah ' + itemLabel + '</span>';
                 document.getElementById('itemId').value = '';
                 document.getElementById('itemMethod').value = 'POST';
                 document.getElementById('itemSubmitBtn').innerHTML = '<i class="bi bi-check-lg"></i> Simpan';

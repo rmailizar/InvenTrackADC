@@ -1,37 +1,38 @@
 @extends('layouts.app')
 
-@section('title', 'Transaksi')
-@section('subtitle', 'Daftar transaksi barang masuk & keluar')
+@php
+    $isTeknik = auth()->user()->bidang === 'teknik';
+    $activeTransactionType = request('type') === 'out' ? 'out' : 'in';
+    $pageTitle = $isTeknik
+        ? ($activeTransactionType === 'out' ? 'Goods Issue' : 'Goods Receipt')
+        : 'Transaksi';
+@endphp
+
+@section('title', $pageTitle)
+@section('subtitle', $isTeknik ? 'Input dan riwayat ' . $pageTitle : 'Daftar transaksi barang masuk & keluar')
 
 @section('content')
-    @php
-        $isTeknik = auth()->user()->bidang === 'teknik';
-    @endphp
     <div class="animate-fade-in">
         <div class="filter-bar">
             <form method="GET" action="{{ route('transactions.index') }}">
+                @if($isTeknik)
+                    <input type="hidden" name="type" value="{{ $activeTransactionType }}">
+                @endif
                 <div class="row align-items-end g-3">
                     <div class="col-lg-3 col-md-6">
                         <label class="form-label">Cari Barang</label>
                         <input type="text" name="search" class="form-control" placeholder="Nama barang..." value="{{ request('search') }}">
                     </div>
-                    <div class="col-lg-2 col-md-6">
-                        <label class="form-label">Jenis</label>
-                        <select name="type" class="form-select">
-                            <option value="">Semua</option>
-                            <option value="in" {{ request('type') == 'in' ? 'selected' : '' }}>{{ $isTeknik ? 'Goods Receipt' : 'In' }}</option>
-                            <option value="out" {{ request('type') == 'out' ? 'selected' : '' }}>{{ $isTeknik ? 'Goods Issue' : 'Out' }}</option>
-                        </select>
-                    </div>
-                    <div class="col-lg-2 col-md-6">
-                        <label class="form-label">Status</label>
-                        <select name="status" class="form-select">
-                            <option value="">Semua</option>
-                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Menunggu Approval</option>
-                            <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
-                            <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
-                        </select>
-                    </div>
+                    @unless($isTeknik)
+                        <div class="col-lg-2 col-md-6">
+                            <label class="form-label">Jenis</label>
+                            <select name="type" class="form-select">
+                                <option value="">Semua</option>
+                                <option value="in" {{ request('type') == 'in' ? 'selected' : '' }}>In</option>
+                                <option value="out" {{ request('type') == 'out' ? 'selected' : '' }}>Out</option>
+                            </select>
+                        </div>
+                    @endunless
                     <div class="col-lg-2 col-md-6">
                         <label class="form-label">Dari Tanggal</label>
                         <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
@@ -43,14 +44,122 @@
                     <div class="col-lg-2 col-md-6">
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-search"></i> Cari</button>
-                            <a href="{{ route('transactions.index') }}" class="btn btn-outline-secondary flex-fill"><i class="bi bi-x-lg"></i> Reset</a>
+                            <a href="{{ $isTeknik ? route('transactions.index', ['type' => $activeTransactionType]) : route('transactions.index') }}" class="btn btn-outline-secondary flex-fill"><i class="bi bi-x-lg"></i> Reset</a>
                         </div>
                     </div>
                 </div>
             </form>
         </div>
 
-        @include('transactions.partials.table', ['transactions' => $transactions])
+        @if($isTeknik)
+            <div class="row g-3 align-items-start">
+                <div class="col-xl-4 col-lg-5">
+                    <div class="card position-sticky" style="top: 16px;">
+                        <div class="card-header">
+                            <span>
+                                <i class="bi {{ $activeTransactionType === 'out' ? 'bi-box-arrow-up' : 'bi-box-arrow-in-down' }} text-primary-custom me-2"></i>
+                                Input {{ $pageTitle }}
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <form method="POST" action="{{ route('transactions.store') }}" id="txInlineForm">
+                                @csrf
+                                <input type="hidden" name="type" value="{{ $activeTransactionType }}">
+
+                                <div class="mb-3">
+                                    <label class="form-label">Tanggal <span class="text-danger">*</span></label>
+                                    <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Spare Part <span class="text-danger">*</span></label>
+                                    <select name="item_id" class="form-select" required id="txInlineItemSelect">
+                                        <option value="">-- Pilih Spare Part --</option>
+                                        @foreach($items as $item)
+                                            <option value="{{ $item->id }}"
+                                                data-category="{{ $item->category }}"
+                                                data-unit="{{ $item->unit }}"
+                                                data-stock="{{ $item->current_stock }}"
+                                                data-no-normalisasi="{{ $item->no_normalisasi }}"
+                                                data-lokasi="{{ $item->lokasi }}"
+                                                data-ship-unloader="{{ $item->ship_unloader }}">
+                                                {{ $item->no_normalisasi ? $item->no_normalisasi . ' - ' : '' }}{{ $item->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="form-label">Komponen</label>
+                                        <input type="text" class="form-control" id="txInlineCategory" readonly>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Stok</label>
+                                        <input type="text" class="form-control" id="txInlineStock" readonly>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">No Normalisasi</label>
+                                        <input type="text" class="form-control" id="txInlineNoNormalisasi" readonly>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Lokasi</label>
+                                        <input type="text" class="form-control" id="txInlineLokasi" readonly>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Ship Unloader <span class="text-danger">*</span></label>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach([1, 2, 3, 4] as $ship)
+                                            <label class="form-check form-check-inline mb-0">
+                                                <input class="form-check-input tx-inline-ship-checkbox" type="checkbox" name="ship_unloader[]" value="{{ $ship }}">
+                                                <span class="form-check-label">Ship {{ $ship }}</span>
+                                            </label>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <div class="row g-2 mb-3">
+                                    <div class="col-6">
+                                        <label class="form-label">Volume <span class="text-danger">*</span></label>
+                                        <input type="number" name="quantity" class="form-control" min="1" required id="txInlineQuantity">
+                                        <div id="txInlineStockWarning" class="text-danger mt-1" style="font-size:12px;display:none;">
+                                            <i class="bi bi-exclamation-triangle-fill"></i> Melebihi stok tersedia.
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Satuan</label>
+                                        <input type="text" class="form-control" id="txInlineUnit" readonly>
+                                    </div>
+                                </div>
+
+                                @if($activeTransactionType === 'in')
+                                    <div class="mb-3">
+                                        <label class="form-label">Harga Satuan</label>
+                                        <input type="number" name="price" class="form-control" min="0" step="1" placeholder="0">
+                                    </div>
+                                @endif
+
+                                <div class="mb-3">
+                                    <label class="form-label">Keterangan</label>
+                                    <textarea name="description" class="form-control" rows="3" placeholder="Keterangan tambahan (opsional)"></textarea>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-send-fill"></i> Simpan {{ $pageTitle }}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-8 col-lg-7">
+                    @include('transactions.partials.table', ['transactions' => $transactions, 'showCreateButton' => false])
+                </div>
+            </div>
+        @else
+            @include('transactions.partials.table', ['transactions' => $transactions])
+        @endif
     </div>
 
     <div class="modal fade inventrack-modal" id="transactionDetailModal" tabindex="-1" aria-hidden="true">
@@ -216,31 +325,66 @@
 @push('scripts')
     <script>
         window.__transactionDetailData = @json($transactionDetailData);
-        const txModalEl = document.getElementById('transactionModal');
-        const txModal = new bootstrap.Modal(txModalEl);
-        const txDetailModalEl = document.getElementById('transactionDetailModal');
-        const txDetailModal = new bootstrap.Modal(txDetailModalEl);
-        const txTypeSelect = document.getElementById('txType');
-        const txItemSelect = document.getElementById('txItemSelect');
-        const txCategoryInput = document.getElementById('txItemCategory');
-        const txUnitInput = document.getElementById('txItemUnit');
-        const txStockInput = document.getElementById('txItemStock');
-        const txQuantityInput = document.getElementById('txQuantity');
-        const txPriceInput = document.getElementById('txPrice');
-        const txStockWarning = document.getElementById('txStockWarning');
-        const txNoNormalisasi = document.getElementById('txNoNormalisasi');
-        const txLokasi = document.getElementById('txLokasi');
-        const txVolume = document.getElementById('txVolume');
-        const isTeknikTransaction = @json($isTeknik);
+        var txModalEl = document.getElementById('transactionModal');
+        var txModal = new bootstrap.Modal(txModalEl);
+        var txDetailModalEl = document.getElementById('transactionDetailModal');
+        var txDetailModal = new bootstrap.Modal(txDetailModalEl);
+        var txTypeSelect = document.getElementById('txType');
+        var txItemSelect = document.getElementById('txItemSelect');
+        var txCategoryInput = document.getElementById('txItemCategory');
+        var txUnitInput = document.getElementById('txItemUnit');
+        var txStockInput = document.getElementById('txItemStock');
+        var txQuantityInput = document.getElementById('txQuantity');
+        var txPriceInput = document.getElementById('txPrice');
+        var txStockWarning = document.getElementById('txStockWarning');
+        var txNoNormalisasi = document.getElementById('txNoNormalisasi');
+        var txLokasi = document.getElementById('txLokasi');
+        var txVolume = document.getElementById('txVolume');
+        var isTeknikTransaction = @json($isTeknik);
+        var activeTransactionType = @json($activeTransactionType);
+
+        var txInlineItemSelect = document.getElementById('txInlineItemSelect');
+        var txInlineQuantity = document.getElementById('txInlineQuantity');
+        var txInlineStock = document.getElementById('txInlineStock');
+        var txInlineStockWarning = document.getElementById('txInlineStockWarning');
+
+        function refreshInlineTransactionInfo() {
+            if (!txInlineItemSelect) return;
+            var selected = txInlineItemSelect.options[txInlineItemSelect.selectedIndex];
+            var hasItem = Boolean(txInlineItemSelect.value);
+            document.getElementById('txInlineCategory').value = hasItem ? (selected.dataset.category || '') : '';
+            document.getElementById('txInlineUnit').value = hasItem ? (selected.dataset.unit || '') : '';
+            document.getElementById('txInlineStock').value = hasItem ? (selected.dataset.stock || '0') : '';
+            document.getElementById('txInlineNoNormalisasi').value = hasItem ? (selected.dataset.noNormalisasi || '') : '';
+            document.getElementById('txInlineLokasi').value = hasItem ? (selected.dataset.lokasi || '') : '';
+
+            var ships = hasItem ? (selected.dataset.shipUnloader || '').split(',').filter(Boolean) : [];
+            document.querySelectorAll('.tx-inline-ship-checkbox').forEach(el => el.checked = ships.includes(el.value));
+            checkInlineStock();
+        }
+
+        function checkInlineStock() {
+            if (!txInlineQuantity || !txInlineStockWarning) return;
+            var stock = parseInt(txInlineStock.value || '0') || 0;
+            var qty = parseInt(txInlineQuantity.value || '0') || 0;
+            txInlineStockWarning.style.display = activeTransactionType === 'out' && txInlineItemSelect?.value && qty > stock ? 'block' : 'none';
+        }
+
+        if (txInlineItemSelect) {
+            txInlineItemSelect.addEventListener('change', refreshInlineTransactionInfo);
+        }
+        if (txInlineQuantity) {
+            txInlineQuantity.addEventListener('input', checkInlineStock);
+        }
 
         function appendTransactionDetail(container, label, value) {
-            const wrap = document.createElement('div');
+            var wrap = document.createElement('div');
             wrap.className = 'col-sm-6';
-            const muted = document.createElement('div');
+            var muted = document.createElement('div');
             muted.className = 'text-muted';
             muted.style.fontSize = '12px';
             muted.textContent = label;
-            const strong = document.createElement('div');
+            var strong = document.createElement('div');
             strong.className = 'fw-700';
             strong.textContent = value || '-';
             wrap.appendChild(muted);
@@ -251,9 +395,9 @@
         function bindTransactionDetailButtons() {
             document.querySelectorAll('.btn-transaction-detail-open').forEach(function(button) {
                 button.addEventListener('click', function() {
-                const data = window.__transactionDetailData[this.dataset.transactionId];
+                var data = window.__transactionDetailData[this.dataset.transactionId];
                 if (!data) return;
-                const grid = document.getElementById('transactionDetailGrid');
+                var grid = document.getElementById('transactionDetailGrid');
                 grid.replaceChildren();
                 appendTransactionDetail(grid, 'Tanggal', data.date);
                 appendTransactionDetail(grid, 'Jenis', data.type);
@@ -282,7 +426,7 @@
         function bindTransactionDateSort() {
             document.querySelectorAll('.js-date-sort').forEach(function(button) {
                 button.addEventListener('click', function() {
-                    const url = new URL(window.location.href);
+                    var url = new URL(window.location.href);
                     url.searchParams.set('sort', this.dataset.sort || 'latest');
                     url.searchParams.delete('page');
                     loadTransactionsTable(url);
@@ -291,7 +435,7 @@
         }
 
         function loadTransactionsTable(url) {
-            const region = document.getElementById('transactionsTableRegion');
+            var region = document.getElementById('transactionsTableRegion');
             if (!region) return;
 
             region.classList.add('table-ajax-loading');
@@ -320,7 +464,7 @@
         bindTransactionDateSort();
 
         function refreshItemInfo() {
-            const selected = txItemSelect.options[txItemSelect.selectedIndex];
+            var selected = txItemSelect.options[txItemSelect.selectedIndex];
             if (txItemSelect.value) {
                 txCategoryInput.value = selected.dataset.category || '';
                 txUnitInput.value = selected.dataset.unit || '';
@@ -329,7 +473,7 @@
                     txNoNormalisasi.value = selected.dataset.noNormalisasi || '';
                     txLokasi.value = selected.dataset.lokasi || '';
                     txVolume.value = txQuantityInput.value || '0';
-                    const ships = (selected.dataset.shipUnloader || '').split(',').filter(Boolean);
+                    var ships = (selected.dataset.shipUnloader || '').split(',').filter(Boolean);
                     document.querySelectorAll('.tx-ship-checkbox').forEach(el => el.checked = ships.includes(el.value));
                 }
             } else {
@@ -347,15 +491,15 @@
         }
 
         function togglePriceInput() {
-            const disabled = txTypeSelect.value === 'out';
+            var disabled = txTypeSelect.value === 'out';
             if (disabled) txPriceInput.value = '';
             txPriceInput.disabled = disabled;
             checkTxStock();
         }
 
         function checkTxStock() {
-            const stock = parseInt(txStockInput.value || '0') || 0;
-            const qty = parseInt(txQuantityInput.value || '0') || 0;
+            var stock = parseInt(txStockInput.value || '0') || 0;
+            var qty = parseInt(txQuantityInput.value || '0') || 0;
             if (isTeknikTransaction) {
                 txVolume.value = qty ? qty : '0';
             }
@@ -388,7 +532,7 @@
                 document.getElementById('txPendingInfo').style.display = 'none';
                 document.getElementById('txUserRow').style.display = 'none';
 
-                const loading = document.getElementById('txLoading');
+                var loading = document.getElementById('txLoading');
                 loading.classList.add('show');
                 txModal.show();
 
@@ -404,13 +548,13 @@
                         txQuantityInput.value = data.quantity;
                         txPriceInput.value = data.price || '';
                         document.getElementById('txDescription').value = data.description || '';
+                        refreshItemInfo();
                         if (isTeknikTransaction) {
                             txNoNormalisasi.value = data.no_normalisasi || data.item.no_normalisasi || '';
                             txLokasi.value = data.lokasi || data.item.lokasi || '';
                             txVolume.value = data.quantity || '';
                             document.querySelectorAll('.tx-ship-checkbox').forEach(el => el.checked = (data.ship_unloader || []).includes(el.value));
                         }
-                        refreshItemInfo();
                         togglePriceInput();
                     })
                     .catch(() => {
@@ -432,20 +576,20 @@
         }
 
         function submitTransactionForm() {
-            const form = document.getElementById('txForm');
-            const errorDiv = document.getElementById('txError');
-            const errorMsg = document.getElementById('txErrorMsg');
-            const loading = document.getElementById('txLoading');
-            const submitBtn = document.getElementById('txSubmitBtn');
-            const txId = document.getElementById('txId').value;
-            const method = document.getElementById('txMethod').value;
+            var form = document.getElementById('txForm');
+            var errorDiv = document.getElementById('txError');
+            var errorMsg = document.getElementById('txErrorMsg');
+            var loading = document.getElementById('txLoading');
+            var submitBtn = document.getElementById('txSubmitBtn');
+            var txId = document.getElementById('txId').value;
+            var method = document.getElementById('txMethod').value;
 
             errorDiv.style.display = 'none';
             loading.classList.add('show');
             submitBtn.disabled = true;
 
-            const formData = new FormData(form);
-            const url = txId ? `{{ url('transactions') }}/${txId}` : '{{ route("transactions.store") }}';
+            var formData = new FormData(form);
+            var url = txId ? `{{ url('transactions') }}/${txId}` : '{{ route("transactions.store") }}';
             if (method === 'PUT') formData.append('_method', 'PUT');
 
             fetch(url, {
@@ -467,7 +611,7 @@
                         Toast.fire({ icon: 'success', title: data.message });
                         setTimeout(() => location.reload(), 1000);
                     } else {
-                        let messages = [];
+                        var messages = [];
                         if (data.errors) Object.keys(data.errors).forEach(key => messages.push(data.errors[key][0]));
                         if (data.message && !data.errors) messages.push(data.message);
                         errorMsg.innerHTML = messages.join('<br>');
@@ -483,3 +627,4 @@
         }
     </script>
 @endpush
+

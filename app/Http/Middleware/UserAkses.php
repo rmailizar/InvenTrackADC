@@ -20,21 +20,14 @@ class UserAkses
             return $next($request);
         }
 
-        if (auth()->user()->isManager() && auth()->user()->isTeknik()) {
-            $routeName = $request->route()?->getName();
-            $allowedRoutes = [
-                'dashboard',
-                'dashboard.searchItems',
-                'dashboard.chartData',
-                'dashboard.categoryByYear',
-                'dashboard.monthlyData',
-                'stock-requests.index',
-                'stock-requests.export',
-                'stock-requests.approve',
-                'stock-requests.reject',
-            ];
+        if (auth()->user()->isManager() && auth()->user()->isTeknik() && in_array('admin', $roles, true)) {
+            abort_if(
+                $request->route()?->getName() === 'stock-requests.store',
+                403,
+                'Stok Request Teknik hanya dapat diajukan oleh Admin Teknik.'
+            );
 
-            abort_unless(in_array($routeName, $allowedRoutes, true), 403, 'Manager Teknik hanya dapat mengakses Dashboard dan Stock Request.');
+            return $next($request);
         }
 
         if (in_array($userRole, $roles)) {

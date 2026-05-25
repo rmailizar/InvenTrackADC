@@ -1,3 +1,37 @@
+@if(request()->ajax() && request()->query('inventrack_section') === '1')
+    <div class="inventrack-section-fragment"
+        data-title="@yield('title', 'Dashboard')"
+        data-subtitle="@yield('subtitle', '')">
+        @yield('content')
+    </div>
+    @stack('scripts')
+@else
+@php
+    $sectionMap = [
+        'dashboard' => 'dashboardSection',
+        'items.*' => 'itemsSection',
+        'transactions.*' => 'transactionsSection',
+        'stock.*' => 'stockSection',
+        'reports.*' => 'reportsSection',
+        'users.*' => 'usersSection',
+        'pendingUsers.*' => 'usersSection',
+        'stock-requests.*' => 'stockRequestsSection',
+        'stuff-requests.*' => 'stuffRequestsSection',
+        'import.*' => 'importSection',
+    ];
+
+    $currentSectionId = 'dashboardSection';
+    foreach ($sectionMap as $routePattern => $sectionId) {
+        if (request()->routeIs($routePattern)) {
+            $currentSectionId = $sectionId;
+            break;
+        }
+    }
+
+    if (request()->routeIs('transactions.*') && auth()->check() && auth()->user()->isTeknik()) {
+        $currentSectionId = request('type') === 'out' ? 'transactionsIssueSection' : 'transactionsReceiptSection';
+    }
+@endphp
 <!DOCTYPE html>
 <html lang="id">
 
@@ -8,6 +42,9 @@
     <title>@yield('title', 'Dashboard') - Nextlog</title>
     <meta name="description" content="InvenTrack - Sistem Manajemen Inventory Modern">
 
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+    <link rel="preload" as="image" href="{{ asset('images/logo-web-top.png') }}" fetchpriority="high">
     <!-- Bootstrap 5.3 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -45,9 +82,9 @@
                 <div class="brand-icon">
                     <div class="sidebar-logo-stack">
                         <img src="{{ asset('images/logo-web-top.png') }}" alt="InvenTrack"
-                            class="sidebar-logo-part sidebar-logo-top" decoding="async">
+                            class="sidebar-logo-part sidebar-logo-top" decoding="async" fetchpriority="high">
                         <img src="{{ asset('images/logo-web-bottom.png') }}" alt=""
-                            class="sidebar-logo-part sidebar-logo-bottom" decoding="async">
+                            class="sidebar-logo-part sidebar-logo-bottom" loading="lazy" decoding="async">
                     </div>
                 </div>
                 <div class="logo-container">
@@ -62,12 +99,15 @@
             @php
                 $isTeknik = auth()->user()->isTeknik();
                 $isTeknikManager = auth()->user()->isManager() && $isTeknik;
+                $canUseAdminMenus = auth()->user()->isSuperAdmin() || auth()->user()->isAdmin() || $isTeknikManager;
             @endphp
             <div class="sidebar-label">Menu Utama</div>
 
             {{-- Dashboard: Admin & Manager only --}}
             @if(auth()->user()->isSuperAdmin() || auth()->user()->isAdmin() || auth()->user()->isManager())
                 <a href="{{ route('dashboard') }}"
+                    onclick="switchSection('dashboardSection', this); return false;"
+                    data-section="dashboardSection"
                     class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                     <i class="bi bi-grid-1x2-fill"></i>
                     <span>Dashboard</span>
@@ -81,26 +121,49 @@
             @endif
 
             {{-- Master Barang: Admin only --}}
-            @if(!$isTeknikManager && (auth()->user()->isSuperAdmin() || auth()->user()->isAdmin()))
+            @if($canUseAdminMenus)
                 <a href="{{ route('items.index') }}"
+                    onclick="switchSection('itemsSection', this); return false;"
+                    data-section="itemsSection"
                     class="sidebar-link {{ request()->routeIs('items.*') ? 'active' : '' }}">
                     <i class="bi bi-box-fill"></i>
-                    <span>Master Barang</span>
+                    <span>{{ $isTeknik ? 'Master SOH' : 'Master Barang' }}</span>
                 </a>
             @endif
 
             {{-- Transaksi: Admin & Staff only --}}
-            @if(!$isTeknikManager && (auth()->user()->isSuperAdmin() || auth()->user()->isAdmin() || auth()->user()->isStaff()))
-                <a href="{{ route('transactions.index') }}"
-                    class="sidebar-link {{ request()->routeIs('transactions.*') ? 'active' : '' }}">
-                    <i class="bi bi-arrow-left-right"></i>
-                    <span>Transaksi</span>
-                </a>
+            @if($canUseAdminMenus || auth()->user()->isStaff())
+                @if($isTeknik)
+                    <a href="{{ route('transactions.index', ['type' => 'in']) }}"
+                        onclick="switchSection('transactionsReceiptSection', this); return false;"
+                        data-section="transactionsReceiptSection"
+                        class="sidebar-link {{ request()->routeIs('transactions.*') && request('type', 'in') === 'in' ? 'active' : '' }}">
+                        <i class="bi bi-box-arrow-in-down"></i>
+                        <span>Goods Receipt</span>
+                    </a>
+                    <a href="{{ route('transactions.index', ['type' => 'out']) }}"
+                        onclick="switchSection('transactionsIssueSection', this); return false;"
+                        data-section="transactionsIssueSection"
+                        class="sidebar-link {{ request()->routeIs('transactions.*') && request('type') === 'out' ? 'active' : '' }}">
+                        <i class="bi bi-box-arrow-up"></i>
+                        <span>Goods Issue</span>
+                    </a>
+                @else
+                    <a href="{{ route('transactions.index') }}"
+                        onclick="switchSection('transactionsSection', this); return false;"
+                        data-section="transactionsSection"
+                        class="sidebar-link {{ request()->routeIs('transactions.*') ? 'active' : '' }}">
+                        <i class="bi bi-arrow-left-right"></i>
+                        <span>Transaksi</span>
+                    </a>
+                @endif
             @endif
 
             {{-- Rekap Stok: All user --}}
-            @if(!$isTeknikManager && (auth()->user()->isSuperAdmin() || auth()->user()->isAdmin() || auth()->user()->isManager() || auth()->user()->isStaff()))
+            @if($canUseAdminMenus || auth()->user()->isManager() || auth()->user()->isStaff())
                 <a href="{{ route('stock.index') }}"
+                    onclick="switchSection('stockSection', this); return false;"
+                    data-section="stockSection"
                     class="sidebar-link {{ request()->routeIs('stock.*') ? 'active' : '' }}">
                     <i class="bi bi-clipboard-data-fill"></i>
                     <span>Rekap Stok</span>
@@ -108,8 +171,10 @@
             @endif
 
             {{-- Stuff Request: Admin & Staff --}}
-            @if(auth()->user()->isSuperAdmin() || auth()->user()->isAdmin() || auth()->user()->isStaff() || $isTeknikManager)
+            @if($canUseAdminMenus || auth()->user()->isStaff())
                 <a href="{{ route('stock-requests.index') }}"
+                    onclick="switchSection('stockRequestsSection', this); return false;"
+                    data-section="stockRequestsSection"
                     class="sidebar-link {{ request()->routeIs('stock-requests.*') ? 'active' : '' }}">
                     <i class="bi bi-cart-check-fill"></i>
                     <span>Stok Request</span>
@@ -121,24 +186,26 @@
                     @endif
                 </a>
 
-                @if(!$isTeknikManager)
-                    <a href="{{ route('stuff-requests.index') }}"
-                        class="sidebar-link {{ request()->routeIs('stuff-requests.*') ? 'active' : '' }}">
-                        <i class="bi bi-inbox-fill"></i>
-                        <span>Permintaan Barang</span>
-                        @php $pendingReqCount = \App\Models\StuffRequest::visibleFor(auth()->user())->pending()->count(); @endphp
-                        @if($pendingReqCount > 0)
-                            <span class="badge bg-warning text-dark">{{ $pendingReqCount }}</span>
-                        @endif
-                    </a>
-                @endif
+                <a href="{{ route('stuff-requests.index') }}"
+                    onclick="switchSection('stuffRequestsSection', this); return false;"
+                    data-section="stuffRequestsSection"
+                    class="sidebar-link {{ request()->routeIs('stuff-requests.*') ? 'active' : '' }}">
+                    <i class="bi bi-inbox-fill"></i>
+                    <span>Permintaan Barang</span>
+                    @php $pendingReqCount = \App\Models\StuffRequest::visibleFor(auth()->user())->pending()->count(); @endphp
+                    @if($pendingReqCount > 0)
+                        <span class="badge bg-warning text-dark">{{ $pendingReqCount }}</span>
+                    @endif
+                </a>
             @endif
 
             {{-- Laporan: Admin & Manager --}}
-            @if(!$isTeknikManager && (auth()->user()->isSuperAdmin() || auth()->user()->isAdmin() || auth()->user()->isManager()))
+            @if($canUseAdminMenus || auth()->user()->isManager())
                 <div class="sidebar-label" style="margin-top: 8px;">Laporan</div>
 
                 <a href="{{ route('reports.index') }}"
+                    onclick="switchSection('reportsSection', this); return false;"
+                    data-section="reportsSection"
                     class="sidebar-link {{ request()->routeIs('reports.*') ? 'active' : '' }}">
                     <i class="bi bi-file-earmark-bar-graph-fill"></i>
                     <span>Laporan</span>
@@ -146,16 +213,20 @@
             @endif
 
             {{-- Pengaturan: Admin only --}}
-            @if(!$isTeknikManager && (auth()->user()->isSuperAdmin() || auth()->user()->isAdmin()))
+            @if($canUseAdminMenus)
                 <div class="sidebar-label" style="margin-top: 8px;">Pengaturan</div>
 
                 <a href="{{ route('users.index') }}"
+                    onclick="switchSection('usersSection', this); return false;"
+                    data-section="usersSection"
                     class="sidebar-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
                     <i class="bi bi-people-fill"></i>
                     <span>{{ auth()->user()->isSuperAdmin() ? 'User Management Global' : 'Manajemen User' }}</span>
                 </a>
 
                 <a href="{{ route('import.index') }}"
+                    onclick="switchSection('importSection', this); return false;"
+                    data-section="importSection"
                     class="sidebar-link {{ request()->routeIs('import.*') ? 'active' : '' }}">
                     <i class="bi bi-cloud-arrow-up-fill"></i>
                     <span>Import Data</span>
@@ -167,6 +238,8 @@
                 <div class="sidebar-label" style="margin-top: 8px;">Pengaturan</div>
 
                 <a href="{{ route('pendingUsers.index', ['account_status' => 'pending']) }}"
+                    onclick="switchSection('usersSection', this); return false;"
+                    data-section="usersSection"
                     class="sidebar-link {{ request()->routeIs('pendingUsers.*') ? 'active' : '' }}">
                     <i class="bi bi-person-check-fill"></i>
                     <span>Approval User</span>
@@ -218,12 +291,12 @@
                     <i class="bi bi-list"></i>
                 </button>
                 <div>
-                    <div class="page-title">@yield('title', 'Dashboard')</div>
-                    <div class="page-subtitle">@yield('subtitle', '')</div>
+                    <div class="page-title" id="pageTitle">@yield('title', 'Dashboard')</div>
+                    <div class="page-subtitle" id="pageSubtitle">@yield('subtitle', '')</div>
                 </div>
             </div>
             <div class="topbar-right">
-                @if(!auth()->user()->isStaff() && !(auth()->user()->isManager() && auth()->user()->isTeknik()))
+                @if(!auth()->user()->isStaff())
                     @php
                         $lowStockCount = \App\Models\Item::visibleFor(auth()->user())->get()->filter(fn($i) => $i->is_low_stock)->count();
                     @endphp
@@ -252,8 +325,12 @@
         </header>
 
         <!-- Page Content -->
-        <div class="page-content">
-            @yield('content')
+        <div class="page-content" id="sectionShell">
+            <section id="{{ $currentSectionId }}" class="content-section active" data-loaded="true"
+                data-title="@yield('title', 'Dashboard')"
+                data-subtitle="@yield('subtitle', '')">
+                @yield('content')
+            </section>
         </div>
     </main>
 
@@ -276,233 +353,19 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        function updateClock() {
-            const now = new Date();
-
-            // Ambil Jam, Menit, dan Detik
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-
-            // Format tampilan (contoh: 14:05:01)
-            const timeString = `${hours}:${minutes}:${seconds}`;
-
-            // Masukkan ke dalam elemen HTML
-            document.getElementById('live-clock').textContent = timeString;
-        }
-
-        // Jalankan fungsi setiap 1000 milidetik (1 detik)
-        setInterval(updateClock, 1000);
-
-        // Panggil sekali di awal agar tidak menunggu 1 detik pertama
-        updateClock();
-
-        // Theme toggle
-        function toggleTheme() {
-            const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            html.setAttribute('data-theme', newTheme);
-            localStorage.setItem('inventrack-theme', newTheme);
-            updateChartTheme();
-        }
-
-        const desktopSidebarMedia = window.matchMedia('(min-width: 992px)');
-
-        function isDesktopSidebar() {
-            return desktopSidebarMedia.matches;
-        }
-
-        function rememberSidebarHoverOpen(open) {
-            if (open) {
-                sessionStorage.setItem('inventrack-sidebar-hover-open', '1');
-                return;
-            }
-
-            sessionStorage.removeItem('inventrack-sidebar-hover-open');
-        }
-
-        function shouldRestoreSidebarHoverOpen() {
-            return sessionStorage.getItem('inventrack-sidebar-hover-open') === '1';
-        }
-
-        function setDesktopSidebarCollapsed(collapsed) {
-            const sidebar = document.getElementById('sidebar');
-            const mainContent = document.querySelector('.main-content');
-            const footer = document.querySelector('.main-footer');
-
-            sidebar.classList.toggle('collapsed', collapsed);
-            mainContent.classList.toggle('sidebar-collapsed', collapsed);
-            if (footer) footer.classList.toggle('sidebar-collapsed', collapsed);
-        }
-
-        // Sidebar toggle (desktop: collapsed/expanded, mobile: slide)
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-            if (!isDesktopSidebar()) {
-                sidebar.classList.remove('collapsed');
-                sidebar.classList.toggle('show');
-                overlay.classList.toggle('show');
-            }
-        }
-
-        function syncDesktopSidebarHoverState() {
-            if (!isDesktopSidebar()) return;
-
-            const sidebar = document.getElementById('sidebar');
-            setDesktopSidebarCollapsed(!(sidebar.matches(':hover') || shouldRestoreSidebarHoverOpen()));
-        }
-
-        function normalizeSidebarForViewport() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-
-            if (isDesktopSidebar()) {
-                sidebar.classList.remove('show');
-                overlay.classList.remove('show');
-                syncDesktopSidebarHoverState();
-            } else {
-                sidebar.classList.remove('collapsed');
-                document.querySelector('.main-content').classList.remove('sidebar-collapsed');
-                const footer = document.querySelector('.main-footer');
-                if (footer) footer.classList.remove('sidebar-collapsed');
-            }
-        }
-
-        normalizeSidebarForViewport();
-
-        const sidebarEl = document.getElementById('sidebar');
-
-        sidebarEl.addEventListener('mouseenter', () => {
-            if (isDesktopSidebar()) {
-                rememberSidebarHoverOpen(true);
-                setDesktopSidebarCollapsed(false);
-            }
-        });
-
-        sidebarEl.addEventListener('mouseleave', () => {
-            if (isDesktopSidebar()) {
-                rememberSidebarHoverOpen(false);
-                setDesktopSidebarCollapsed(true);
-            }
-        });
-
-        requestAnimationFrame(syncDesktopSidebarHoverState);
-
-        // SweetAlert2 Toast Configuration
-        const Toast = Swal.mixin({
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3500,
-            timerProgressBar: true,
-            customClass: {
-                popup: document.documentElement.getAttribute('data-theme') === 'dark'
-                    ? 'swal-toast-custom swal-dark'
-                    : 'swal-toast-custom'
-            }
-        });
-
-        // Show session flash messages via SweetAlert2
-        @if(session('success'))
-            Toast.fire({
-                icon: 'success',
-                title: {!! json_encode(session('success')) !!}
-            });
-        @endif
-
-        @if(session('error'))
-            Toast.fire({
-                icon: 'error',
-                title: {!! json_encode(session('error')) !!}
-            });
-        @endif
-
-        /**
-         * SweetAlert2 Confirmation Dialog
-         * @param {string} title - Dialog title
-         * @param {string} text - Dialog message
-         * @param {string} icon - 'warning', 'question', 'info', 'error'
-         * @param {string} confirmText - Confirm button text
-         * @param {string} formSelector - CSS selector for the form to submit
-         */
-        function swalConfirm(title, text, icon, confirmText, formSelector) {
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-            Swal.fire({
-                title: title,
-                text: text,
-                icon: icon,
-                showCancelButton: true,
-                confirmButtonText: confirmText || 'Ya, Lanjutkan',
-                cancelButtonText: 'Batal',
-                reverseButtons: true,
-                customClass: {
-                    popup: isDark ? 'swal-dark' : '',
-                    confirmButton: 'swal-btn-confirm',
-                    cancelButton: 'swal-btn-cancel'
-                },
-                buttonsStyling: false,
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    document.querySelector(formSelector).submit();
-                }
-            });
-        }
-
-        // Close sidebar on link click (mobile); desktop stays open while hovered.
-        document.querySelectorAll('.sidebar-link').forEach(link => {
-            link.addEventListener('click', () => {
-                if (!isDesktopSidebar()) {
-                    document.getElementById('sidebar').classList.remove('show');
-                    document.getElementById('sidebarOverlay').classList.remove('show');
-                    return;
-                }
-
-                rememberSidebarHoverOpen(true);
-            });
-        });
-
-        document.addEventListener('mousemove', (event) => {
-            if (!isDesktopSidebar() || !shouldRestoreSidebarHoverOpen()) return;
-
-            const sidebarRect = sidebarEl.getBoundingClientRect();
-            const isInsideExpandedSidebar =
-                event.clientX >= sidebarRect.left &&
-                event.clientX <= sidebarRect.left + parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width')) &&
-                event.clientY >= sidebarRect.top &&
-                event.clientY <= sidebarRect.bottom;
-
-            if (!isInsideExpandedSidebar) {
-                rememberSidebarHoverOpen(false);
-                setDesktopSidebarCollapsed(true);
-            }
-        }, { passive: true });
-
-        // Handle window resize: reset mobile state and keep desktop pages collapsed by default.
-        window.addEventListener('resize', () => {
-            normalizeSidebarForViewport();
-        });
-
-        function relocateInventrackModal(modal) {
-            if (!modal || !modal.classList.contains('inventrack-modal')) return;
-            if (modal.parentElement !== document.body) {
-                document.body.appendChild(modal);
-            }
-        }
-
-        // Keep Bootstrap modals outside page stacking contexts so the backdrop never covers them.
-        document.querySelectorAll('.modal.inventrack-modal').forEach((modal) => {
-            relocateInventrackModal(modal);
-        });
-
-        document.addEventListener('show.bs.modal', (event) => {
-            relocateInventrackModal(event.target);
-        });
-
+        window.inventrackConfig = {
+            currentSectionId: @json($currentSectionId),
+            isTeknik: @json(auth()->check() && auth()->user()->isTeknik()),
+            flash: {
+                success: @json(session('success')),
+                error: @json(session('error')),
+            },
+        };
     </script>
+    @vite('resources/js/app.js')
 
     @stack('scripts')
 </body>
 
 </html>
+@endif

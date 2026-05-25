@@ -6,12 +6,21 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Rekap Stok & Permintaan Barang - NextLog</title>
     <meta name="description" content="Lihat rekap stok barang dan ajukan stuff request tanpa login">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="preload" as="image" href="{{ asset('images/logo-web.png') }}" fetchpriority="high">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <link href="{{ asset('css/custom.css') }}?v={{ filemtime(public_path('css/custom.css')) }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/png" href="{{ asset('images/logo-web-top.png') }}">
+    @if($activeBidang === 'teknik')
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    @endif
     <script>
         (function() {
             const theme = localStorage.getItem('inventrack-theme') || 'light';
@@ -35,13 +44,13 @@
                 
                 <div class="d-none d-md-block">
                     <div class="company-logo">
-                        <img src="{{ asset('images/logo-perusahaan.png') }}" alt="Logo" class="logo-img">
+                        <img src="{{ asset('images/logo-perusahaan.png') }}" alt="Logo" class="logo-img" loading="lazy" decoding="async">
                     </div>
                 </div>
 
                 <div class="brand text-center">
                     <div class="brand-logo-wrapper mx-auto">
-                        <img src="{{ asset('images/logo-web.png') }}" alt="InvenTrack Logo" class="app-logo">
+                        <img src="{{ asset('images/logo-web.png') }}" alt="InvenTrack Logo" class="app-logo" decoding="async" fetchpriority="high">
                     </div>
                 </div>
 
@@ -62,6 +71,179 @@
         {{-- Body --}}
         <div class="public-body">
             <div class="container">
+                @if($activeBidang === 'teknik' && $publicDashboard)
+                    <div class="row g-3 mb-4 dashboard-summary-cards">
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="stats-card primary">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="stats-icon">
+                                        <i class="bi bi-box-seam-fill"></i>
+                                    </div>
+                                    <div class="stats-copy">
+                                        <div class="stats-value" style="font-size:22px;">{{ number_format($publicDashboard['totalItems']) }}</div>
+                                        <div class="stats-label">Total Barang</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="stats-card success">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="stats-icon">
+                                        <i class="bi bi-arrow-down-circle-fill"></i>
+                                    </div>
+                                    <div class="stats-copy">
+                                        <div class="stats-value" style="font-size:22px;">{{ number_format($publicDashboard['masukBulanIni']) }}</div>
+                                        <div class="stats-label">Goods Receipt Bulan Ini</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="stats-card danger">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="stats-icon">
+                                        <i class="bi bi-arrow-up-circle-fill"></i>
+                                    </div>
+                                    <div class="stats-copy">
+                                        <div class="stats-value" style="font-size:22px;">{{ number_format($publicDashboard['keluarBulanIni']) }}</div>
+                                        <div class="stats-label">Goods Issue Bulan Ini</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="stats-card warning">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="stats-icon">
+                                        <i class="bi bi-exclamation-triangle-fill"></i>
+                                    </div>
+                                    <div class="stats-copy">
+                                        <div class="stats-value" style="font-size:22px;">{{ number_format($publicDashboard['lowStockCount']) }}</div>
+                                        <div class="stats-label">Total Stok Rendah</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-lg-8">
+                            <div class="card">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <span>
+                                        <i class="bi bi-graph-up text-primary-custom me-2"></i>
+                                        Goods Receipt vs Goods Issue
+                                    </span>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <select id="publicMonthlyPeriodFilter" class="form-select form-select-sm"
+                                            style="width:auto; min-width:140px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px;">
+                                            <option value="thisMonth" {{ $publicDashboard['selectedMonthlyPeriod'] === 'thisMonth' ? 'selected' : '' }}>Bulan Ini</option>
+                                            <option value="6months" {{ $publicDashboard['selectedMonthlyPeriod'] === '6months' ? 'selected' : '' }}>6 Bulan Terakhir</option>
+                                            <option value="ytd" {{ $publicDashboard['selectedMonthlyPeriod'] === 'ytd' ? 'selected' : '' }}>12 Bulan</option>
+                                        </select>
+                                        <select id="publicMonthlyYearFilter" class="form-select form-select-sm"
+                                            style="width:auto; min-width:110px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px;">
+                                            @foreach($publicDashboard['availableYears'] as $year)
+                                                <option value="{{ $year }}" {{ $publicDashboard['selectedYear'] == $year ? 'selected' : '' }}>{{ $year }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container" style="height:320px;">
+                                        <canvas id="publicMonthlyChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card">
+                                <div class="card-header d-flex align-items-center justify-content-between">
+                                    <span><i class="bi bi-pie-chart-fill text-primary-custom me-2"></i>Stok per Ship Unloader</span>
+                                    <select id="publicShipYearFilter" class="form-select form-select-sm"
+                                        style="width:auto; min-width:120px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px;">
+                                        <option value="">Semua Tahun</option>
+                                        @foreach($publicDashboard['availableYears'] as $year)
+                                            <option value="{{ $year }}">{{ $year }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-container" style="height:320px;">
+                                        <canvas id="publicShipChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4 align-items-start">
+                        <div class="col-lg-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <span><i class="bi bi-fire text-danger-custom me-2"></i>Goods Issue Terbanyak</span>
+                                </div>
+                                <div class="card-body py-2">
+                                    @forelse($publicDashboard['topKeluar'] as $index => $tx)
+                                        <div
+                                            class="d-flex align-items-center justify-content-between gap-3 py-2 {{ !$loop->last ? 'border-bottom' : '' }}">
+                                            <div class="d-flex align-items-center gap-3 min-width-0">
+                                                <span class="fw-700"
+                                                    style="width:24px;height:24px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;">{{ $index + 1 }}</span>
+                                                <div class="min-width-0">
+                                                    <div class="fw-600 text-truncate" style="font-size:13px;">{{ $tx->item->name ?? 'Barang dihapus' }}</div>
+                                                    <div class="text-truncate" style="font-size:11px;color:var(--text-secondary);">
+                                                        @if($tx->item?->no_normalisasi)
+                                                            {{ $tx->item->no_normalisasi }} -
+                                                        @endif
+                                                        {{ $tx->item->category ?? '' }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <span class="fw-700" style="color:#CA5995;flex-shrink:0;">{{ number_format($tx->total) }}</span>
+                                        </div>
+                                    @empty
+                                        <div class="empty-state" style="padding:24px 10px;">
+                                            <i class="bi bi-inbox" style="font-size:36px;"></i>
+                                            <h6 class="mt-2" style="font-size:13px;">Belum ada data</h6>
+                                        </div>
+                                    @endforelse
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-lg-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <span><i class="bi bi-clock-fill text-primary-custom me-2"></i>Transaksi Terbaru</span>
+                                </div>
+                                <div class="card-body py-2">
+                                    @forelse($publicDashboard['recentTransactions'] as $tx)
+                                        <div class="d-flex align-items-start gap-3 py-2 {{ !$loop->last ? 'border-bottom' : '' }}">
+                                            <div
+                                                style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;{{ $tx->type === 'in' ? 'background:var(--success-bg);color:var(--success);' : 'background:var(--danger-bg);color:var(--danger);' }}">
+                                                <i class="bi bi-arrow-{{ $tx->type === 'in' ? 'down' : 'up' }}-circle-fill"></i>
+                                            </div>
+                                            <div class="flex-grow-1 min-width-0">
+                                                <div class="fw-600 text-truncate" style="font-size:13px;">{{ $tx->item->name ?? 'Barang dihapus' }}</div>
+                                                <div class="text-truncate" style="font-size:11px;color:var(--text-secondary);">
+                                                    {{ $tx->type_label }} - {{ $tx->quantity }} {{ $tx->item->unit ?? '' }} - {{ $tx->user->name ?? 'System' }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div class="empty-state" style="padding:24px 10px;">
+                                            <i class="bi bi-inbox" style="font-size:36px;"></i>
+                                            <h6 class="mt-2" style="font-size:13px;">Belum ada transaksi</h6>
+                                        </div>
+                                    @endforelse
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 <div class="row g-4">
                     {{-- Left: Stock Recap --}}
                     <div class="col-lg-8">
@@ -329,7 +511,7 @@
                     
                     <div class="login-modal-brand">
                         <div class="brand-icon">
-                            <img src="{{ asset('images/logo-web.png') }}" alt="InvenTrack Logo" class="login-modal-logo-img">
+                            <img src="{{ asset('images/logo-web.png') }}" alt="InvenTrack Logo" class="login-modal-logo-img" loading="lazy" decoding="async">
                         </div>
                         <div class="logo-container">
                             <div class="next-logistic">
@@ -389,6 +571,213 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    @if($activeBidang === 'teknik' && $publicDashboard)
+        <script>
+            (function() {
+                if (typeof Chart === 'undefined') return;
+
+                const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+                const chartTextColor = () => isDark() ? '#cbd5e1' : '#475569';
+                const chartMutedColor = () => isDark() ? '#64748b' : '#94a3b8';
+                const chartGridColor = () => isDark() ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+                const chartSurfaceColor = () => isDark() ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.95)';
+                const catColors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'];
+
+                function lineGradient(ctx, color) {
+                    const gradient = ctx.createLinearGradient(0, 0, 0, 320);
+                    gradient.addColorStop(0, color);
+                    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+                    return gradient;
+                }
+
+                function hexToRgba(hex, alpha) {
+                    const value = hex.replace('#', '');
+                    const r = parseInt(value.substring(0, 2), 16);
+                    const g = parseInt(value.substring(2, 4), 16);
+                    const b = parseInt(value.substring(4, 6), 16);
+                    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+                }
+
+                function donutGradient(ctx, color) {
+                    const gradient = ctx.createLinearGradient(0, 0, 0, 260);
+                    gradient.addColorStop(0, hexToRgba(color, isDark() ? 0.72 : 0.52));
+                    gradient.addColorStop(1, hexToRgba(color, 0.06));
+                    return gradient;
+                }
+
+                function tooltipOptions() {
+                    return {
+                        mode: 'index',
+                        intersect: false,
+                        usePointStyle: true,
+                        backgroundColor: chartSurfaceColor(),
+                        titleColor: isDark() ? '#f8fafc' : '#0f172a',
+                        bodyColor: chartTextColor(),
+                        borderColor: isDark() ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        boxPadding: 6
+                    };
+                }
+
+                function lineOptions() {
+                    return {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                align: 'end',
+                                labels: {
+                                    usePointStyle: true,
+                                    pointStyle: 'circle',
+                                    padding: 15,
+                                    color: chartTextColor(),
+                                    font: { family: 'Inter', size: 12, weight: 500 }
+                                }
+                            },
+                            tooltip: tooltipOptions()
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false, drawBorder: false },
+                                ticks: { color: chartMutedColor(), padding: 10, font: { family: 'Inter', size: 11 } }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: chartGridColor(), drawBorder: false },
+                                ticks: { color: chartMutedColor(), padding: 10, font: { family: 'Inter', size: 11 } }
+                            }
+                        },
+                        interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                    };
+                }
+
+                let publicMonthlyChart = null;
+                let publicShipChart = null;
+                const monthlyCtx = document.getElementById('publicMonthlyChart')?.getContext('2d');
+                if (monthlyCtx) {
+                    publicMonthlyChart = new Chart(monthlyCtx, {
+                        type: 'line',
+                        data: {
+                            labels: {!! json_encode(array_column($publicDashboard['monthlyData'], 'label')) !!},
+                            datasets: [
+                                {
+                                    label: 'Goods Receipt',
+                                    data: {!! json_encode(array_column($publicDashboard['monthlyData'], 'masuk')) !!},
+                                    fill: true,
+                                    backgroundColor: lineGradient(monthlyCtx, isDark() ? 'rgba(59,130,246,0.4)' : 'rgba(59,130,246,0.3)'),
+                                    borderColor: '#3b82f6',
+                                    borderWidth: 2,
+                                    tension: 0.4,
+                                    pointBackgroundColor: isDark() ? '#0f172a' : '#ffffff',
+                                    pointBorderColor: '#3b82f6',
+                                    pointBorderWidth: 2,
+                                    pointRadius: 5,
+                                    pointHoverRadius: 7
+                                },
+                                {
+                                    label: 'Goods Issue',
+                                    data: {!! json_encode(array_column($publicDashboard['monthlyData'], 'keluar')) !!},
+                                    fill: true,
+                                    backgroundColor: lineGradient(monthlyCtx, isDark() ? 'rgba(16,185,129,0.4)' : 'rgba(16,185,129,0.3)'),
+                                    borderColor: '#10b981',
+                                    borderWidth: 2,
+                                    tension: 0.4,
+                                    pointBackgroundColor: isDark() ? '#0f172a' : '#ffffff',
+                                    pointBorderColor: '#10b981',
+                                    pointBorderWidth: 2,
+                                    pointRadius: 5,
+                                    pointHoverRadius: 7
+                                }
+                            ]
+                        },
+                        options: lineOptions()
+                    });
+                }
+
+                const shipCtx = document.getElementById('publicShipChart')?.getContext('2d');
+                if (shipCtx) {
+                    publicShipChart = new Chart(shipCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: {!! json_encode(array_column($publicDashboard['categoryData'], 'category')) !!},
+                            datasets: [{
+                                data: {!! json_encode(array_column($publicDashboard['categoryData'], 'stock')) !!},
+                                backgroundColor: catColors.map(color => donutGradient(shipCtx, color)),
+                                borderColor: catColors,
+                                borderWidth: 2,
+                                hoverOffset: 6,
+                                spacing: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '70%',
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        usePointStyle: true,
+                                        pointStyle: 'circle',
+                                        padding: 15,
+                                        color: chartMutedColor(),
+                                        font: { family: 'Inter', size: 11, weight: 500 }
+                                    }
+                                },
+                                tooltip: tooltipOptions()
+                            }
+                        }
+                    });
+                }
+
+                function changePublicMonthlyChart() {
+                    if (!publicMonthlyChart) return;
+
+                    const year = document.getElementById('publicMonthlyYearFilter')?.value || @json($publicDashboard['selectedYear']);
+                    const period = document.getElementById('publicMonthlyPeriodFilter')?.value || 'thisMonth';
+                    const url = `{{ route('public.teknik.monthlyData') }}?year=${encodeURIComponent(year)}&period=${encodeURIComponent(period)}`;
+
+                    fetch(url)
+                        .then(res => res.json())
+                        .then(data => {
+                            publicMonthlyChart.data.labels = data.map(d => d.label);
+                            publicMonthlyChart.data.datasets[0].data = data.map(d => d.masuk);
+                            publicMonthlyChart.data.datasets[1].data = data.map(d => d.keluar);
+                            publicMonthlyChart.update('active');
+                        })
+                        .catch(err => console.error(err));
+                }
+
+                function changePublicShipChart() {
+                    if (!publicShipChart) return;
+
+                    const year = document.getElementById('publicShipYearFilter')?.value || '';
+                    const url = year
+                        ? `{{ route('public.teknik.shipUnloaderData') }}?year=${encodeURIComponent(year)}`
+                        : `{{ route('public.teknik.shipUnloaderData') }}`;
+
+                    fetch(url)
+                        .then(res => res.json())
+                        .then(data => {
+                            publicShipChart.data.labels = data.map(d => d.category);
+                            publicShipChart.data.datasets[0].data = data.map(d => d.stock);
+                            publicShipChart.data.datasets[0].backgroundColor = catColors
+                                .slice(0, data.length)
+                                .map(color => donutGradient(shipCtx, color));
+                            publicShipChart.data.datasets[0].borderColor = catColors.slice(0, data.length);
+                            publicShipChart.update('active');
+                        })
+                        .catch(err => console.error(err));
+                }
+
+                document.getElementById('publicMonthlyPeriodFilter')?.addEventListener('change', changePublicMonthlyChart);
+                document.getElementById('publicMonthlyYearFilter')?.addEventListener('change', changePublicMonthlyChart);
+                document.getElementById('publicShipYearFilter')?.addEventListener('change', changePublicShipChart);
+            })();
+        </script>
+    @endif
     <script>
         function toggleTheme() {
             const html = document.documentElement;

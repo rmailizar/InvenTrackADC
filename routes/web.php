@@ -20,6 +20,8 @@ Route::get('/', [StuffRequestController::class, 'publicIndex'])->name('public.st
 Route::post('/request-stuff', [StuffRequestController::class, 'store'])->name('public.stuff-request.store');
 Route::get('/stock-request', [StuffRequestController::class, 'publicIndex'])->name('public.stock-request');
 Route::post('/request-stock', [StuffRequestController::class, 'store'])->name('public.stock-request.store');
+Route::get('/public/api/teknik/monthly-data', [StuffRequestController::class, 'publicMonthlyData'])->name('public.teknik.monthlyData');
+Route::get('/public/api/teknik/ship-unloader-data', [StuffRequestController::class, 'publicShipUnloaderData'])->name('public.teknik.shipUnloaderData');
 
 // Auth Routes
 Route::get('/login', [LoginController::class, 'showLogin'])->name('login');

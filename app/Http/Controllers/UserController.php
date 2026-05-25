@@ -17,7 +17,7 @@ class UserController extends Controller
         $query = User::query()->visibleFor(auth()->user());
 
         // Manager approval page should only show pending users by default
-        if (auth()->check() && auth()->user()->isManager()) {
+        if (auth()->check() && auth()->user()->isManager() && !auth()->user()->isTeknik()) {
             $query->where('account_status', 'pending');
         }
 
@@ -50,7 +50,7 @@ class UserController extends Controller
         $defaultPassword = self::DEFAULT_PASSWORD;
         $onlineUserIds = collect();
 
-        if (auth()->user()->isAdmin() || auth()->user()->isSuperAdmin()) {
+        if (auth()->user()->isAdmin() || auth()->user()->isSuperAdmin() || (auth()->user()->isManager() && auth()->user()->isTeknik())) {
             $onlineUserIds = DB::table(config('session.table', 'sessions'))
                 ->whereNotNull('user_id')
                 ->where('last_activity', '>=', now()->subMinutes(5)->timestamp)

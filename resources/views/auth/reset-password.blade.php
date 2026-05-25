@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Reset Password - Nextlog</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="dns-prefetch" href="//cdn.jsdelivr.net">
+    <link rel="preload" as="image" href="{{ asset('images/logo-web.png') }}" fetchpriority="high">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="{{ asset('css/custom.css') }}?v={{ filemtime(public_path('css/custom.css')) }}" rel="stylesheet">
@@ -28,7 +31,7 @@
         <div class="login-card w-100" style="max-width:440px;">
             <div class="login-brand text-center mb-2">
                 <div class="brand-reset brand-icon mx-auto mb-3">
-                    <img src="{{ asset('images/logo-web.png') }}" alt="InvenTrack Logo" style="max-width:240px;">
+                    <img src="{{ asset('images/logo-web.png') }}" alt="InvenTrack Logo" style="max-width:240px;" decoding="async" fetchpriority="high">
                     <div class="next-logistic">
                                 NEXTLOGISTIC
                     </div>

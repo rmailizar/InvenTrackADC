@@ -6,6 +6,7 @@
 @section('content')
     @php
         $isTeknik = auth()->user()->bidang === 'teknik';
+        $canProcessAsAdmin = auth()->user()->isAdmin() || (auth()->user()->isManager() && $isTeknik);
         $stockActionData = [];
         foreach ($requests as $r) {
             $stockActionData[$r->id] = [
@@ -164,7 +165,7 @@
                                         @endif
                                     </td>
                                     <td class="text-center">
-                                        @if($req->status === 'pending' && auth()->user()->isAdmin() && $isTeknik)
+                                        @if($req->status === 'pending' && $canProcessAsAdmin && $isTeknik)
                                             <button type="button"
                                                 class="btn btn-sm btn-outline-primary btn-stuff-request-modal-open"
                                                 title="Rincian barang & selesai"
@@ -180,7 +181,7 @@
                                                 <form method="POST" action="{{ route('stuff-requests.cancel', $req) }}"
                                                     id="cancelReq-{{ $req->id }}">@csrf</form>
                                             </div>
-                                        @elseif($req->status === 'pending' && auth()->user()->isAdmin())
+                                        @elseif($req->status === 'pending' && $canProcessAsAdmin)
                                             <button type="button"
                                                 class="btn btn-sm btn-outline-primary btn-stuff-request-modal-open"
                                                 title="Rincian barang & tindakan"

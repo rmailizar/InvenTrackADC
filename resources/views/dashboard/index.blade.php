@@ -9,6 +9,7 @@
         $receiptLabel = $isTeknik ? 'Goods Receipt' : 'Barang Masuk';
         $issueLabel = $isTeknik ? 'Goods Issue' : 'Barang Keluar';
         $componentLabel = $isTeknik ? 'Komponen' : 'Kategori';
+        $distributionLabel = $isTeknik ? 'Ship Unloader' : $componentLabel;
         $pendingApprovalLabel = auth()->user()->isManager() && $isTeknik
             ? 'Stock Request Menunggu Approval'
             : 'Menunggu Approval';
@@ -205,18 +206,28 @@
                 <div class="card">
                     <div class="card-header d-flex align-items-center justify-content-between">
                         <span>
-                            <i class="bi bi-bar-chart-fill text-primary-custom me-2"></i>
+                            <i class="bi bi-graph-up text-primary-custom me-2"></i>
                             {{ $receiptLabel }} vs {{ $issueLabel }} (12 Bulan)
                         </span>
 
-                        <select onchange="changeMonthlyYear(this.value)" class="form-select form-select-sm"
-                            style="width:auto; min-width:120px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px; padding:4px 28px 4px 10px;">
-                            @foreach($availableYears as $year)
-                                <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>
-                                    {{ $year }}
-                                </option>
-                            @endforeach
-                        </select>
+                        <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+                            @if($isTeknik)
+                                <select id="monthlyPeriodFilter" onchange="changeMonthlyChart()" class="form-select form-select-sm"
+                                    style="width:auto; min-width:140px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px; padding:4px 28px 4px 10px;">
+                                    <option value="thisMonth" {{ $selectedMonthlyPeriod === 'thisMonth' ? 'selected' : '' }}>Bulan Ini</option>
+                                    <option value="6months" {{ $selectedMonthlyPeriod === '6months' ? 'selected' : '' }}>6 Bulan Terakhir</option>
+                                    <option value="ytd" {{ $selectedMonthlyPeriod === 'ytd' ? 'selected' : '' }}>12 Bulan</option>
+                                </select>
+                            @endif
+                            <select id="monthlyYearFilter" onchange="changeMonthlyChart()" class="form-select form-select-sm"
+                                style="width:auto; min-width:120px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px; padding:4px 28px 4px 10px;">
+                                @foreach($availableYears as $year)
+                                    <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>
+                                        {{ $year }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
 
                     <div class="card-body">
@@ -229,7 +240,7 @@
             <div class="col-lg-4">
                 <div class="card">
                     <div class="card-header d-flex align-items-center justify-content-between">
-                        <span><i class="bi bi-pie-chart-fill text-primary-custom me-2"></i>Stok per {{ $componentLabel }}</span>
+                        <span><i class="bi bi-pie-chart-fill text-primary-custom me-2"></i>Stok per {{ $distributionLabel }}</span>
                         <select id="categoryYearFilter" class="form-select form-select-sm"
                             style="width:auto; min-width:120px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px; padding:4px 28px 4px 10px;">
                             <option value="">Semua Tahun</option>
@@ -253,7 +264,7 @@
                 <div class="card">
                     <div class="card-header d-flex align-items-center justify-content-between">
                         <span>
-                            <i class="bi bi-graph-up-arrow text-primary-custom me-2"></i>
+                            <i class="bi bi-activity text-primary-custom me-2"></i>
                             {{ $receiptLabel }} vs {{ $issueLabel }} (Tahunan)
                         </span>
 
@@ -394,8 +405,6 @@
                                         {{ $tx->type_label }} - {{ $tx->quantity }} {{ $tx->item->unit ?? '' }} - {{ $tx->user->name ?? '' }}
                                     </div>
                                 </div>
-                                <span class="badge-status badge-{{ $tx->status }}"
-                                    style="font-size:10px;">{{ ucfirst($tx->status) }}</span>
                             </div>
                         @empty
                             <div class="empty-state" style="padding:30px 10px;">
@@ -579,46 +588,63 @@
 @push('scripts')
     <script>
         // ===== Theme detection =====
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)';
-        const tickColor = isDark ? '#94a3b8' : '#6c757d';
-        const legendColor = isDark ? '#e2e8f0' : '#1a1a2e';
+        const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
+        const chartTextColor = () => isDark() ? '#cbd5e1' : '#475569';
+        const chartMutedColor = () => isDark() ? '#64748b' : '#94a3b8';
+        const chartGridColor = () => isDark() ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+        const chartSurfaceColor = () => isDark() ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.95)';
 
         function updateChartTheme() {
-            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-
-            const newLegendColor = isDark ? '#ffffff' : '#000000';
-            const newTickColor = isDark ? '#cbd5f5' : '#000000';
-            const newGridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)';
-
             [monthlyChartInstance, yearlyChartInstance, categoryChartInstance].forEach(chart => {
-
-                // ===== LEGEND (SEMUA CHART) =====
                 if (chart.options.plugins?.legend?.labels) {
-                    chart.options.plugins.legend.labels.color = newLegendColor;
+                    chart.options.plugins.legend.labels.color = chartTextColor();
                 }
 
-                // ===== KHUSUS BAR / LINE CHART (ADA SCALES) =====
+                if (chart.options.plugins?.tooltip) {
+                    chart.options.plugins.tooltip.backgroundColor = chartSurfaceColor();
+                    chart.options.plugins.tooltip.titleColor = isDark() ? '#f8fafc' : '#0f172a';
+                    chart.options.plugins.tooltip.bodyColor = chartTextColor();
+                    chart.options.plugins.tooltip.borderColor = isDark() ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.1)';
+                }
+
                 if (chart.options.scales) {
                     if (chart.options.scales.x?.ticks) {
-                        chart.options.scales.x.ticks.color = newTickColor;
+                        chart.options.scales.x.ticks.color = chartMutedColor();
                     }
 
                     if (chart.options.scales.y?.ticks) {
-                        chart.options.scales.y.ticks.color = newTickColor;
+                        chart.options.scales.y.ticks.color = chartMutedColor();
                     }
 
                     if (chart.options.scales.y?.grid) {
-                        chart.options.scales.y.grid.color = newGridColor;
+                        chart.options.scales.y.grid.color = chartGridColor();
                     }
                 }
 
                 chart.update();
             });
+
+            monthlyChartInstance.data.datasets[0].backgroundColor = lineGradient(monthlyCtx, isDark() ? 'rgba(59,130,246,0.4)' : 'rgba(59,130,246,0.3)');
+            monthlyChartInstance.data.datasets[1].backgroundColor = lineGradient(monthlyCtx, isDark() ? 'rgba(16,185,129,0.4)' : 'rgba(16,185,129,0.3)');
+            yearlyChartInstance.data.datasets[0].backgroundColor = lineGradient(yearlyCtx, isDark() ? 'rgba(59,130,246,0.4)' : 'rgba(59,130,246,0.3)');
+            yearlyChartInstance.data.datasets[1].backgroundColor = lineGradient(yearlyCtx, isDark() ? 'rgba(16,185,129,0.4)' : 'rgba(16,185,129,0.3)');
+            [monthlyChartInstance, yearlyChartInstance].forEach(chart => {
+                chart.data.datasets.forEach(dataset => {
+                    dataset.pointBackgroundColor = isDark() ? '#0f172a' : '#ffffff';
+                });
+                chart.update();
+            });
+
+            categoryChartInstance.data.datasets[0].backgroundColor = catColors
+                .slice(0, categoryChartInstance.data.labels.length)
+                .map(color => donutGradient(catCtx, color));
+            categoryChartInstance.update();
         }
 
-        function changeMonthlyYear(year) {
-            fetch(`{{ route('dashboard.monthlyData') }}?year=${year}`)
+        function changeMonthlyChart() {
+            const year = document.getElementById('monthlyYearFilter')?.value || @json($selectedYear);
+            const period = document.getElementById('monthlyPeriodFilter')?.value || 'ytd';
+            fetch(`{{ route('dashboard.monthlyData') }}?year=${encodeURIComponent(year)}&period=${encodeURIComponent(period)}`)
                 .then(res => res.json())
                 .then(data => {
 
@@ -644,70 +670,120 @@
         }
 
         // ===== Chart color constants =====
-        const masukBg = 'rgba(16, 185, 129, 0.8)';
-        const masukBorder = '#10b981';
-        const keluarBg = 'rgba(239, 68, 68, 0.7)';
-        const keluarBorder = '#ef4444';
+        const masukBorder = '#3b82f6';
+        const keluarBorder = '#10b981';
+        const catColors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#06b6d4', '#ef4444', '#14b8a6', '#ec4899'];
+
+        function lineGradient(ctx, color) {
+            const gradient = ctx.createLinearGradient(0, 0, 0, 320);
+            gradient.addColorStop(0, color);
+            gradient.addColorStop(1, 'rgba(255,255,255,0)');
+            return gradient;
+        }
+
+        function donutGradient(ctx, color) {
+            const gradient = ctx.createLinearGradient(0, 0, 0, 260);
+            const alpha = isDark() ? 0.72 : 0.52;
+            gradient.addColorStop(0, hexToRgba(color, alpha));
+            gradient.addColorStop(1, hexToRgba(color, 0.06));
+            return gradient;
+        }
+
+        function hexToRgba(hex, alpha) {
+            const value = hex.replace('#', '');
+            const r = parseInt(value.substring(0, 2), 16);
+            const g = parseInt(value.substring(2, 4), 16);
+            const b = parseInt(value.substring(4, 6), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        function tooltipOptions() {
+            return {
+                mode: 'index',
+                intersect: false,
+                usePointStyle: true,
+                backgroundColor: chartSurfaceColor(),
+                titleColor: isDark() ? '#f8fafc' : '#0f172a',
+                bodyColor: chartTextColor(),
+                borderColor: isDark() ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.1)',
+                borderWidth: 1,
+                padding: 12,
+                boxPadding: 6
+            };
+        }
 
         // ===== Common chart options factory =====
-        function barChartOptions() {
+        function premiumLineOptions() {
             return {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         position: 'top',
+                        align: 'end',
                         labels: {
                             usePointStyle: true,
                             pointStyle: 'circle',
-                            padding: 20,
-                            color: legendColor,
+                            padding: 15,
+                            color: chartTextColor(),
                             font: { family: 'Inter', size: 12, weight: 500 }
                         }
-                    }
+                    },
+                    tooltip: tooltipOptions()
                 },
                 scales: {
                     x: {
-                        grid: { display: false },
-                        ticks: { color: tickColor, font: { family: 'Inter', size: 11 } }
+                        grid: { display: false, drawBorder: false },
+                        ticks: { color: chartMutedColor(), padding: 10, font: { family: 'Inter', size: 11 } }
                     },
                     y: {
                         beginAtZero: true,
-                        grid: { color: gridColor },
-                        ticks: { color: tickColor, font: { family: 'Inter', size: 11 } }
+                        grid: { color: chartGridColor(), drawBorder: false },
+                        ticks: { color: chartMutedColor(), padding: 10, font: { family: 'Inter', size: 11 } }
                     }
-                }
+                },
+                interaction: { mode: 'nearest', axis: 'x', intersect: false }
             };
         }
 
         // ===== Monthly Chart =====
         const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
         const monthlyChartInstance = new Chart(monthlyCtx, {
-            type: 'bar',
+            type: 'line',
             data: {
                 labels: {!! json_encode(array_column($monthlyData, 'label')) !!},
                 datasets: [
                     {
                         label: @json($receiptLabel),
                         data: {!! json_encode(array_column($monthlyData, 'masuk')) !!},
-                        backgroundColor: masukBg,
+                        fill: true,
+                        backgroundColor: lineGradient(monthlyCtx, isDark() ? 'rgba(59,130,246,0.4)' : 'rgba(59,130,246,0.3)'),
                         borderColor: masukBorder,
                         borderWidth: 2,
-                        borderRadius: 6,
-                        borderSkipped: false,
+                        tension: 0.4,
+                        pointBackgroundColor: isDark() ? '#0f172a' : '#ffffff',
+                        pointBorderColor: masukBorder,
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
                     },
                     {
                         label: @json($issueLabel),
                         data: {!! json_encode(array_column($monthlyData, 'keluar')) !!},
-                        backgroundColor: keluarBg,
+                        fill: true,
+                        backgroundColor: lineGradient(monthlyCtx, isDark() ? 'rgba(16,185,129,0.4)' : 'rgba(16,185,129,0.3)'),
                         borderColor: keluarBorder,
                         borderWidth: 2,
-                        borderRadius: 6,
-                        borderSkipped: false,
+                        tension: 0.4,
+                        pointBackgroundColor: isDark() ? '#0f172a' : '#ffffff',
+                        pointBorderColor: keluarBorder,
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
                     }
                 ]
             },
-            options: barChartOptions()
+            options: premiumLineOptions()
         });
 
         // ===== Yearly Chart =====
@@ -720,55 +796,67 @@
                     {
                         label: @json($receiptLabel),
                         data: {!! json_encode(array_column($yearlyData, 'masuk')) !!},
-                        backgroundColor: masukBg,
+                        fill: true,
+                        backgroundColor: lineGradient(yearlyCtx, isDark() ? 'rgba(59,130,246,0.4)' : 'rgba(59,130,246,0.3)'),
                         borderColor: masukBorder,
                         borderWidth: 2,
-                        borderRadius: 6,
-                        borderSkipped: false,
+                        tension: 0.4,
+                        pointBackgroundColor: isDark() ? '#0f172a' : '#ffffff',
+                        pointBorderColor: masukBorder,
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
                     },
                     {
                         label: @json($issueLabel),
                         data: {!! json_encode(array_column($yearlyData, 'keluar')) !!},
-                        backgroundColor: keluarBg,
+                        fill: true,
+                        backgroundColor: lineGradient(yearlyCtx, isDark() ? 'rgba(16,185,129,0.4)' : 'rgba(16,185,129,0.3)'),
                         borderColor: keluarBorder,
                         borderWidth: 2,
-                        borderRadius: 6,
-                        borderSkipped: false,
+                        tension: 0.4,
+                        pointBackgroundColor: isDark() ? '#0f172a' : '#ffffff',
+                        pointBorderColor: keluarBorder,
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
                     }
                 ]
             },
-            options: barChartOptions()
+            options: premiumLineOptions()
         });
 
         // ===== Category Donut Chart =====
         const catCtx = document.getElementById('categoryChart').getContext('2d');
-        const catColors = ['#10b981', '#06b6d4', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#6366f1'];
         const categoryChartInstance = new Chart(catCtx, {
             type: 'doughnut',
             data: {
                 labels: {!! json_encode(array_column($categoryData, 'category')) !!},
                 datasets: [{
                     data: {!! json_encode(array_column($categoryData, 'stock')) !!},
-                    backgroundColor: catColors.slice(0, {{ count($categoryData) }}),
-                    borderWidth: 0,
-                    hoverOffset: 8,
+                    backgroundColor: catColors.slice(0, {{ count($categoryData) }}).map(color => donutGradient(catCtx, color)),
+                    borderColor: catColors.slice(0, {{ count($categoryData) }}),
+                    borderWidth: 2,
+                    hoverOffset: 6,
+                    spacing: 4,
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                cutout: '65%',
+                cutout: '70%',
                 plugins: {
                     legend: {
                         position: 'bottom',
                         labels: {
                             usePointStyle: true,
                             pointStyle: 'circle',
-                            padding: 16,
-                            color: legendColor,
+                            padding: 15,
+                            color: chartMutedColor(),
                             font: { family: 'Inter', size: 11, weight: 500 }
                         }
-                    }
+                    },
+                    tooltip: tooltipOptions()
                 }
             }
         });
@@ -928,7 +1016,8 @@
                 .then(data => {
                     categoryChartInstance.data.labels = data.map(d => d.category);
                     categoryChartInstance.data.datasets[0].data = data.map(d => d.stock);
-                    categoryChartInstance.data.datasets[0].backgroundColor = catColors.slice(0, data.length);
+                    categoryChartInstance.data.datasets[0].backgroundColor = catColors.slice(0, data.length).map(color => donutGradient(catCtx, color));
+                    categoryChartInstance.data.datasets[0].borderColor = catColors.slice(0, data.length);
                     categoryChartInstance.update('active');
                 });
         });

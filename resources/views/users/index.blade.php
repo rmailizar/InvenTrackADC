@@ -1,18 +1,22 @@
 @extends('layouts.app')
 
-@section('title', auth()->user()->isSuperAdmin() ? 'User Management Global' : (auth()->user()->isManager() ? 'Approval User' : 'Manajemen User'))
-@section('subtitle', auth()->user()->isSuperAdmin() ? 'Kelola akun pengguna Bidang Umum dan Teknik' : (auth()->user()->isManager() ? 'Setujui atau tolak akun pengguna' : 'Kelola akun pengguna sistem'))
+@php
+    $actor = auth()->user();
+    $isTeknikActor = $actor->isTeknik();
+    $isTeknikManager = $actor->isManager() && $isTeknikActor;
+    $canManageUsers = $actor->isSuperAdmin() || $actor->isAdmin() || $isTeknikManager;
+    $isApprovalManager = $actor->isManager() && !$isTeknikManager;
+@endphp
+
+@section('title', $actor->isSuperAdmin() ? 'User Management Global' : ($isApprovalManager ? 'Approval User' : 'Manajemen User'))
+@section('subtitle', $actor->isSuperAdmin() ? 'Kelola akun pengguna Bidang Umum dan Teknik' : ($isApprovalManager ? 'Setujui atau tolak akun pengguna' : 'Kelola akun pengguna sistem'))
 
 @section('content')
-    @php
-        $actor = auth()->user();
-        $isTeknikActor = $actor->isTeknik();
-    @endphp
     <div class="animate-fade-in">
         <!-- Filter Bar -->
         <div class="filter-bar">
             <form method="GET"
-                action="{{ auth()->user()->isManager() ? route('pendingUsers.index') : route('users.index') }}">
+                action="{{ $isApprovalManager ? route('pendingUsers.index') : route('users.index') }}">
                 <div class="row align-items-end g-3">
                     <div class="col-md-4">
                         <label class="form-label">Cari User</label>
@@ -43,7 +47,7 @@
                             </select>
                         </div>
                     @endif
-                    @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
+                    @if($canManageUsers)
                         <div class="col-md-2">
                             <label class="form-label">Status Akun</label>
                             <select name="account_status" class="form-select">
@@ -61,7 +65,7 @@
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-search"></i>
                                 Filter</button>
-                            <a href="{{ auth()->user()->isManager() ? route('pendingUsers.index') : route('users.index') }}"
+                            <a href="{{ $isApprovalManager ? route('pendingUsers.index') : route('users.index') }}"
                                 class="btn btn-outline-secondary flex-fill"><i class="bi bi-x-lg"></i> Reset</a>
                         </div>
                     </div>
@@ -69,7 +73,7 @@
             </form>
         </div>
 
-        @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
+        @if($canManageUsers)
             <div class="d-flex justify-content-end mb-3">
                 <button type="button" class="btn btn-primary" onclick="openUserModal()">
                     <i class="bi bi-person-plus-fill"></i> Tambah User
@@ -92,11 +96,11 @@
                                 <th>Bidang</th>
                                 <th>No HP</th>
                                 <th>Persetujuan</th>
-                                @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
+                                @if($canManageUsers)
                                 <th>Status</th>
                                 @endif
                                 <th>Terdaftar</th>
-                                @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
+                                @if($canManageUsers)
                                 <th>Terakhir Login</th>
                                 @endif
                                 <th style="width:140px;">Aksi</th>
@@ -140,7 +144,7 @@
                                         <span
                                             class="badge-status badge-{{ $user->account_status }}">{{ ucfirst($user->account_status) }}</span>
                                     </td>
-                                    @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
+                                    @if($canManageUsers)
                                         @php $isOnline = $onlineUserIds->has($user->id); @endphp
                                         <td>
                                             <span class="badge-status {{ $isOnline ? 'badge-online' : 'badge-offline' }}">
@@ -152,7 +156,7 @@
                                     <td style="font-size:12px; color:var(--text-secondary);">
                                         {{ $user->created_at->format('d/m/Y') }}
                                     </td>
-                                    @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
+                                    @if($canManageUsers)
                                     <td style="font-size:12px;">
                                         {{ $user->last_login_at ? \Carbon\Carbon::parse($user->last_login_at)->format('d/m/Y, H:i') : '-' }}
                                     </td>
@@ -160,7 +164,7 @@
                                     <td>
                                         <div class="action-buttons">
                                             {{-- Manager: Approve/Reject user account --}}
-                                            @if(auth()->user()->isManager() && $user->account_status === 'pending')
+                                            @if($isApprovalManager && $user->account_status === 'pending')
                                                 <form action="{{ route('users.approveAccount', $user->id) }}" method="POST"
                                                     style="display:inline;" id="approveUser-{{ $user->id }}">
                                                     @csrf
@@ -180,7 +184,7 @@
                                             @endif
 
                                             {{-- Admin: Edit/Delete --}}
-                                            @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
+                                            @if($canManageUsers)
                                                 <button type="button" class="btn-action edit" title="Edit"
                                                     onclick="openUserModal({{ $user->id }})">
                                                     <i class="bi bi-pencil-fill"></i>
@@ -201,10 +205,10 @@
                                 </tr>
                             @empty
                                 <tr class="no-data-row">
-                                    <td colspan="{{ (auth()->user()->isAdmin() || auth()->user()->isSuperAdmin()) ? 12 : 10 }}">
+                                    <td colspan="{{ $canManageUsers ? 12 : 10 }}">
                                         <i class="bi bi-people"
                                             style="font-size:40px;display:block;margin-bottom:8px;opacity:0.3;"></i>
-                                        {{ auth()->user()->isManager() ? 'Tidak ada user menunggu approval' : 'Belum ada data user' }}
+                                        {{ $isApprovalManager ? 'Tidak ada user menunggu approval' : 'Belum ada data user' }}
                                     </td>
                                 </tr>
                             @endforelse
@@ -222,7 +226,7 @@
     </div>
 
     {{-- User Modal (Create/Edit) --}}
-    @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
+    @if($canManageUsers)
         <div class="modal fade inventrack-modal" id="userModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content" style="position:relative;">
@@ -349,7 +353,7 @@
     @endif
 @endsection
 
-@if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
+@if($canManageUsers)
     @push('scripts')
         <script>
             const userModalEl = document.getElementById('userModal');

@@ -36,6 +36,7 @@ class DashboardController extends Controller
             ->pluck('year');
 
         $selectedYear = $request->year ?? $availableYears->first() ?? $now->year;
+        $selectedMonthlyPeriod = $request->monthly_period ?? ($user->isTeknik() ? 'thisMonth' : 'ytd');
 
         // Stats cards
         $totalItems = Item::visibleFor($user)->count();
@@ -58,28 +59,7 @@ class DashboardController extends Controller
 
         // 📊 MONTHLY CHART (FIXED 12 BULAN)
         // ========================
-        $monthlyData = [];
-
-        for ($month = 1; $month <= 12; $month++) {
-
-            $date = Carbon::create($selectedYear, $month, 1);
-
-            $masuk = Transaction::visibleFor($user)->approved()->masuk()
-                ->whereYear('date', $selectedYear)
-                ->whereMonth('date', $month)
-                ->sum('quantity');
-
-            $keluar = Transaction::visibleFor($user)->approved()->keluar()
-                ->whereYear('date', $selectedYear)
-                ->whereMonth('date', $month)
-                ->sum('quantity');
-
-            $monthlyData[] = [
-                'label' => $date->translatedFormat('M'),
-                'masuk' => (int) $masuk,
-                'keluar' => (int) $keluar,
-            ];
-        }
+        $monthlyData = $this->monthlyChartData($user, (int) $selectedYear, $selectedMonthlyPeriod);
 
         // Available years for category filter
         $availableYears = Transaction::visibleFor($user)
@@ -120,17 +100,9 @@ class DashboardController extends Controller
             ];
         }
 
-        // Stock per category
-        $categories = Item::visibleFor($user)->select('category')->distinct()->pluck('category');
-        $categoryData = [];
-        foreach ($categories as $cat) {
-            $items = Item::visibleFor($user)->where('category', $cat)->get();
-            $totalStock = $items->sum(fn($item) => $item->current_stock);
-            $categoryData[] = [
-                'category' => $cat,
-                'stock' => max(0, $totalStock),
-            ];
-        }
+        $categoryData = $user->isTeknik()
+            ? $this->shipUnloaderStockData($user)
+            : $this->categoryStockData($user);
 
         // Top 5 items most keluar
         $topKeluar = Transaction::visibleFor($user)->approved()->keluar()
@@ -170,6 +142,7 @@ class DashboardController extends Controller
             'pendingCount',
             'lowStockItems',
             'monthlyData',
+            'selectedMonthlyPeriod',
             'yearlyData',
             'selectedYear',
             'categoryData',
@@ -185,32 +158,77 @@ class DashboardController extends Controller
 
     public function monthlyData(Request $request)
     {
-        $year = $request->year ?? now()->year;
+        $year = (int) ($request->year ?? now()->year);
+        $period = $request->period ?? (auth()->user()->isTeknik() ? 'thisMonth' : 'ytd');
+
+        return response()->json($this->monthlyChartData(auth()->user(), $year, $period));
+    }
+
+    private function monthlyChartData($user, int $year, string $period = 'ytd'): array
+    {
+        if (!in_array($period, ['thisMonth', '6months', 'ytd'], true)) {
+            $period = 'ytd';
+        }
+
+        $now = Carbon::now();
+        $anchorMonth = $year === (int) $now->year ? (int) $now->month : 12;
+        $points = [];
+
+        if ($period === 'thisMonth') {
+            $date = Carbon::create($year, $year === (int) $now->year ? (int) $now->month : 12, 1);
+            $weeksInMonth = (int) ceil($date->daysInMonth / 7);
+
+            for ($week = 1; $week <= $weeksInMonth; $week++) {
+                $startDay = (($week - 1) * 7) + 1;
+                $endDay = min($week * 7, $date->daysInMonth);
+                $points[] = [
+                    'label' => 'Week ' . $week,
+                    'start' => $date->copy()->day($startDay)->startOfDay(),
+                    'end' => $date->copy()->day($endDay)->endOfDay(),
+                ];
+            }
+        } elseif ($period === '6months') {
+            for ($i = 5; $i >= 0; $i--) {
+                $date = Carbon::create($year, $anchorMonth, 1)->subMonths($i);
+                $points[] = [
+                    'label' => $date->translatedFormat('M'),
+                    'month' => (int) $date->month,
+                    'year' => (int) $date->year,
+                ];
+            }
+        } else {
+            for ($month = 1; $month <= 12; $month++) {
+                $date = Carbon::create($year, $month, 1);
+                $points[] = [
+                    'label' => $date->translatedFormat('M'),
+                    'month' => $month,
+                    'year' => $year,
+                ];
+            }
+        }
 
         $monthlyData = [];
 
-        for ($month = 1; $month <= 12; $month++) {
+        foreach ($points as $point) {
+            $masukQuery = Transaction::visibleFor($user)->approved()->masuk();
+            $keluarQuery = Transaction::visibleFor($user)->approved()->keluar();
 
-            $date = \Carbon\Carbon::create($year, $month, 1);
-
-            $masuk = Transaction::visibleFor(auth()->user())->approved()->masuk()
-                ->whereYear('date', $year)
-                ->whereMonth('date', $month)
-                ->sum('quantity');
-
-            $keluar = Transaction::visibleFor(auth()->user())->approved()->keluar()
-                ->whereYear('date', $year)
-                ->whereMonth('date', $month)
-                ->sum('quantity');
+            if (isset($point['start'], $point['end'])) {
+                $masukQuery->whereBetween('date', [$point['start'], $point['end']]);
+                $keluarQuery->whereBetween('date', [$point['start'], $point['end']]);
+            } else {
+                $masukQuery->whereYear('date', $point['year'])->whereMonth('date', $point['month']);
+                $keluarQuery->whereYear('date', $point['year'])->whereMonth('date', $point['month']);
+            }
 
             $monthlyData[] = [
-                'label' => $date->translatedFormat('M'),
-                'masuk' => (int) $masuk,
-                'keluar' => (int) $keluar,
+                'label' => $point['label'],
+                'masuk' => (int) $masukQuery->sum('quantity'),
+                'keluar' => (int) $keluarQuery->sum('quantity'),
             ];
         }
 
-        return response()->json($monthlyData);
+        return $monthlyData;
     }
 
     /**
@@ -386,14 +404,25 @@ class DashboardController extends Controller
     public function categoryByYear(Request $request)
     {
         $year = $request->get('year');
-        $categories = Item::visibleFor(auth()->user())->select('category')->distinct()->pluck('category');
+        $user = auth()->user();
+
+        if ($user->isTeknik()) {
+            return response()->json($this->shipUnloaderStockData($user, $year));
+        }
+
+        return response()->json($this->categoryStockData($user, $year));
+    }
+
+    private function categoryStockData($user, ?int $year = null): array
+    {
+        $categories = Item::visibleFor($user)->select('category')->distinct()->pluck('category');
         $data = [];
 
         foreach ($categories as $cat) {
-            $itemIds = Item::visibleFor(auth()->user())->where('category', $cat)->pluck('id');
+            $itemIds = Item::visibleFor($user)->where('category', $cat)->pluck('id');
 
-            $masukQuery = Transaction::visibleFor(auth()->user())->approved()->masuk()->whereIn('item_id', $itemIds);
-            $keluarQuery = Transaction::visibleFor(auth()->user())->approved()->keluar()->whereIn('item_id', $itemIds);
+            $masukQuery = Transaction::visibleFor($user)->approved()->masuk()->whereIn('item_id', $itemIds);
+            $keluarQuery = Transaction::visibleFor($user)->approved()->keluar()->whereIn('item_id', $itemIds);
 
             if ($year) {
                 $masukQuery->whereYear('date', $year);
@@ -409,6 +438,55 @@ class DashboardController extends Controller
             ];
         }
 
-        return response()->json($data);
+        return $data;
+    }
+
+    private function shipUnloaderStockData($user, ?int $year = null): array
+    {
+        $stockByShip = collect(['1', '2', '3', '4'])->mapWithKeys(fn($ship) => [$ship => 0])->all();
+        $items = Item::visibleFor($user)->where('bidang', 'teknik')->get();
+
+        foreach ($items as $item) {
+            $ships = collect(explode(',', (string) $item->ship_unloader))
+                ->map(fn($ship) => trim($ship))
+                ->filter(fn($ship) => in_array($ship, ['1', '2', '3', '4'], true))
+                ->unique()
+                ->values();
+
+            if ($ships->isEmpty()) {
+                continue;
+            }
+
+            $stock = $year
+                ? $this->itemStockForYear($user, $item->id, (int) $year)
+                : $item->current_stock;
+            $stock = max(0, (int) $stock);
+
+            foreach ($ships as $ship) {
+                $stockByShip[$ship] += $stock;
+            }
+        }
+
+        return collect($stockByShip)
+            ->map(fn($stock, $ship) => [
+                'category' => "Ship {$ship}",
+                'stock' => $stock,
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function itemStockForYear($user, int $itemId, int $year): int
+    {
+        $masuk = Transaction::visibleFor($user)->approved()->masuk()
+            ->where('item_id', $itemId)
+            ->whereYear('date', $year)
+            ->sum('quantity');
+        $keluar = Transaction::visibleFor($user)->approved()->keluar()
+            ->where('item_id', $itemId)
+            ->whereYear('date', $year)
+            ->sum('quantity');
+
+        return (int) ($masuk - $keluar);
     }
 }

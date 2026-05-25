@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Item;
 use App\Models\StuffRequest;
 use App\Models\Transaction;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -41,8 +42,181 @@ class StuffRequestController extends Controller
         $items = $query->orderBy('name')->get();
         $categories = Item::where('bidang', $activeBidang)->select('category')->distinct()->pluck('category');
         $allItems = Item::where('bidang', $activeBidang)->orderBy('name')->get(); // for the select dropdown
+        $publicDashboard = null;
 
-        return view('public.stuff-request', compact('items', 'categories', 'allItems', 'activeBidang'));
+        if ($activeBidang === 'teknik') {
+            $now = Carbon::now();
+            $allTeknikItems = Item::where('bidang', 'teknik')->get();
+            $availableYears = Transaction::where('bidang', 'teknik')
+                ->approved()
+                ->selectRaw('YEAR(date) as year')
+                ->distinct()
+                ->orderByDesc('year')
+                ->pluck('year');
+            $selectedYear = $availableYears->first() ?? $now->year;
+
+            $publicDashboard = [
+                'totalItems' => $allTeknikItems->count(),
+                'masukBulanIni' => Transaction::where('bidang', 'teknik')->approved()->masuk()
+                    ->whereMonth('date', $now->month)
+                    ->whereYear('date', $now->year)
+                    ->sum('quantity'),
+                'keluarBulanIni' => Transaction::where('bidang', 'teknik')->approved()->keluar()
+                    ->whereMonth('date', $now->month)
+                    ->whereYear('date', $now->year)
+                    ->sum('quantity'),
+                'lowStockCount' => $allTeknikItems
+                    ->filter(fn($item) => $item->current_stock <= $item->min_stock)
+                    ->count(),
+                'selectedMonthlyPeriod' => $request->monthly_period ?? 'thisMonth',
+                'monthlyData' => $this->publicMonthlyChartData((int) $selectedYear, $request->monthly_period ?? 'thisMonth'),
+                'categoryData' => $this->publicShipUnloaderStockData($allTeknikItems),
+                'availableYears' => $availableYears->isNotEmpty() ? $availableYears : collect([$now->year]),
+                'selectedYear' => $selectedYear,
+                'recentTransactions' => Transaction::with(['item', 'user'])
+                    ->where('bidang', 'teknik')
+                    ->latest()
+                    ->limit(5)
+                    ->get(),
+                'topKeluar' => Transaction::with('item')
+                    ->where('bidang', 'teknik')
+                    ->approved()
+                    ->keluar()
+                    ->selectRaw('item_id, SUM(quantity) as total')
+                    ->groupBy('item_id')
+                    ->orderByDesc('total')
+                    ->limit(5)
+                    ->get(),
+            ];
+        }
+
+        return view('public.stuff-request', compact('items', 'categories', 'allItems', 'activeBidang', 'publicDashboard'));
+    }
+
+    public function publicMonthlyData(Request $request)
+    {
+        $year = (int) ($request->year ?? now()->year);
+        $period = $request->period ?? 'thisMonth';
+
+        return response()->json($this->publicMonthlyChartData($year, $period));
+    }
+
+    public function publicShipUnloaderData(Request $request)
+    {
+        $year = $request->filled('year') ? (int) $request->year : null;
+        $items = Item::where('bidang', 'teknik')->get();
+
+        return response()->json($this->publicShipUnloaderStockData($items, $year));
+    }
+
+    private function publicMonthlyChartData(int $year, string $period = 'thisMonth'): array
+    {
+        if (!in_array($period, ['thisMonth', '6months', 'ytd'], true)) {
+            $period = 'thisMonth';
+        }
+
+        $now = Carbon::now();
+        $anchorMonth = $year === (int) $now->year ? (int) $now->month : 12;
+        $points = [];
+
+        if ($period === 'thisMonth') {
+            $date = Carbon::create($year, $anchorMonth, 1);
+            $weeksInMonth = (int) ceil($date->daysInMonth / 7);
+
+            for ($week = 1; $week <= $weeksInMonth; $week++) {
+                $startDay = (($week - 1) * 7) + 1;
+                $endDay = min($week * 7, $date->daysInMonth);
+                $points[] = [
+                    'label' => 'Week ' . $week,
+                    'start' => $date->copy()->day($startDay)->startOfDay(),
+                    'end' => $date->copy()->day($endDay)->endOfDay(),
+                ];
+            }
+        } elseif ($period === '6months') {
+            for ($i = 5; $i >= 0; $i--) {
+                $date = Carbon::create($year, $anchorMonth, 1)->subMonths($i);
+                $points[] = [
+                    'label' => $date->translatedFormat('M'),
+                    'month' => (int) $date->month,
+                    'year' => (int) $date->year,
+                ];
+            }
+        } else {
+            for ($month = 1; $month <= 12; $month++) {
+                $date = Carbon::create($year, $month, 1);
+                $points[] = [
+                    'label' => $date->translatedFormat('M'),
+                    'month' => $month,
+                    'year' => $year,
+                ];
+            }
+        }
+
+        $monthlyData = [];
+
+        foreach ($points as $point) {
+            $masukQuery = Transaction::where('bidang', 'teknik')->approved()->masuk();
+            $keluarQuery = Transaction::where('bidang', 'teknik')->approved()->keluar();
+
+            if (isset($point['start'], $point['end'])) {
+                $masukQuery->whereBetween('date', [$point['start'], $point['end']]);
+                $keluarQuery->whereBetween('date', [$point['start'], $point['end']]);
+            } else {
+                $masukQuery->whereYear('date', $point['year'])->whereMonth('date', $point['month']);
+                $keluarQuery->whereYear('date', $point['year'])->whereMonth('date', $point['month']);
+            }
+
+            $monthlyData[] = [
+                'label' => $point['label'],
+                'masuk' => (int) $masukQuery->sum('quantity'),
+                'keluar' => (int) $keluarQuery->sum('quantity'),
+            ];
+        }
+
+        return $monthlyData;
+    }
+
+    private function publicShipUnloaderStockData($items, ?int $year = null): array
+    {
+        $stockByShip = collect(['1', '2', '3', '4'])->mapWithKeys(fn($ship) => [$ship => 0])->all();
+
+        foreach ($items as $item) {
+            $ships = collect(explode(',', (string) $item->ship_unloader))
+                ->map(fn($ship) => trim($ship))
+                ->filter(fn($ship) => in_array($ship, ['1', '2', '3', '4'], true))
+                ->unique()
+                ->values();
+
+            $stock = $year
+                ? $this->publicItemStockForYear($item->id, $year)
+                : $item->current_stock;
+
+            foreach ($ships as $ship) {
+                $stockByShip[$ship] += max(0, (int) $stock);
+            }
+        }
+
+        return collect($stockByShip)
+            ->map(fn($stock, $ship) => [
+                'category' => "Ship {$ship}",
+                'stock' => $stock,
+            ])
+            ->values()
+            ->all();
+    }
+
+    private function publicItemStockForYear(int $itemId, int $year): int
+    {
+        $masuk = Transaction::where('bidang', 'teknik')->approved()->masuk()
+            ->where('item_id', $itemId)
+            ->whereYear('date', $year)
+            ->sum('quantity');
+        $keluar = Transaction::where('bidang', 'teknik')->approved()->keluar()
+            ->where('item_id', $itemId)
+            ->whereYear('date', $year)
+            ->sum('quantity');
+
+        return (int) ($masuk - $keluar);
     }
 
     /**
@@ -279,7 +453,7 @@ class StuffRequestController extends Controller
         $user = auth()->user();
         $canCancelPendingTeknik = $stuffRequest->bidang === 'teknik'
             && $stuffRequest->status === 'pending'
-            && $user->isAdmin()
+            && ($user->isAdmin() || $user->isManager())
             && $user->isTeknik();
 
         if ($stuffRequest->status !== 'approved' && !$canCancelPendingTeknik) {

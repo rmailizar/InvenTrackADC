@@ -2,14 +2,17 @@
     $isTeknik = auth()->user()->bidang === 'teknik';
     $currentSort = request('sort', 'latest') === 'oldest' ? 'oldest' : 'latest';
     $nextSort = $currentSort === 'oldest' ? 'latest' : 'oldest';
+    $showCreateButton = $showCreateButton ?? true;
 @endphp
 
 <div id="transactionsTableRegion">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="text-muted" style="font-size:13px;">Total: {{ $transactions->total() }} transaksi</div>
-        <button type="button" class="btn btn-primary" onclick="openTransactionModal()">
-            <i class="bi bi-plus-lg"></i> Input Transaksi
-        </button>
+        @if($showCreateButton)
+            <button type="button" class="btn btn-primary" onclick="openTransactionModal()">
+                <i class="bi bi-plus-lg"></i> Input Transaksi
+            </button>
+        @endif
     </div>
 
     <div class="card">
@@ -41,7 +44,6 @@
                                 <th class="text-end">Harga Satuan</th>
                                 <th>Satuan</th>
                                 <th>User</th>
-                                <th>Status</th>
                                 <th class="text-center" style="width:72px;">Aksi</th>
                             </tr>
                         @else
@@ -64,7 +66,6 @@
                                 <th>Jumlah</th>
                                 <th>Satuan</th>
                                 <th>User</th>
-                                <th>Status</th>
                                 <th>Keterangan</th>
                                 <th class="text-center" style="width:72px;">Aksi</th>
                             </tr>
@@ -91,16 +92,25 @@
                                     <td class="text-end">{{ $tx->price === null ? '-' : 'Rp ' . number_format($tx->price, 0, ',', '.') }}</td>
                                     <td>{{ $tx->item->unit ?? '-' }}</td>
                                     <td>{{ $tx->user->name ?? '-' }}</td>
-                                    <td>
-                                        <span class="badge-status badge-approved">
-                                            <i class="bi bi-check-circle-fill"></i> Approved
-                                        </span>
-                                    </td>
                                     <td class="text-center">
-                                        <button type="button" class="btn btn-sm btn-outline-primary btn-transaction-detail-open"
-                                            title="Lihat Detail" data-transaction-id="{{ $tx->id }}">
-                                            <i class="bi bi-eye-fill"></i>
-                                        </button>
+                                        <div class="d-flex justify-content-center gap-1">
+                                            <button type="button" class="btn btn-sm btn-outline-primary btn-transaction-detail-open"
+                                                title="Lihat Detail" data-transaction-id="{{ $tx->id }}">
+                                                <i class="bi bi-eye-fill"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-warning"
+                                                title="Edit" onclick="openTransactionModal({{ $tx->id }})">
+                                                <i class="bi bi-pencil-fill"></i>
+                                            </button>
+                                            <form action="{{ route('transactions.destroy', $tx) }}" method="POST" id="deleteTx-{{ $tx->id }}">
+                                                @csrf
+                                                @method('DELETE')
+                                                <button type="button" class="btn btn-sm btn-outline-danger" title="Hapus"
+                                                    onclick="swalConfirm('Hapus Transaksi', 'Yakin hapus transaksi ini? Data yang sudah dihapus tidak bisa dikembalikan.', 'warning', 'Ya, Hapus', '#deleteTx-{{ $tx->id }}')">
+                                                    <i class="bi bi-trash-fill"></i>
+                                                </button>
+                                            </form>
+                                        </div>
                                     </td>
                                 @else
                                     <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
@@ -108,14 +118,6 @@
                                     <td class="fw-700">{{ number_format($tx->quantity) }}</td>
                                     <td>{{ $tx->item->unit ?? '-' }}</td>
                                     <td>{{ $tx->user->name ?? '-' }}</td>
-                                    <td>
-                                        <span class="badge-status badge-{{ $tx->status }}">
-                                            {{ $tx->status === 'pending' ? 'Menunggu Approval' : ucfirst($tx->status) }}
-                                        </span>
-                                        @if($tx->status !== 'pending' && $tx->approver)
-                                            <div style="font-size:10px; color:var(--text-muted); margin-top:2px;">oleh {{ $tx->approver->name }}</div>
-                                        @endif
-                                    </td>
                                     <td style="max-width:220px; font-size:12px; color:var(--text-secondary);">
                                         {{ \Illuminate\Support\Str::limit($tx->description, 60) }}
                                     </td>
@@ -129,7 +131,7 @@
                             </tr>
                         @empty
                             <tr class="no-data-row">
-                                <td colspan="{{ $isTeknik ? 14 : 11 }}">
+                                <td colspan="{{ $isTeknik ? 13 : 10 }}">
                                     <i class="bi bi-inbox" style="font-size:40px;display:block;margin-bottom:8px;opacity:0.3;"></i>
                                     Belum ada data transaksi
                                 </td>

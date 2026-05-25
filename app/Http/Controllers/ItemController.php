@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
+use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ItemController extends Controller
 {
@@ -57,6 +59,7 @@ class ItemController extends Controller
             'bidang' => auth()->user()->isSuperAdmin() ? 'required|in:teknik,umum' : 'nullable|in:teknik,umum',
             'no_normalisasi' => 'nullable|string|max:255',
             'lokasi' => 'nullable|string|max:255',
+            'current_stock' => 'nullable|integer|min:0',
             'ship_unloader' => 'nullable|array',
             'ship_unloader.*' => 'in:1,2,3,4',
         ]);
@@ -73,7 +76,16 @@ class ItemController extends Controller
             $validated['ship_unloader'] = null;
         }
 
-        Item::create($validated);
+        $currentStock = (int) ($validated['current_stock'] ?? 0);
+        unset($validated['current_stock']);
+
+        DB::transaction(function () use ($validated, $currentStock) {
+            $item = Item::create($validated);
+
+            if ($item->bidang === 'teknik' && $currentStock > 0) {
+                $this->createStockAdjustment($item, $currentStock, 'Stok awal dari Master SOH');
+            }
+        });
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true, 'message' => 'Barang berhasil ditambahkan.']);
@@ -106,6 +118,7 @@ class ItemController extends Controller
             'bidang' => auth()->user()->isSuperAdmin() ? 'required|in:teknik,umum' : 'nullable|in:teknik,umum',
             'no_normalisasi' => 'nullable|string|max:255',
             'lokasi' => 'nullable|string|max:255',
+            'current_stock' => 'nullable|integer|min:0',
             'ship_unloader' => 'nullable|array',
             'ship_unloader.*' => 'in:1,2,3,4',
         ]);
@@ -122,7 +135,21 @@ class ItemController extends Controller
             $validated['ship_unloader'] = null;
         }
 
-        $item->update($validated);
+        $targetStock = (int) ($validated['current_stock'] ?? $item->current_stock);
+        unset($validated['current_stock']);
+
+        DB::transaction(function () use ($item, $validated, $targetStock) {
+            $item->update($validated);
+            $item->refresh();
+
+            if ($item->bidang === 'teknik') {
+                $delta = $targetStock - $item->current_stock;
+
+                if ($delta !== 0) {
+                    $this->createStockAdjustment($item, abs($delta), 'Penyesuaian stok dari Master SOH', $delta > 0 ? 'in' : 'out');
+                }
+            }
+        });
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true, 'message' => 'Barang berhasil diupdate.']);
@@ -162,6 +189,27 @@ class ItemController extends Controller
         return array_merge($item->toArray(), [
             'current_stock' => $item->current_stock,
             'volume' => $item->current_stock,
+        ]);
+    }
+
+    private function createStockAdjustment(Item $item, int $quantity, string $description, string $type = 'in'): void
+    {
+        Transaction::create([
+            'item_id' => $item->id,
+            'user_id' => auth()->id(),
+            'bidang' => $item->bidang,
+            'no_normalisasi' => $item->no_normalisasi,
+            'lokasi' => $item->lokasi,
+            'volume' => $quantity,
+            'ship_unloader' => $item->ship_unloader,
+            'date' => now()->toDateString(),
+            'type' => $type,
+            'quantity' => $quantity,
+            'price' => null,
+            'description' => $description,
+            'status' => 'approved',
+            'approved_by' => auth()->id(),
+            'approved_at' => now(),
         ]);
     }
 }

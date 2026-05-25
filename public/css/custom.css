@@ -809,6 +809,12 @@ body.public-layout .public-page {
     transition: var(--transition);
 }
 
+.public-header > .container {
+    max-width: none;
+    padding-left: clamp(20px, 3vw, 56px);
+    padding-right: clamp(20px, 3vw, 56px);
+}
+
 /* Wrapper Utama */
 .header-wrapper {
     display: grid !important;
@@ -3903,7 +3909,8 @@ body.login-page.reset-password-page .reset-password-shell {
 }
 
 .background-glow-container::after {
-    top: 16%;
+    top: 28%;
+    left: -1240px;
 }
 
 .nexus-bg,
@@ -3997,6 +4004,7 @@ body.login-page.reset-password-page .reset-password-shell {
     opacity: 0.72;
     transition: background-image 0.25s ease, opacity 0.25s ease;
     animation: nexusGridDrift 60s linear infinite;
+    will-change: background-position;
 }
 
 @keyframes nexusGridDrift {
@@ -4047,15 +4055,49 @@ body::before,
     z-index: 2;
 }
 
+.content-section {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 900px;
+}
+
 @media (max-width: 767.98px) {
     body,
+    .background-glow-container,
     .nexus-bg,
     .nexus-grid {
-        transition: none;
+        transition: none !important;
+        animation: none !important;
     }
 
     .nexus-grid {
-        opacity: 0.55;
+        display: none;
+        opacity: 0;
+        background-image: none;
+        background-position: center;
+        will-change: auto;
+    }
+
+    .background-glow-container::before,
+    .background-glow-container::after {
+        display: none !important;
+        animation: none !important;
+        transform: none !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+    }
+
+    .nexus-grid,
+    .background-glow-container::before,
+    .background-glow-container::after,
+    .notification-dot,
+    .badge {
+        animation: none !important;
     }
 }
 

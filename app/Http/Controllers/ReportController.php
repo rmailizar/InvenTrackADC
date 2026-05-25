@@ -53,7 +53,7 @@ class ReportController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        if ($request->ajax() || $request->wantsJson()) {
+        if (!$request->has('inventrack_section') && ($request->ajax() || $request->wantsJson())) {
             return response()->json([
                 'html' => view('reports.partials.transactions-table', compact('transactions'))->render(),
                 'sort' => $request->input('sort', 'latest') === 'oldest' ? 'oldest' : 'latest',
