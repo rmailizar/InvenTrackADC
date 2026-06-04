@@ -99,8 +99,8 @@ class ImportController extends Controller
         if ($type === 'items') {
             $sheet->setTitle('Template Barang');
             if ($isTeknik) {
-                $headers = ['no_normalisasi', 'nama_barang', 'kategori', 'ship_unloader', 'lokasi', 'satuan', 'min_stok'];
-                $sample = ['SU-01-LAN-001', 'Kabel LAN Cat6 305m', 'Jaringan', '1,2', 'Gudang Teknik A1', 'Box', 2];
+                $headers = ['no_normalisasi', 'nama_barang', 'kategori', 'komponen', 'lokasi', 'volume', 'satuan', 'min_stok'];
+                $sample = ['SU-01-LAN-001', 'Kabel LAN Cat6 305m', 'Spare Part', 'Jaringan', 'Gudang Teknik A1', 25, 'Box', 2];
             } else {
                 $headers = ['nama_barang', 'kategori', 'satuan', 'min_stok'];
                 $sample = ['Kertas HVS A4', 'ATK', 'Rim', 10];
@@ -108,8 +108,8 @@ class ImportController extends Controller
         } else {
             $sheet->setTitle('Template Transaksi');
             if ($isTeknik) {
-                $headers = ['tanggal', 'jenis', 'no_normalisasi', 'nama_barang', 'ship_unloader', 'lokasi', 'volume', 'satuan', 'harga', 'keterangan'];
-                $sample = ['17/04/2026', 'in', 'SU-01-LAN-001', 'Kabel LAN Cat6 305m', '1,2', 'Gudang Teknik A1', 5, 'Box', 125000, 'Goods receipt teknik'];
+                $headers = ['tanggal', 'jenis', 'no_normalisasi', 'nama_barang', 'ship_unloader', 'lokasi', 'jumlah', 'satuan', 'keterangan'];
+                $sample = ['17/04/2026', 'in', 'SU-01-LAN-001', 'Kabel LAN Cat6 305m', '1,2', 'Gudang Teknik A1', 5, 'Box', 'Goods receipt teknik'];
             } else {
                 $headers = ['tanggal', 'nama_barang', 'jenis', 'jumlah', 'harga', 'keterangan'];
                 $sample = ['17/04/2026', 'Kertas HVS A4', 'in', 50, 55000, 'Pembelian bulanan'];

@@ -15,7 +15,13 @@ class ReportController extends Controller
     public function index(Request $request)
     {
         $activeTable = $request->input('table', 'transactions') === 'stock' ? 'stock' : 'transactions';
-        $categories = Item::visibleFor(auth()->user())->select('category')->distinct()->orderBy('category')->pluck('category');
+        $categoryColumn = auth()->user()?->isTeknik() ? 'component' : 'category';
+        $categories = Item::visibleFor(auth()->user())
+            ->select($categoryColumn)
+            ->whereNotNull($categoryColumn)
+            ->distinct()
+            ->orderBy($categoryColumn)
+            ->pluck($categoryColumn);
         $years = Transaction::visibleFor(auth()->user())
             ->selectRaw('YEAR(date) as year')
             ->distinct()
@@ -119,7 +125,7 @@ class ReportController extends Controller
 
         if ($request->filled('category')) {
             $query->whereHas('item', function ($q) use ($request) {
-                $q->where('category', $request->category);
+                $q->where(auth()->user()?->isTeknik() ? 'component' : 'category', $request->category);
             });
         }
 
@@ -127,7 +133,7 @@ class ReportController extends Controller
             $query->where('type', $request->type);
         }
 
-        if ($request->filled('price_filter') && $request->filled('year')) {
+        if (!auth()->user()?->isTeknik() && $request->filled('price_filter') && $request->filled('year')) {
             $operator = $request->price_filter === 'tertinggi' ? 'MAX' : null;
             $operator = $request->price_filter === 'terendah' ? 'MIN' : $operator;
 
@@ -162,12 +168,13 @@ class ReportController extends Controller
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
                         ->orWhere('category', 'like', "%{$search}%")
+                        ->orWhere('component', 'like', "%{$search}%")
                         ->orWhere('no_normalisasi', 'like', "%{$search}%")
                         ->orWhere('lokasi', 'like', "%{$search}%")
                         ->orWhere('unit', 'like', "%{$search}%");
                 });
             })
-            ->when($request->filled('category'), fn($query) => $query->where('category', $request->category))
+            ->when($request->filled('category'), fn($query) => $query->where(auth()->user()?->isTeknik() ? 'component' : 'category', $request->category))
             ->orderBy('name')
             ->get();
 

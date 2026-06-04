@@ -34,14 +34,13 @@
                                         </button>
                                     </span>
                                 </th>
-                                <th>Jenis</th>
                                 <th>No Normalisasi</th>
                                 <th>Nama Barang</th>
                                 <th>Komponen</th>
                                 <th>Ship Unloader</th>
                                 <th>Lokasi</th>
                                 <th class="text-center">Volume</th>
-                                <th class="text-end">Harga Satuan</th>
+                                <th class="text-center">Jumlah</th>
                                 <th>Satuan</th>
                                 <th>User</th>
                                 <th class="text-center" style="width:72px;">Aksi</th>
@@ -65,6 +64,7 @@
                                 <th>Kategori</th>
                                 <th>Jumlah</th>
                                 <th>Satuan</th>
+                                <th>Harga Satuan</th>
                                 <th>User</th>
                                 <th>Keterangan</th>
                                 <th class="text-center" style="width:72px;">Aksi</th>
@@ -76,20 +76,14 @@
                             <tr>
                                 <td>{{ $transactions->firstItem() + $index }}</td>
                                 <td>{{ $tx->date->format('d/m/Y') }}</td>
-                                <td>
-                                    <span class="badge-status badge-{{ $tx->type }}">
-                                        <i class="bi bi-arrow-{{ $tx->type === 'in' ? 'down' : 'up' }}-circle-fill" style="font-size:10px;"></i>
-                                        {{ $tx->type_label }}
-                                    </span>
-                                </td>
                                 @if($isTeknik)
                                     <td class="fw-600">{{ $tx->no_normalisasi ?? $tx->item->no_normalisasi ?? '-' }}</td>
                                     <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
-                                    <td>{{ $tx->item->category ?? '-' }}</td>
+                                    <td>{{ $tx->item->component ?? '-' }}</td>
                                     <td>{{ $tx->ship_unloader_label }}</td>
                                     <td>{{ $tx->lokasi ?? $tx->item->lokasi ?? '-' }}</td>
+                                    <td class="text-center fw-700">{{ $tx->volume === null ? '-' : number_format($tx->volume) }}</td>
                                     <td class="text-center fw-700">{{ number_format($tx->quantity) }}</td>
-                                    <td class="text-end">{{ $tx->price === null ? '-' : 'Rp ' . number_format($tx->price, 0, ',', '.') }}</td>
                                     <td>{{ $tx->item->unit ?? '-' }}</td>
                                     <td>{{ $tx->user->name ?? '-' }}</td>
                                     <td class="text-center">
@@ -113,10 +107,17 @@
                                         </div>
                                     </td>
                                 @else
+                                    <td>
+                                        <span class="badge-status badge-{{ $tx->type }}">
+                                            <i class="bi bi-arrow-{{ $tx->type === 'in' ? 'down' : 'up' }}-circle-fill" style="font-size:10px;"></i>
+                                            {{ $tx->type_label }}
+                                        </span>
+                                    </td>
                                     <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
                                     <td>{{ $tx->item->category ?? '-' }}</td>
                                     <td class="fw-700">{{ number_format($tx->quantity) }}</td>
                                     <td>{{ $tx->item->unit ?? '-' }}</td>
+                                    <td>{{ $tx->price === null ? '-' : 'Rp ' . number_format($tx->price, 0, ',', '.') }}</td>
                                     <td>{{ $tx->user->name ?? '-' }}</td>
                                     <td style="max-width:220px; font-size:12px; color:var(--text-secondary);">
                                         {{ \Illuminate\Support\Str::limit($tx->description, 60) }}
@@ -131,7 +132,7 @@
                             </tr>
                         @empty
                             <tr class="no-data-row">
-                                <td colspan="{{ $isTeknik ? 13 : 10 }}">
+                                <td colspan="{{ $isTeknik ? 12 : 11 }}">
                                     <i class="bi bi-inbox" style="font-size:40px;display:block;margin-bottom:8px;opacity:0.3;"></i>
                                     Belum ada data transaksi
                                 </td>

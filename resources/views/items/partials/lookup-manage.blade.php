@@ -1,11 +1,11 @@
 <div class="mt-3 p-3 rounded-3 border" style="background: var(--body-bg); border-color: var(--border-color) !important;">
     <div class="fw-600 mb-2" style="font-size:13px;">
-        <i class="bi bi-sliders2 text-primary-custom me-1"></i>Kelola opsi kategori &amp; satuan
+        <i class="bi bi-sliders2 text-primary-custom me-1"></i>Kelola opsi kategori, komponen &amp; satuan
     </div>
     <p class="text-muted small mb-3">Ubah nama menerapkan ke <strong>semua barang</strong> yang memakai nilai tersebut. Hapus memindahkan semua barang ke nilai baru sehingga nilai lama tidak lagi dipakai.</p>
 
     <div class="row g-3">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="small text-uppercase text-muted fw-600 mb-2" style="font-size:11px; letter-spacing:0.04em;">Kategori</div>
             @forelse($categories as $cat)
                 <div class="d-flex align-items-center justify-content-between gap-2 py-1 border-bottom" style="border-color: var(--border-color) !important;">
@@ -19,7 +19,23 @@
                 <span class="text-muted small">Belum ada data kategori.</span>
             @endforelse
         </div>
-        <div class="col-md-6">
+        @if(isset($components))
+            <div class="col-md-4">
+                <div class="small text-uppercase text-muted fw-600 mb-2" style="font-size:11px; letter-spacing:0.04em;">Komponen</div>
+                @forelse($components as $component)
+                    <div class="d-flex align-items-center justify-content-between gap-2 py-1 border-bottom" style="border-color: var(--border-color) !important;">
+                        <span class="text-truncate" title="{{ $component }}">{{ $component }}</span>
+                        <div class="d-flex gap-1 flex-shrink-0">
+                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 lookup-replace-btn" data-type="component" data-from="{{ $component }}" data-mode="edit" title="Ubah nama">Ubah</button>
+                            <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 lookup-replace-btn" data-type="component" data-from="{{ $component }}" data-mode="hapus" title="Hapus / pindahkan">Hapus</button>
+                        </div>
+                    </div>
+                @empty
+                    <span class="text-muted small">Belum ada data komponen.</span>
+                @endforelse
+            </div>
+        @endif
+        <div class="{{ isset($components) ? 'col-md-4' : 'col-md-6' }}">
             <div class="small text-uppercase text-muted fw-600 mb-2" style="font-size:11px; letter-spacing:0.04em;">Satuan</div>
             @forelse($units as $unit)
                 <div class="d-flex align-items-center justify-content-between gap-2 py-1 border-bottom" style="border-color: var(--border-color) !important;">
@@ -44,7 +60,7 @@
                 <input type="hidden" name="type" id="lookup-type">
                 <input type="hidden" name="from" id="lookup-from">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="lookupReplaceModalLabel">Ubah kategori / satuan</h5>
+                    <h5 class="modal-title" id="lookupReplaceModalLabel">Ubah kategori / komponen / satuan</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
                 </div>
                 <div class="modal-body">
@@ -82,8 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
             fromInput.value = from;
             toInput.value = '';
 
-            const isCat = typ === 'category';
-            const labelJenis = isCat ? 'kategori' : 'satuan';
+            const labelJenis = typ === 'category' ? 'kategori' : (typ === 'component' ? 'komponen' : 'satuan');
             if (mode === 'hapus') {
                 titleEl.textContent = 'Hapus ' + labelJenis;
                 hintEl.innerHTML = 'Semua barang dengan ' + labelJenis + ' <strong>' + escapeHtml(from) + '</strong> akan memakai ' + labelJenis + ' baru berikut (nilai lama tidak lagi dipakai):';

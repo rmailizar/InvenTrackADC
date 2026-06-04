@@ -45,12 +45,13 @@ class StockRecapExport implements FromCollection, WithHeadings, WithMapping, Wit
                 $query->where(function ($q) {
                     $q->where('name', 'like', "%{$this->search}%")
                         ->orWhere('category', 'like', "%{$this->search}%")
+                        ->orWhere('component', 'like', "%{$this->search}%")
                         ->orWhere('no_normalisasi', 'like', "%{$this->search}%")
                         ->orWhere('lokasi', 'like', "%{$this->search}%")
                         ->orWhere('unit', 'like', "%{$this->search}%");
                 });
             })
-            ->when($this->category, fn($query) => $query->where('category', $this->category))
+            ->when($this->category, fn($query) => $query->where($this->isTeknikReport() ? 'component' : 'category', $this->category))
             ->orderBy('name')
             ->get();
 
@@ -108,6 +109,7 @@ class StockRecapExport implements FromCollection, WithHeadings, WithMapping, Wit
                 'No',
                 'No Normalisasi',
                 'Nama Barang',
+                'Kategori',
                 'Komponen',
                 'Ship Unloader',
                 'Lokasi',
@@ -145,9 +147,10 @@ class StockRecapExport implements FromCollection, WithHeadings, WithMapping, Wit
                 $row->item->no_normalisasi ?? '-',
                 $row->item->name,
                 $row->item->category,
+                $row->item->component ?? '-',
                 $row->item->stock_ship_unloader_label,
                 $row->item->lokasi ?? '-',
-                $this->visibleNumber($row->stok_akhir),
+                $this->visibleNumber($row->item->volume),
                 $row->item->unit,
                 $this->visibleNumber($row->masuk),
                 $this->visibleNumber($row->keluar),
@@ -202,7 +205,7 @@ class StockRecapExport implements FromCollection, WithHeadings, WithMapping, Wit
             return 'Out of Stock';
         }
 
-        if ($row->stok_akhir < $row->item->min_stock) {
+        if ($row->stok_akhir <= $row->item->min_stock) {
             return 'Request Order';
         }
 

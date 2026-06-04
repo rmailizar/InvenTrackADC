@@ -29,6 +29,7 @@ class StuffRequestController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('category', 'like', "%{$search}%")
+                    ->orWhere('component', 'like', "%{$search}%")
                     ->orWhere('no_normalisasi', 'like', "%{$search}%")
                     ->orWhere('lokasi', 'like', "%{$search}%")
                     ->orWhere('unit', 'like', "%{$search}%");
@@ -36,11 +37,12 @@ class StuffRequestController extends Controller
         }
 
         if ($request->filled('category')) {
-            $query->where('category', $request->category);
+            $query->where($activeBidang === 'teknik' ? 'component' : 'category', $request->category);
         }
 
         $items = $query->orderBy('name')->get();
-        $categories = Item::where('bidang', $activeBidang)->select('category')->distinct()->pluck('category');
+        $categoryColumn = $activeBidang === 'teknik' ? 'component' : 'category';
+        $categories = Item::where('bidang', $activeBidang)->select($categoryColumn)->whereNotNull($categoryColumn)->distinct()->pluck($categoryColumn);
         $allItems = Item::where('bidang', $activeBidang)->orderBy('name')->get(); // for the select dropdown
         $publicDashboard = null;
 
@@ -312,7 +314,8 @@ class StuffRequestController extends Controller
                     ->orWhere('nip', 'like', "%{$search}%")
                     ->orWhereHas('lines.item', function ($q2) use ($search) {
                         $q2->where('name', 'like', "%{$search}%")
-                            ->orWhere('category', 'like', "%{$search}%");
+                            ->orWhere('category', 'like', "%{$search}%")
+                            ->orWhere('component', 'like', "%{$search}%");
                     });
             });
         }

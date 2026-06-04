@@ -216,14 +216,20 @@
                                             @endif
                                             <tr>
                                                 <td><code>kategori</code></td>
-                                                <td>{{ $isTeknik ? 'Komponen barang' : 'Kategori barang' }}</td>
+                                                <td>Kategori barang</td>
                                                 <td><span class="badge-status" style="color:var(--success);">Ya</span>
                                                 </td>
                                             </tr>
                                             @if($isTeknik)
                                                 <tr>
-                                                    <td><code>ship_unloader</code></td>
-                                                    <td>Nomor ship unloader, pisahkan dengan koma</td>
+                                                    <td><code>komponen</code></td>
+                                                    <td>Komponen barang teknik</td>
+                                                    <td><span class="badge-status" style="color:var(--warning);">Opsional</span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td><code>volume</code></td>
+                                                    <td>Volume barang master SOH</td>
                                                     <td><span class="badge-status" style="color:var(--warning);">Opsional</span>
                                                     </td>
                                                 </tr>
@@ -304,8 +310,8 @@
                                                     </td>
                                                 </tr>
                                                 <tr>
-                                                    <td><code>volume</code></td>
-                                                    <td>Jumlah barang transaksi</td>
+                                                    <td><code>jumlah</code></td>
+                                                    <td>Jumlah transaksi goods receipt/issued</td>
                                                     <td><span class="badge-status" style="color:var(--success);">Ya</span>
                                                     </td>
                                                 </tr>
@@ -317,13 +323,13 @@
                                                     <td><span class="badge-status" style="color:var(--success);">Ya</span>
                                                     </td>
                                                 </tr>
+                                                <tr>
+                                                    <td><code>harga</code></td>
+                                                    <td>Harga satuan</td>
+                                                    <td><span class="badge-status" style="color:var(--warning);">Opsional</span>
+                                                    </td>
+                                                </tr>
                                             @endunless
-                                            <tr>
-                                                <td><code>harga</code></td>
-                                                <td>Harga satuan</td>
-                                                <td><span class="badge-status" style="color:var(--warning);">Opsional</span>
-                                                </td>
-                                            </tr>
                                             <tr>
                                                 <td><code>keterangan</code></td>
                                                 <td>Catatan</td>

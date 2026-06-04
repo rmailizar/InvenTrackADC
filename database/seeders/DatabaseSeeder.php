@@ -71,11 +71,11 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Tinta Printer Black', 'category' => 'ATK', 'unit' => 'Botol', 'bidang' => 'umum', 'min_stock' => 5],
             ['name' => 'Map L Folder', 'category' => 'Arsip', 'unit' => 'Pcs', 'bidang' => 'umum', 'min_stock' => 30],
             ['name' => 'Sabun Cuci Tangan 500ml', 'category' => 'Kebersihan', 'unit' => 'Botol', 'bidang' => 'umum', 'min_stock' => 12],
-            ['name' => 'Kabel LAN Cat6 305m', 'no_normalisasi' => 'SU-01-LAN-001', 'category' => 'Jaringan', 'unit' => 'Box', 'bidang' => 'teknik', 'lokasi' => 'Gudang Teknik A1', 'ship_unloader' => '1,2', 'min_stock' => 2],
-            ['name' => 'RJ45 Connector', 'no_normalisasi' => 'SU-02-RJ45-002', 'category' => 'Jaringan', 'unit' => 'Pack', 'bidang' => 'teknik', 'lokasi' => 'Rak Komponen B2', 'ship_unloader' => '1,3', 'min_stock' => 5],
-            ['name' => 'Switch 24 Port Gigabit', 'no_normalisasi' => 'SU-03-SW24-003', 'category' => 'Jaringan', 'unit' => 'Unit', 'bidang' => 'teknik', 'lokasi' => 'Panel Room C1', 'ship_unloader' => '3,4', 'min_stock' => 2],
-            ['name' => 'Hard Disk External 2TB', 'no_normalisasi' => 'SU-04-HDD-004', 'category' => 'Perangkat IT', 'unit' => 'Unit', 'bidang' => 'teknik', 'lokasi' => 'Lemari IT D1', 'ship_unloader' => '2,4', 'min_stock' => 3],
-            ['name' => 'Obeng Set Presisi', 'no_normalisasi' => 'SU-01-TOOLS-005', 'category' => 'Tools', 'unit' => 'Set', 'bidang' => 'teknik', 'lokasi' => 'Toolbox Teknik', 'ship_unloader' => '1', 'min_stock' => 4],
+            ['name' => 'Kabel LAN Cat6 305m', 'no_normalisasi' => 'SU-01-LAN-001', 'category' => 'Spare Part', 'component' => 'Jaringan', 'unit' => 'Box', 'bidang' => 'teknik', 'lokasi' => 'Gudang Teknik A1', 'volume' => 25, 'ship_unloader' => null, 'min_stock' => 2],
+            ['name' => 'RJ45 Connector', 'no_normalisasi' => 'SU-02-RJ45-002', 'category' => 'Spare Part', 'component' => 'Jaringan', 'unit' => 'Pack', 'bidang' => 'teknik', 'lokasi' => 'Rak Komponen B2', 'volume' => 100, 'ship_unloader' => null, 'min_stock' => 5],
+            ['name' => 'Switch 24 Port Gigabit', 'no_normalisasi' => 'SU-03-SW24-003', 'category' => 'Perangkat IT', 'component' => 'Jaringan', 'unit' => 'Unit', 'bidang' => 'teknik', 'lokasi' => 'Panel Room C1', 'volume' => 1, 'ship_unloader' => null, 'min_stock' => 2],
+            ['name' => 'Hard Disk External 2TB', 'no_normalisasi' => 'SU-04-HDD-004', 'category' => 'Perangkat IT', 'component' => 'Storage', 'unit' => 'Unit', 'bidang' => 'teknik', 'lokasi' => 'Lemari IT D1', 'volume' => 1, 'ship_unloader' => null, 'min_stock' => 3],
+            ['name' => 'Obeng Set Presisi', 'no_normalisasi' => 'SU-01-TOOLS-005', 'category' => 'Tools', 'component' => 'Tools', 'unit' => 'Set', 'bidang' => 'teknik', 'lokasi' => 'Toolbox Teknik', 'volume' => 1, 'ship_unloader' => null, 'min_stock' => 4],
         ];
 
         $items = [];
@@ -107,6 +107,15 @@ class DatabaseSeeder extends Seeder
                 $date = $now->copy()->subDays(20 - $index);
                 $inQuantity = 35 + ($index * 6);
                 $outQuantity = 4 + $index;
+                $shipUnloader = $bidang === 'teknik'
+                    ? match ($index % 5) {
+                        0 => '1,2',
+                        1 => '1,3',
+                        2 => '3,4',
+                        3 => '2,4',
+                        default => '1',
+                    }
+                    : null;
 
                 Transaction::create([
                     'item_id' => $item->id,
@@ -114,12 +123,12 @@ class DatabaseSeeder extends Seeder
                     'bidang' => $bidang,
                     'no_normalisasi' => $item->no_normalisasi,
                     'lokasi' => $item->lokasi,
-                    'volume' => $bidang === 'teknik' ? $inQuantity : null,
-                    'ship_unloader' => $item->ship_unloader,
+                    'volume' => $bidang === 'teknik' ? $item->volume : null,
+                    'ship_unloader' => $shipUnloader,
                     'date' => $date->toDateString(),
                     'type' => 'in',
                     'quantity' => $inQuantity,
-                    'price' => 15000 + ($index * 2500),
+                    'price' => $bidang === 'umum' ? 15000 + ($index * 2500) : null,
                     'description' => 'Stok awal Bidang ' . ucfirst($bidang),
                     'status' => 'approved',
                     'approved_by' => $data['admin']->id,
@@ -132,12 +141,12 @@ class DatabaseSeeder extends Seeder
                     'bidang' => $bidang,
                     'no_normalisasi' => $item->no_normalisasi,
                     'lokasi' => $item->lokasi,
-                    'volume' => $bidang === 'teknik' ? $outQuantity : null,
-                    'ship_unloader' => $item->ship_unloader,
+                    'volume' => $bidang === 'teknik' ? $item->volume : null,
+                    'ship_unloader' => $shipUnloader,
                     'date' => $date->copy()->addDays(5)->toDateString(),
                     'type' => 'out',
                     'quantity' => $outQuantity,
-                    'price' => 0,
+                    'price' => null,
                     'description' => 'Pemakaian operasional Bidang ' . ucfirst($bidang),
                     'status' => 'approved',
                     'approved_by' => $data['admin']->id,

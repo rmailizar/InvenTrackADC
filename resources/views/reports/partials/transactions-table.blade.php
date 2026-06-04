@@ -40,7 +40,7 @@
                                 <th>Ship Unloader</th>
                                 <th>Lokasi</th>
                                 <th class="text-center">Volume</th>
-                                <th class="text-end">Harga Satuan</th>
+                                <th class="text-center">Jumlah</th>
                                 <th>Satuan</th>
                                 <th>User</th>
                                 <th>Status</th>
@@ -63,8 +63,8 @@
                                 <th>Kategori</th>
                                 <th>Jenis</th>
                                 <th>Jumlah</th>
-                                <th>Harga Satuan</th>
                                 <th>Satuan</th>
+                                <th>Harga Satuan</th>
                                 <th>User</th>
                                 <th>Keterangan</th>
                             </tr>
@@ -85,11 +85,11 @@
                                     </td>
                                     <td class="fw-600">{{ $tx->no_normalisasi ?? $tx->item->no_normalisasi ?? '-' }}</td>
                                     <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
-                                    <td>{{ $tx->item->category ?? '-' }}</td>
+                                    <td>{{ $tx->item->component ?? '-' }}</td>
                                     <td>{{ $tx->ship_unloader_label }}</td>
                                     <td>{{ $tx->lokasi ?? $tx->item->lokasi ?? '-' }}</td>
+                                    <td class="text-center fw-700">{{ $tx->volume === null ? '-' : number_format($tx->volume) }}</td>
                                     <td class="text-center fw-700">{{ number_format($tx->quantity) }}</td>
-                                    <td class="text-end">{{ $tx->price === null ? '-' : 'Rp ' . number_format($tx->price, 0, ',', '.') }}</td>
                                     <td>{{ $tx->item->unit ?? '-' }}</td>
                                     <td>{{ $tx->user->name ?? '-' }}</td>
                                     <td><span class="badge-status badge-approved">Approved</span></td>
@@ -104,8 +104,8 @@
                                         </span>
                                     </td>
                                     <td class="fw-700">{{ number_format($tx->quantity) }}</td>
-                                    <td>{{ $tx->price ?? '-' }}</td>
                                     <td>{{ $tx->item->unit ?? '-' }}</td>
+                                    <td>{{ $tx->price === null ? '-' : 'Rp ' . number_format($tx->price, 0, ',', '.') }}</td>
                                     <td>{{ $tx->user->name ?? '-' }}</td>
                                     <td style="max-width:200px; font-size:12px; color:var(--text-secondary);">
                                         {{ \Illuminate\Support\Str::limit($tx->description, 50) }}

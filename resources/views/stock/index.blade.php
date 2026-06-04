@@ -14,7 +14,7 @@
                 <div class="row align-items-end g-3">
                     <div class="col-md-3">
                         <label class="form-label">Cari Barang</label>
-                        <input type="text" name="search" class="form-control" placeholder="Nama atau kategori..."
+                        <input type="text" name="search" class="form-control" placeholder="{{ $isTeknik ? 'Nama, no normalisasi, atau komponen...' : 'Nama atau kategori...' }}"
                             value="{{ request('search') }}">
                     </div>
                     <div class="col-md-3">
@@ -70,6 +70,7 @@
                                     <th style="width:50px;">No</th>
                                     <th>No Normalisasi</th>
                                     <th>Nama Barang</th>
+                                    <th>Kategori</th>
                                     <th>Komponen</th>
                                     <th>Ship Unloader</th>
                                     <th>Lokasi</th>
@@ -109,9 +110,10 @@
                                         <td class="fw-600">{{ $item->no_normalisasi ?? '-' }}</td>
                                         <td class="fw-600">{{ $item->name }}</td>
                                         <td>{{ $item->category }}</td>
+                                        <td>{{ $item->component ?? '-' }}</td>
                                         <td>{{ $item->stock_ship_unloader_label }}</td>
                                         <td>{{ $item->lokasi ?? '-' }}</td>
-                                        <td class="text-center fw-700">{{ number_format($currentStock) }}</td>
+                                        <td class="text-center fw-700">{{ $item->volume === null ? '-' : number_format($item->volume) }}</td>
                                         <td>{{ $item->unit }}</td>
                                     @else
                                         <td class="fw-600">{{ $item->name }}</td>
@@ -121,15 +123,15 @@
                                     <td class="text-center fw-600 text-success-custom">{{ number_format($totalMasuk) }}</td>
                                     <td class="text-center fw-600 text-danger-custom">{{ number_format($totalKeluar) }}</td>
                                     <td class="text-center fw-700"
-                                        style="font-size:15px; {{ $currentStock <= $item->min_stock ? 'color:var(--danger);' : 'color:var(--success);' }}">
+                                        style="font-size:15px; {{ $currentStock <= 0 ? 'color:var(--danger);' : ($currentStock <= $item->min_stock ? 'color:var(--warning-dark);' : 'color:var(--success);') }}">
                                         {{ number_format($currentStock) }}
                                     </td>
                                     <td class="text-center">{{ $item->min_stock }}</td>
                                     <td>
-                                        @if($currentStock == 0)
+                                        @if($currentStock <= 0)
                                             <span class="badge-status badge-rejected"><i class="bi bi-x-circle-fill"></i>
                                                 Out of Stock</span>
-                                        @elseif($currentStock < $item->min_stock)
+                                        @elseif($currentStock <= $item->min_stock)
                                             <span class="badge-status badge-pending">
                                                 <i class="bi bi-exclamation-triangle-fill"></i> Request Order
                                             </span>
@@ -140,7 +142,7 @@
                                 </tr>
                             @empty
                                 <tr class="no-data-row">
-                                    <td colspan="{{ $isTeknik ? 13 : 9 }}">
+                                    <td colspan="{{ $isTeknik ? 14 : 9 }}">
                                         <i class="bi bi-inbox"
                                             style="font-size:40px;display:block;margin-bottom:8px;opacity:0.3;"></i>
                                         Tidak ada data stok

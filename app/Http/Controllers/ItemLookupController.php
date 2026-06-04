@@ -10,10 +10,11 @@ class ItemLookupController extends Controller
     public function index()
     {
         $categories = Item::visibleFor(auth()->user())->select('category')->distinct()->orderBy('category')->pluck('category');
+        $components = Item::visibleFor(auth()->user())->select('component')->whereNotNull('component')->distinct()->orderBy('component')->pluck('component');
         $units = Item::visibleFor(auth()->user())->select('unit')->distinct()->orderBy('unit')->pluck('unit');
         $shipUnloaders = $this->shipUnloaders();
 
-        return view('items.lookups', compact('categories', 'units', 'shipUnloaders'));
+        return view('items.lookups', compact('categories', 'components', 'units', 'shipUnloaders'));
     }
 
     /**
@@ -22,7 +23,7 @@ class ItemLookupController extends Controller
     public function replace(Request $request)
     {
         $validated = $request->validate([
-            'type' => 'required|in:category,unit,ship_unloader',
+            'type' => 'required|in:category,component,unit,ship_unloader',
             'from' => 'required|string|max:255',
             'to' => 'required|string|max:255',
         ]);
@@ -31,7 +32,11 @@ class ItemLookupController extends Controller
             return $this->replaceShipUnloader($validated);
         }
 
-        $field = $validated['type'] === 'category' ? 'category' : 'unit';
+        $field = match ($validated['type']) {
+            'category' => 'category',
+            'component' => 'component',
+            default => 'unit',
+        };
         $from = trim($validated['from']);
         $to = trim($validated['to']);
 
@@ -47,7 +52,11 @@ class ItemLookupController extends Controller
 
         $query->update([$field => $to]);
 
-        $label = $validated['type'] === 'category' ? 'Kategori' : 'Satuan';
+        $label = match ($validated['type']) {
+            'category' => 'Kategori',
+            'component' => 'Komponen',
+            default => 'Satuan',
+        };
 
         return back()->with('success', "{$label} \"{$from}\" berhasil diubah menjadi \"{$to}\" pada {$count} barang.");
     }

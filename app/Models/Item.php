@@ -13,6 +13,7 @@ class Item extends Model
         'name',
         'no_normalisasi',
         'category',
+        'component',
         'unit',
         'bidang',
         'lokasi',
@@ -57,7 +58,6 @@ class Item extends Model
             ->where('status', 'approved')
             ->whereNotNull('ship_unloader')
             ->pluck('ship_unloader')
-            ->prepend($this->ship_unloader)
             ->filter()
             ->all();
 

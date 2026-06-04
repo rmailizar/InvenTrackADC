@@ -82,7 +82,9 @@
                                                 data-stock="{{ $item->current_stock }}"
                                                 data-no-normalisasi="{{ $item->no_normalisasi }}"
                                                 data-lokasi="{{ $item->lokasi }}"
-                                                data-ship-unloader="{{ $item->ship_unloader }}">
+                                                data-component="{{ $item->component }}"
+                                                data-volume="{{ $item->volume }}"
+                                                data-ship-unloader="{{ $item->stock_ship_unloader }}">
                                                 {{ $item->no_normalisasi ? $item->no_normalisasi . ' - ' : '' }}{{ $item->name }}
                                             </option>
                                         @endforeach
@@ -95,8 +97,16 @@
                                         <input type="text" class="form-control" id="txInlineCategory" readonly>
                                     </div>
                                     <div class="col-6">
+                                        <label class="form-label">Kategori</label>
+                                        <input type="text" class="form-control" id="txInlineItemCategory" readonly>
+                                    </div>
+                                    <div class="col-6">
                                         <label class="form-label">Stok</label>
                                         <input type="text" class="form-control" id="txInlineStock" readonly>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label">Volume</label>
+                                        <input type="text" class="form-control" id="txInlineVolume" readonly>
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label">No Normalisasi</label>
@@ -122,7 +132,7 @@
 
                                 <div class="row g-2 mb-3">
                                     <div class="col-6">
-                                        <label class="form-label">Volume <span class="text-danger">*</span></label>
+                                        <label class="form-label">Jumlah <span class="text-danger">*</span></label>
                                         <input type="number" name="quantity" class="form-control" min="1" required id="txInlineQuantity">
                                         <div id="txInlineStockWarning" class="text-danger mt-1" style="font-size:12px;display:none;">
                                             <i class="bi bi-exclamation-triangle-fill"></i> Melebihi stok tersedia.
@@ -133,13 +143,6 @@
                                         <input type="text" class="form-control" id="txInlineUnit" readonly>
                                     </div>
                                 </div>
-
-                                @if($activeTransactionType === 'in')
-                                    <div class="mb-3">
-                                        <label class="form-label">Harga Satuan</label>
-                                        <input type="number" name="price" class="form-control" min="0" step="1" placeholder="0">
-                                    </div>
-                                @endif
 
                                 <div class="mb-3">
                                     <label class="form-label">Keterangan</label>
@@ -222,8 +225,9 @@
                                         data-stock="{{ $item->current_stock }}"
                                         data-no-normalisasi="{{ $item->no_normalisasi }}"
                                         data-lokasi="{{ $item->lokasi }}"
-                                        data-volume="{{ $item->current_stock }}"
-                                        data-ship-unloader="{{ $item->ship_unloader }}">
+                                        data-component="{{ $item->component }}"
+                                        data-volume="{{ $item->volume }}"
+                                        data-ship-unloader="{{ $item->stock_ship_unloader }}">
                                         {{ $item->name }}
                                     </option>
                                 @endforeach
@@ -282,10 +286,17 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
+                                <label class="form-label">Kategori</label>
+                                <input type="text" class="form-control" id="txCategoryReadonly" readonly>
+                            </div>
+                        </div>
+
+                        @unless($isTeknik)
+                            <div class="mb-3">
                                 <label class="form-label">Harga Satuan</label>
                                 <input type="number" name="price" class="form-control" min="0" step="1" placeholder="0" id="txPrice">
                             </div>
-                        </div>
+                        @endunless
 
                         <div class="mb-3" id="txUserRow">
                             <label class="form-label">User</label>
@@ -325,6 +336,9 @@
 @push('scripts')
     <script>
         window.__transactionDetailData = @json($transactionDetailData);
+        var transactionDetailData = @json($transactionDetailData);
+        var currentScript = document.currentScript;
+        var transactionSectionRoot = currentScript ? (currentScript.closest('.content-section') || document) : document;
         var txModalEl = document.getElementById('transactionModal');
         var txModal = new bootstrap.Modal(txModalEl);
         var txDetailModalEl = document.getElementById('transactionDetailModal');
@@ -335,6 +349,7 @@
         var txUnitInput = document.getElementById('txItemUnit');
         var txStockInput = document.getElementById('txItemStock');
         var txQuantityInput = document.getElementById('txQuantity');
+        var txCategoryReadonly = document.getElementById('txCategoryReadonly');
         var txPriceInput = document.getElementById('txPrice');
         var txStockWarning = document.getElementById('txStockWarning');
         var txNoNormalisasi = document.getElementById('txNoNormalisasi');
@@ -343,141 +358,167 @@
         var isTeknikTransaction = @json($isTeknik);
         var activeTransactionType = @json($activeTransactionType);
 
-        var txInlineItemSelect = document.getElementById('txInlineItemSelect');
-        var txInlineQuantity = document.getElementById('txInlineQuantity');
-        var txInlineStock = document.getElementById('txInlineStock');
-        var txInlineStockWarning = document.getElementById('txInlineStockWarning');
+        (function bindInlineTransactionForm() {
+            var root = transactionSectionRoot;
+            var txInlineItemSelect = root.querySelector('#txInlineItemSelect');
+            var txInlineQuantity = root.querySelector('#txInlineQuantity');
+            var txInlineStock = root.querySelector('#txInlineStock');
+            var txInlineStockWarning = root.querySelector('#txInlineStockWarning');
+            var inlineTransactionType = activeTransactionType;
 
-        function refreshInlineTransactionInfo() {
-            if (!txInlineItemSelect) return;
-            var selected = txInlineItemSelect.options[txInlineItemSelect.selectedIndex];
-            var hasItem = Boolean(txInlineItemSelect.value);
-            document.getElementById('txInlineCategory').value = hasItem ? (selected.dataset.category || '') : '';
-            document.getElementById('txInlineUnit').value = hasItem ? (selected.dataset.unit || '') : '';
-            document.getElementById('txInlineStock').value = hasItem ? (selected.dataset.stock || '0') : '';
-            document.getElementById('txInlineNoNormalisasi').value = hasItem ? (selected.dataset.noNormalisasi || '') : '';
-            document.getElementById('txInlineLokasi').value = hasItem ? (selected.dataset.lokasi || '') : '';
+            function getInlineField(id) {
+                return root.querySelector('#' + id);
+            }
 
-            var ships = hasItem ? (selected.dataset.shipUnloader || '').split(',').filter(Boolean) : [];
-            document.querySelectorAll('.tx-inline-ship-checkbox').forEach(el => el.checked = ships.includes(el.value));
-            checkInlineStock();
-        }
+            function checkInlineStock() {
+                if (!txInlineQuantity || !txInlineStock || !txInlineStockWarning) return;
+                var stock = parseInt(txInlineStock.value || '0') || 0;
+                var qty = parseInt(txInlineQuantity.value || '0') || 0;
+                txInlineStockWarning.style.display = inlineTransactionType === 'out' && txInlineItemSelect?.value && qty > stock ? 'block' : 'none';
+            }
 
-        function checkInlineStock() {
-            if (!txInlineQuantity || !txInlineStockWarning) return;
-            var stock = parseInt(txInlineStock.value || '0') || 0;
-            var qty = parseInt(txInlineQuantity.value || '0') || 0;
-            txInlineStockWarning.style.display = activeTransactionType === 'out' && txInlineItemSelect?.value && qty > stock ? 'block' : 'none';
-        }
-
-        if (txInlineItemSelect) {
-            txInlineItemSelect.addEventListener('change', refreshInlineTransactionInfo);
-        }
-        if (txInlineQuantity) {
-            txInlineQuantity.addEventListener('input', checkInlineStock);
-        }
-
-        function appendTransactionDetail(container, label, value) {
-            var wrap = document.createElement('div');
-            wrap.className = 'col-sm-6';
-            var muted = document.createElement('div');
-            muted.className = 'text-muted';
-            muted.style.fontSize = '12px';
-            muted.textContent = label;
-            var strong = document.createElement('div');
-            strong.className = 'fw-700';
-            strong.textContent = value || '-';
-            wrap.appendChild(muted);
-            wrap.appendChild(strong);
-            container.appendChild(wrap);
-        }
-
-        function bindTransactionDetailButtons() {
-            document.querySelectorAll('.btn-transaction-detail-open').forEach(function(button) {
-                button.addEventListener('click', function() {
-                var data = window.__transactionDetailData[this.dataset.transactionId];
-                if (!data) return;
-                var grid = document.getElementById('transactionDetailGrid');
-                grid.replaceChildren();
-                appendTransactionDetail(grid, 'Tanggal', data.date);
-                appendTransactionDetail(grid, 'Jenis', data.type);
-                if (isTeknikTransaction) {
-                    appendTransactionDetail(grid, 'No Normalisasi', data.no_normalisasi);
-                    appendTransactionDetail(grid, 'Nama Barang', data.name);
-                    appendTransactionDetail(grid, 'Komponen', data.category);
-                    appendTransactionDetail(grid, 'Ship Unloader', data.ship_unloader);
-                    appendTransactionDetail(grid, 'Lokasi', data.lokasi);
-                    appendTransactionDetail(grid, 'Volume', data.volume);
-                    appendTransactionDetail(grid, 'Harga Satuan', data.price);
-                } else {
-                    appendTransactionDetail(grid, 'Barang', data.name);
-                    appendTransactionDetail(grid, 'Kategori', data.category);
-                    appendTransactionDetail(grid, 'Jumlah', data.quantity);
-                    appendTransactionDetail(grid, 'Keterangan', data.description);
+            function refreshInlineTransactionInfo() {
+                if (!txInlineItemSelect) return;
+                var selected = txInlineItemSelect.options[txInlineItemSelect.selectedIndex];
+                var hasItem = Boolean(txInlineItemSelect.value);
+                getInlineField('txInlineCategory').value = hasItem ? (selected.dataset.category || '') : '';
+                if (getInlineField('txInlineItemCategory')) {
+                    getInlineField('txInlineCategory').value = hasItem ? (selected.dataset.component || '') : '';
+                    getInlineField('txInlineItemCategory').value = hasItem ? (selected.dataset.category || '') : '';
                 }
-                appendTransactionDetail(grid, 'Satuan', data.unit);
-                appendTransactionDetail(grid, 'User', data.user);
-                appendTransactionDetail(grid, 'Status', data.status);
-                txDetailModal.show();
-            });
-            });
-        }
+                getInlineField('txInlineUnit').value = hasItem ? (selected.dataset.unit || '') : '';
+                getInlineField('txInlineStock').value = hasItem ? (selected.dataset.stock || '0') : '';
+                if (getInlineField('txInlineVolume')) {
+                    getInlineField('txInlineVolume').value = hasItem ? (selected.dataset.volume || '') : '';
+                }
+                getInlineField('txInlineNoNormalisasi').value = hasItem ? (selected.dataset.noNormalisasi || '') : '';
+                getInlineField('txInlineLokasi').value = hasItem ? (selected.dataset.lokasi || '') : '';
 
-        function bindTransactionDateSort() {
-            document.querySelectorAll('.js-date-sort').forEach(function(button) {
-                button.addEventListener('click', function() {
-                    var url = new URL(window.location.href);
-                    url.searchParams.set('sort', this.dataset.sort || 'latest');
-                    url.searchParams.delete('page');
-                    loadTransactionsTable(url);
+                var ships = hasItem ? (selected.dataset.shipUnloader || '').split(',').filter(Boolean) : [];
+                root.querySelectorAll('.tx-inline-ship-checkbox').forEach(el => el.checked = ships.includes(el.value));
+                checkInlineStock();
+            }
+
+            if (txInlineItemSelect) {
+                txInlineItemSelect.addEventListener('change', refreshInlineTransactionInfo);
+                refreshInlineTransactionInfo();
+            }
+            if (txInlineQuantity) {
+                txInlineQuantity.addEventListener('input', checkInlineStock);
+            }
+        })();
+
+        (function bindTransactionTableSection() {
+            var root = transactionSectionRoot;
+            var detailData = transactionDetailData;
+
+            function appendTransactionDetail(container, label, value) {
+                var wrap = document.createElement('div');
+                wrap.className = 'col-sm-6';
+                var muted = document.createElement('div');
+                muted.className = 'text-muted';
+                muted.style.fontSize = '12px';
+                muted.textContent = label;
+                var strong = document.createElement('div');
+                strong.className = 'fw-700';
+                strong.textContent = value || '-';
+                wrap.appendChild(muted);
+                wrap.appendChild(strong);
+                container.appendChild(wrap);
+            }
+
+            function bindTransactionDetailButtons() {
+                root.querySelectorAll('.btn-transaction-detail-open').forEach(function(button) {
+                    button.addEventListener('click', function() {
+                        var data = detailData[this.dataset.transactionId];
+                        if (!data) return;
+                        var grid = document.getElementById('transactionDetailGrid');
+                        grid.replaceChildren();
+                        appendTransactionDetail(grid, 'Tanggal', data.date);
+                        appendTransactionDetail(grid, 'Jenis', data.type);
+                        if (isTeknikTransaction) {
+                            appendTransactionDetail(grid, 'No Normalisasi', data.no_normalisasi);
+                            appendTransactionDetail(grid, 'Nama Barang', data.name);
+                            appendTransactionDetail(grid, 'Kategori', data.category);
+                            appendTransactionDetail(grid, 'Komponen', data.component);
+                            appendTransactionDetail(grid, 'Ship Unloader', data.ship_unloader);
+                            appendTransactionDetail(grid, 'Lokasi', data.lokasi);
+                            appendTransactionDetail(grid, 'Volume', data.volume);
+                            appendTransactionDetail(grid, 'Jumlah', data.quantity);
+                        } else {
+                            appendTransactionDetail(grid, 'Barang', data.name);
+                            appendTransactionDetail(grid, 'Kategori', data.category);
+                            appendTransactionDetail(grid, 'Jumlah', data.quantity);
+                            appendTransactionDetail(grid, 'Harga Satuan', data.price);
+                            appendTransactionDetail(grid, 'Keterangan', data.description);
+                        }
+                        appendTransactionDetail(grid, 'Satuan', data.unit);
+                        appendTransactionDetail(grid, 'User', data.user);
+                        appendTransactionDetail(grid, 'Status', data.status);
+                        txDetailModal.show();
+                    });
                 });
-            });
-        }
+            }
 
-        function loadTransactionsTable(url) {
-            var region = document.getElementById('transactionsTableRegion');
-            if (!region) return;
+            function bindTransactionDateSort() {
+                root.querySelectorAll('.js-date-sort').forEach(function(button) {
+                    button.addEventListener('click', function() {
+                        var url = new URL(window.location.href);
+                        url.searchParams.set('sort', this.dataset.sort || 'latest');
+                        url.searchParams.delete('page');
+                        loadTransactionsTable(url);
+                    });
+                });
+            }
 
-            region.classList.add('table-ajax-loading');
+            function loadTransactionsTable(url) {
+                var region = root.querySelector('#transactionsTableRegion');
+                if (!region) return;
 
-            fetch(url.toString(), {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    region.outerHTML = data.html;
-                    window.__transactionDetailData = data.detailData || {};
-                    window.history.pushState({}, '', url.toString());
-                    bindTransactionDetailButtons();
-                    bindTransactionDateSort();
+                region.classList.add('table-ajax-loading');
+
+                fetch(url.toString(), {
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
                 })
-                .catch(() => {
-                    Toast.fire({ icon: 'error', title: 'Gagal mengurutkan data transaksi.' });
-                    region.classList.remove('table-ajax-loading');
-                });
-        }
+                    .then(response => response.json())
+                    .then(data => {
+                        region.outerHTML = data.html;
+                        detailData = data.detailData || {};
+                        window.__transactionDetailData = detailData;
+                        window.history.pushState({}, '', url.toString());
+                        bindTransactionDetailButtons();
+                        bindTransactionDateSort();
+                    })
+                    .catch(() => {
+                        Toast.fire({ icon: 'error', title: 'Gagal mengurutkan data transaksi.' });
+                        region.classList.remove('table-ajax-loading');
+                    });
+            }
 
-        bindTransactionDetailButtons();
-        bindTransactionDateSort();
+            bindTransactionDetailButtons();
+            bindTransactionDateSort();
+        })();
 
         function refreshItemInfo() {
             var selected = txItemSelect.options[txItemSelect.selectedIndex];
             if (txItemSelect.value) {
-                txCategoryInput.value = selected.dataset.category || '';
+                txCategoryInput.value = isTeknikTransaction ? (selected.dataset.component || '') : (selected.dataset.category || '');
+                if (txCategoryReadonly) txCategoryReadonly.value = selected.dataset.category || '';
                 txUnitInput.value = selected.dataset.unit || '';
                 txStockInput.value = selected.dataset.stock || '0';
                 if (isTeknikTransaction) {
                     txNoNormalisasi.value = selected.dataset.noNormalisasi || '';
                     txLokasi.value = selected.dataset.lokasi || '';
-                    txVolume.value = txQuantityInput.value || '0';
+                    txVolume.value = selected.dataset.volume || '';
                     var ships = (selected.dataset.shipUnloader || '').split(',').filter(Boolean);
                     document.querySelectorAll('.tx-ship-checkbox').forEach(el => el.checked = ships.includes(el.value));
                 }
             } else {
                 txCategoryInput.value = '';
+                if (txCategoryReadonly) txCategoryReadonly.value = '';
                 txUnitInput.value = '';
                 txStockInput.value = '';
                 if (isTeknikTransaction) {
@@ -491,9 +532,6 @@
         }
 
         function togglePriceInput() {
-            var disabled = txTypeSelect.value === 'out';
-            if (disabled) txPriceInput.value = '';
-            txPriceInput.disabled = disabled;
             checkTxStock();
         }
 
@@ -501,7 +539,12 @@
             var stock = parseInt(txStockInput.value || '0') || 0;
             var qty = parseInt(txQuantityInput.value || '0') || 0;
             if (isTeknikTransaction) {
-                txVolume.value = qty ? qty : '0';
+                txVolume.value = txItemSelect.value ? (txItemSelect.options[txItemSelect.selectedIndex].dataset.volume || '') : '';
+            }
+            if (txPriceInput) {
+                var disabled = txTypeSelect.value === 'out';
+                if (disabled) txPriceInput.value = '';
+                txPriceInput.disabled = disabled;
             }
             txStockWarning.style.display = txTypeSelect.value === 'out' && txItemSelect.value && qty > stock ? 'block' : 'none';
         }
@@ -517,6 +560,7 @@
             txUnitInput.value = '';
             txStockInput.value = '';
             txStockWarning.style.display = 'none';
+            if (txCategoryReadonly) txCategoryReadonly.value = '';
             if (isTeknikTransaction) {
                 txNoNormalisasi.value = '';
                 txLokasi.value = '';
@@ -546,13 +590,13 @@
                         document.getElementById('txType').value = data.type;
                         txItemSelect.value = data.item_id;
                         txQuantityInput.value = data.quantity;
-                        txPriceInput.value = data.price || '';
+                        if (txPriceInput) txPriceInput.value = data.price || '';
                         document.getElementById('txDescription').value = data.description || '';
                         refreshItemInfo();
                         if (isTeknikTransaction) {
                             txNoNormalisasi.value = data.no_normalisasi || data.item.no_normalisasi || '';
                             txLokasi.value = data.lokasi || data.item.lokasi || '';
-                            txVolume.value = data.quantity || '';
+                            txVolume.value = data.volume || data.item.volume || '';
                             document.querySelectorAll('.tx-ship-checkbox').forEach(el => el.checked = (data.ship_unloader || []).includes(el.value));
                         }
                         togglePriceInput();

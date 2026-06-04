@@ -55,6 +55,9 @@ class DashboardController extends Controller
         // Low stock items
         $allItems = Item::visibleFor($user)->get();
         $lowStockItems = $allItems->filter(fn($item) => $item->is_low_stock && $item->current_stock >= 0);
+        $criticalStockCount = $user->isTeknik()
+            ? $allItems->filter(fn($item) => $item->current_stock <= 0)->count()
+            : 0;
 
 
         // 📊 MONTHLY CHART (FIXED 12 BULAN)
@@ -103,6 +106,9 @@ class DashboardController extends Controller
         $categoryData = $user->isTeknik()
             ? $this->shipUnloaderStockData($user)
             : $this->categoryStockData($user);
+        $technicalTypeSummary = $user->isTeknik()
+            ? $this->technicalTypeSummary($allItems)
+            : null;
 
         // Top 5 items most keluar
         $topKeluar = Transaction::visibleFor($user)->approved()->keluar()
@@ -141,11 +147,13 @@ class DashboardController extends Controller
             'keluarBulanIni',
             'pendingCount',
             'lowStockItems',
+            'criticalStockCount',
             'monthlyData',
             'selectedMonthlyPeriod',
             'yearlyData',
             'selectedYear',
             'categoryData',
+            'technicalTypeSummary',
             'availableYears',
             'startYear',
             'endYear',
@@ -333,10 +341,11 @@ class DashboardController extends Controller
             ->where(function ($query) use ($q) {
                 $query->where('name', 'like', "%{$q}%")
                     ->orWhere('category', 'like', "%{$q}%")
+                    ->orWhere('component', 'like', "%{$q}%")
                     ->orWhere('no_normalisasi', 'like', "%{$q}%")
                     ->orWhere('lokasi', 'like', "%{$q}%");
             })
-            ->select('id', 'name', 'category', 'no_normalisasi')
+            ->select('id', 'name', 'category', 'component', 'no_normalisasi')
             ->limit(10)
             ->get();
         return response()->json($items);
@@ -439,6 +448,27 @@ class DashboardController extends Controller
         }
 
         return $data;
+    }
+
+    private function technicalTypeSummary($items): array
+    {
+        $grouped = $items
+            ->filter(fn($item) => filled($item->component))
+            ->groupBy(fn($item) => $item->component);
+        $totalItems = max(1, $items->count());
+
+        return [
+            'total_types' => $grouped->count(),
+            'top_types' => $grouped
+                ->map(fn($rows, $component) => [
+                    'name' => $component,
+                    'count' => $rows->count(),
+                    'percentage' => (int) round(($rows->count() / $totalItems) * 100),
+                ])
+                ->sortByDesc('count')
+                ->values()
+                ->all(),
+        ];
     }
 
     private function shipUnloaderStockData($user, ?int $year = null): array

@@ -38,7 +38,7 @@
                     @if($isStock)
                         <div class="col-md-3">
                             <label class="form-label">Cari Barang</label>
-                            <input type="text" name="search" class="form-control" placeholder="Nama atau kategori..."
+                            <input type="text" name="search" class="form-control" placeholder="{{ $isTeknik ? 'Nama, no normalisasi, atau komponen...' : 'Nama atau kategori...' }}"
                                 value="{{ request('search') }}">
                         </div>
 
@@ -110,18 +110,20 @@
                             </select>
                         </div>
 
-                        <div class="col-lg-2 col-md-6">
-                            <label class="form-label">Harga</label>
-                            <select name="price_filter" class="form-select">
-                                <option value="">Semua</option>
-                                <option value="tertinggi" {{ request('price_filter') == 'tertinggi' ? 'selected' : '' }}>
-                                    Tertinggi
-                                </option>
-                                <option value="terendah" {{ request('price_filter') == 'terendah' ? 'selected' : '' }}>
-                                    Terendah
-                                </option>
-                            </select>
-                        </div>
+                        @unless($isTeknik)
+                            <div class="col-lg-2 col-md-6">
+                                <label class="form-label">Harga</label>
+                                <select name="price_filter" class="form-select">
+                                    <option value="">Semua</option>
+                                    <option value="tertinggi" {{ request('price_filter') == 'tertinggi' ? 'selected' : '' }}>
+                                        Tertinggi
+                                    </option>
+                                    <option value="terendah" {{ request('price_filter') == 'terendah' ? 'selected' : '' }}>
+                                        Terendah
+                                    </option>
+                                </select>
+                            </div>
+                        @endunless
 
                         <div class="col-lg-2 col-md-6">
                             <div class="d-grid">
@@ -220,6 +222,7 @@
                                         <th style="width:50px;">No</th>
                                         <th>No Normalisasi</th>
                                         <th>Nama Barang</th>
+                                        <th>Kategori</th>
                                         <th>Komponen</th>
                                         <th>Ship Unloader</th>
                                         <th>Lokasi</th>
@@ -253,9 +256,10 @@
                                             <td class="fw-600">{{ $row->item->no_normalisasi ?? '-' }}</td>
                                             <td class="fw-600">{{ $row->item->name }}</td>
                                             <td>{{ $row->item->category }}</td>
+                                            <td>{{ $row->item->component ?? '-' }}</td>
                                             <td>{{ $row->item->stock_ship_unloader_label }}</td>
                                             <td>{{ $row->item->lokasi ?? '-' }}</td>
-                                            <td class="text-center fw-700">{{ number_format($row->stok_akhir) }}</td>
+                                            <td class="text-center fw-700">{{ $row->item->volume === null ? '-' : number_format($row->item->volume) }}</td>
                                             <td>{{ $row->item->unit }}</td>
                                         @else
                                             <td class="fw-600">{{ $row->item->name }}</td>
@@ -265,7 +269,7 @@
                                         <td class="text-center fw-600 text-success-custom">{{ number_format($row->masuk) }}</td>
                                         <td class="text-center fw-600 text-danger-custom">{{ number_format($row->keluar) }}</td>
                                         <td class="text-center fw-700"
-                                            style="{{ $row->stok_akhir <= $row->item->min_stock ? 'color:var(--danger);' : 'color:var(--success);' }}">
+                                            style="{{ $row->stok_akhir <= 0 ? 'color:var(--danger);' : ($row->stok_akhir <= $row->item->min_stock ? 'color:var(--warning-dark);' : 'color:var(--success);') }}">
                                             {{ number_format($row->stok_akhir) }}
                                         </td>
                                         <td class="text-center">{{ number_format($row->item->min_stock) }}</td>
@@ -273,7 +277,7 @@
                                             @if($row->stok_akhir <= 0)
                                                 <span class="badge-status badge-rejected"><i class="bi bi-x-circle-fill"></i>
                                                     Out of Stock</span>
-                                            @elseif($row->stok_akhir < $row->item->min_stock)
+                                            @elseif($row->stok_akhir <= $row->item->min_stock)
                                                 <span class="badge-status badge-pending">
                                                     <i class="bi bi-exclamation-triangle-fill"></i> Request Order
                                                 </span>
@@ -284,7 +288,7 @@
                                     </tr>
                                 @empty
                                     <tr class="no-data-row">
-                                        <td colspan="{{ $isTeknik ? 13 : 9 }}">
+                                        <td colspan="{{ $isTeknik ? 14 : 9 }}">
                                             <i class="bi bi-inbox"
                                                 style="font-size:40px;display:block;margin-bottom:8px;opacity:0.3;"></i>
                                             Tidak ada data stok untuk filter ini
@@ -307,7 +311,7 @@
                                         <th>Ship Unloader</th>
                                         <th>Lokasi</th>
                                         <th class="text-center">Volume</th>
-                                        <th class="text-end">Harga Satuan</th>
+                                        <th class="text-center">Jumlah</th>
                                         <th>Satuan</th>
                                         <th>User</th>
                                         <th>Status</th>
@@ -342,11 +346,11 @@
                                             </td>
                                             <td class="fw-600">{{ $tx->no_normalisasi ?? $tx->item->no_normalisasi ?? '-' }}</td>
                                             <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
-                                            <td>{{ $tx->item->category ?? '-' }}</td>
+                                            <td>{{ $tx->item->component ?? '-' }}</td>
                                             <td>{{ $tx->ship_unloader_label }}</td>
                                             <td>{{ $tx->lokasi ?? $tx->item->lokasi ?? '-' }}</td>
+                                            <td class="text-center fw-700">{{ $tx->volume === null ? '-' : number_format($tx->volume) }}</td>
                                             <td class="text-center fw-700">{{ number_format($tx->quantity) }}</td>
-                                            <td class="text-end">{{ $tx->price === null ? '-' : 'Rp ' . number_format($tx->price, 0, ',', '.') }}</td>
                                             <td>{{ $tx->item->unit ?? '-' }}</td>
                                             <td>{{ $tx->user->name ?? '-' }}</td>
                                             <td><span class="badge-status badge-approved">Approved</span></td>
@@ -361,7 +365,7 @@
                                                 </span>
                                             </td>
                                             <td class="fw-700">{{ number_format($tx->quantity) }}</td>
-                                            <td>{{ $tx->price ?? '-' }}</td>
+                                            <td>{{ $tx->price === null ? '-' : 'Rp ' . number_format($tx->price, 0, ',', '.') }}</td>
                                             <td>{{ $tx->item->unit ?? '-' }}</td>
                                             <td>{{ $tx->user->name ?? '-' }}</td>
                                             <td style="max-width:200px; font-size:12px; color:var(--text-secondary);">

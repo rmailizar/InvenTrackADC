@@ -54,11 +54,12 @@ class ItemImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFail
             'name'      => $name,
             'no_normalisasi' => $bidang === 'teknik' ? $noNormalisasi : null,
             'category'  => $this->cellString($row['kategori'] ?? ''),
+            'component' => $bidang === 'teknik' ? $this->cellString($row['komponen'] ?? '') : null,
             'unit'      => $this->cellString($row['satuan'] ?? ''),
             'bidang'    => $bidang,
             'lokasi'    => $bidang === 'teknik' ? $this->cellString($row['lokasi'] ?? '') : null,
-            'volume'    => null,
-            'ship_unloader' => $bidang === 'teknik' ? $this->normalizeShipUnloader($row['ship_unloader'] ?? '') : null,
+            'volume'    => $bidang === 'teknik' && $this->cellString($row['volume'] ?? '') !== '' ? (int) $row['volume'] : null,
+            'ship_unloader' => null,
             'min_stock' => (int) ($row['min_stok'] ?? 0),
         ]);
     }
@@ -68,11 +69,12 @@ class ItemImport implements ToModel, WithHeadingRow, WithValidation, SkipsOnFail
         return [
             'nama_barang' => 'required|max:255',
             'kategori'    => 'required|max:255',
+            'komponen'    => 'nullable|max:255',
             'satuan'      => 'required|max:50',
             'bidang'      => 'nullable|in:teknik,umum',
             'no_normalisasi' => 'nullable|max:255',
             'lokasi'      => 'nullable|max:255',
-            'ship_unloader' => 'nullable|max:20',
+            'volume'      => 'nullable|integer|min:0',
             'min_stok'    => 'nullable|integer|min:0',
         ];
     }

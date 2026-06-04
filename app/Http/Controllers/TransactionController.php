@@ -25,6 +25,7 @@ class TransactionController extends Controller
                     ->orWhereHas('item', fn($itemQuery) => $itemQuery
                         ->where('name', 'like', "%{$search}%")
                         ->orWhere('category', 'like', "%{$search}%")
+                        ->orWhere('component', 'like', "%{$search}%")
                         ->orWhere('no_normalisasi', 'like', "%{$search}%")
                         ->orWhere('lokasi', 'like', "%{$search}%"));
             });
@@ -80,7 +81,7 @@ class TransactionController extends Controller
 
     public function create()
     {
-        return redirect()->route('transactions.index');
+        return redirect()->route('transactions.index', $this->transactionIndexParams());
     }
 
     public function store(Request $request)
@@ -113,14 +114,19 @@ class TransactionController extends Controller
         $validated['bidang'] = $item->bidang;
         $validated['no_normalisasi'] = $item->no_normalisasi;
         $validated['lokasi'] = $item->lokasi;
-        $validated['volume'] = $item->bidang === 'teknik' ? $validated['quantity'] : null;
-        $validated['ship_unloader'] = $item->bidang === 'teknik'
-            ? ($this->normalizeShipUnloader($validated['ship_unloader'] ?? []) ?: $item->ship_unloader)
-            : null;
+        $validated['volume'] = $item->bidang === 'teknik' ? $item->volume : null;
+        $validated['ship_unloader'] = $item->bidang === 'teknik' ? $this->normalizeShipUnloader($validated['ship_unloader'] ?? []) : null;
+        if ($item->bidang === 'teknik' && !$validated['ship_unloader']) {
+            $errorMsg = 'Ship Unloader wajib dipilih untuk transaksi Teknik.';
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $errorMsg], 422);
+            }
+            return back()->withInput()->with('error', $errorMsg);
+        }
         $validated['status'] = $item->bidang === 'teknik' ? 'approved' : 'pending';
         $validated['approved_by'] = $item->bidang === 'teknik' ? auth()->id() : null;
         $validated['approved_at'] = $item->bidang === 'teknik' ? now() : null;
-        $validated['price'] = $validated['price'] ?? null;
+        $validated['price'] = $item->bidang === 'teknik' ? null : ($validated['price'] ?? null);
 
         Transaction::create($validated);
 
@@ -132,7 +138,9 @@ class TransactionController extends Controller
             return response()->json(['success' => true, 'message' => $successMsg]);
         }
 
-        return redirect()->route('transactions.index')->with('success', $successMsg);
+        return redirect()
+            ->route('transactions.index', $this->transactionIndexParams($validated['type'], $item->bidang))
+            ->with('success', $successMsg);
     }
 
     public function edit(Transaction $transaction, Request $request)
@@ -158,21 +166,22 @@ class TransactionController extends Controller
                 'description' => $transaction->description,
                 'no_normalisasi' => $transaction->no_normalisasi,
                 'lokasi' => $transaction->lokasi,
-                'volume' => $transaction->quantity,
+                'volume' => $transaction->volume,
                 'ship_unloader' => $transaction->ship_unloader ? explode(',', $transaction->ship_unloader) : [],
                 'item' => [
                     'category' => $transaction->item->category ?? '',
+                    'component' => $transaction->item->component ?? '',
                     'unit' => $transaction->item->unit ?? '',
                     'current_stock' => $transaction->item->current_stock ?? 0,
                     'no_normalisasi' => $transaction->item->no_normalisasi ?? '',
                     'lokasi' => $transaction->item->lokasi ?? '',
-                    'volume' => $transaction->item->current_stock ?? '',
-                    'ship_unloader' => $transaction->item->ship_unloader ?? '',
+                    'volume' => $transaction->item->volume ?? '',
+                    'ship_unloader' => $transaction->item->stock_ship_unloader ?? '',
                 ],
             ]);
         }
 
-        return redirect()->route('transactions.index');
+        return redirect()->route('transactions.index', $this->transactionIndexParams($transaction->type, $transaction->bidang));
     }
 
     public function update(Request $request, Transaction $transaction)
@@ -222,14 +231,19 @@ class TransactionController extends Controller
             }
         }
 
-        $validated['price'] = $validated['price'] ?? null;
         $validated['bidang'] = $item->bidang;
         $validated['no_normalisasi'] = $item->no_normalisasi;
         $validated['lokasi'] = $item->lokasi;
-        $validated['volume'] = $item->bidang === 'teknik' ? $validated['quantity'] : null;
-        $validated['ship_unloader'] = $item->bidang === 'teknik'
-            ? ($this->normalizeShipUnloader($validated['ship_unloader'] ?? []) ?: $item->ship_unloader)
-            : null;
+        $validated['volume'] = $item->bidang === 'teknik' ? $item->volume : null;
+        $validated['ship_unloader'] = $item->bidang === 'teknik' ? $this->normalizeShipUnloader($validated['ship_unloader'] ?? []) : null;
+        if ($item->bidang === 'teknik' && !$validated['ship_unloader']) {
+            $errorMsg = 'Ship Unloader wajib dipilih untuk transaksi Teknik.';
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $errorMsg], 422);
+            }
+            return back()->withInput()->with('error', $errorMsg);
+        }
+        $validated['price'] = $item->bidang === 'teknik' ? null : ($validated['price'] ?? null);
 
         $transaction->update($validated);
 
@@ -313,13 +327,14 @@ class TransactionController extends Controller
 
         return response()->json([
             'category' => $item->category,
+            'component' => $item->component,
             'unit' => $item->unit,
             'current_stock' => $item->current_stock,
             'no_normalisasi' => $item->no_normalisasi,
             'lokasi' => $item->lokasi,
-            'volume' => $item->current_stock,
-            'ship_unloader' => $item->ship_unloader,
-            'ship_unloader_label' => $item->ship_unloader_label,
+            'volume' => $item->volume,
+            'ship_unloader' => $item->stock_ship_unloader,
+            'ship_unloader_label' => $item->stock_ship_unloader_label,
         ]);
     }
 
@@ -397,6 +412,18 @@ class TransactionController extends Controller
         return $type === 'in' ? $quantity : -$quantity;
     }
 
+    private function transactionIndexParams(?string $type = null, ?string $bidang = null): array
+    {
+        $user = auth()->user();
+        $type ??= request('type');
+
+        if (($bidang === 'teknik' || $user?->isTeknik()) && in_array($type, ['in', 'out'], true)) {
+            return ['type' => $type];
+        }
+
+        return [];
+    }
+
     private function transactionDetailData($transactions): array
     {
         $data = [];
@@ -408,9 +435,10 @@ class TransactionController extends Controller
                 'no_normalisasi' => $txRow->no_normalisasi ?: ($txRow->item->no_normalisasi ?? '-'),
                 'name' => $txRow->item->name ?? '-',
                 'category' => $txRow->item->category ?? '-',
+                'component' => $txRow->item->component ?? '-',
                 'ship_unloader' => $txRow->ship_unloader_label,
                 'lokasi' => $txRow->lokasi ?: ($txRow->item->lokasi ?? '-'),
-                'volume' => $txRow->quantity,
+                'volume' => $txRow->volume ?? '-',
                 'quantity' => $txRow->quantity,
                 'unit' => $txRow->item->unit ?? '-',
                 'price' => $txRow->price === null ? '-' : 'Rp ' . number_format($txRow->price, 0, ',', '.'),

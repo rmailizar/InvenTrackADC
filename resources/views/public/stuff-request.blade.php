@@ -320,16 +320,16 @@
                                                     <td class="fw-600">{{ $item->no_normalisasi ?? '-' }}</td>
                                                 @endif
                                                 <td class="fw-600">{{ $item->name }}</td>
-                                                <td>{{ $item->category }}</td>
+                                                <td>{{ $activeBidang === 'teknik' ? ($item->component ?? '-') : $item->category }}</td>
                                                 @if($activeBidang === 'teknik')
                                                     <td>{{ $item->lokasi ?? '-' }}</td>
                                                 @endif
                                                 <td>{{ $item->unit }}</td>
-                                                <td class="text-center fw-700" style="font-size:15px; {{ $stock === 0 ? 'color:var(--danger);' : ($stock <= $item->min_stock ? 'color:var(--warning-dark);' : 'color:var(--success);') }}">
+                                                <td class="text-center fw-700" style="font-size:15px; {{ $stock <= 0 ? 'color:var(--danger);' : ($stock <= $item->min_stock ? 'color:var(--warning-dark);' : 'color:var(--success);') }}">
                                                     {{ number_format($stock) }}
                                                 </td>
                                                 <td>
-                                                    @if($stock === 0)
+                                                    @if($stock <= 0)
                                                         <span class="stock-status-badge stock-empty"><i class="bi bi-x-circle-fill"></i> Habis</span>
                                                     @elseif($stock <= $item->min_stock)
                                                         <span class="stock-status-badge stock-low"><i class="bi bi-exclamation-triangle-fill"></i> Rendah</span>
@@ -581,12 +581,15 @@
                 const chartMutedColor = () => isDark() ? '#64748b' : '#94a3b8';
                 const chartGridColor = () => isDark() ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
                 const chartSurfaceColor = () => isDark() ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.95)';
+                const chartCssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
                 const catColors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'];
 
-                function lineGradient(ctx, color) {
+                function lineGradient(ctx, type) {
                     const gradient = ctx.createLinearGradient(0, 0, 0, 320);
-                    gradient.addColorStop(0, color);
-                    gradient.addColorStop(1, 'rgba(255,255,255,0)');
+                    const prefix = type === 'gi' ? '--chart-gi' : '--chart-gr';
+                    gradient.addColorStop(0, chartCssVar(`${prefix}-fill-start`));
+                    gradient.addColorStop(0.65, chartCssVar(`${prefix}-fill-mid`));
+                    gradient.addColorStop(1, chartCssVar(`${prefix}-fill-end`));
                     return gradient;
                 }
 
@@ -600,8 +603,8 @@
 
                 function donutGradient(ctx, color) {
                     const gradient = ctx.createLinearGradient(0, 0, 0, 260);
-                    gradient.addColorStop(0, hexToRgba(color, isDark() ? 0.72 : 0.52));
-                    gradient.addColorStop(1, hexToRgba(color, 0.06));
+                    gradient.addColorStop(0, hexToRgba(color, chartCssVar('--chart-donut-alpha-start')));
+                    gradient.addColorStop(1, hexToRgba(color, chartCssVar('--chart-donut-alpha-end')));
                     return gradient;
                 }
 
@@ -666,12 +669,14 @@
                                     label: 'Goods Receipt',
                                     data: {!! json_encode(array_column($publicDashboard['monthlyData'], 'masuk')) !!},
                                     fill: true,
-                                    backgroundColor: lineGradient(monthlyCtx, isDark() ? 'rgba(59,130,246,0.4)' : 'rgba(59,130,246,0.3)'),
+                                    backgroundColor: lineGradient(monthlyCtx, 'gr'),
                                     borderColor: '#3b82f6',
                                     borderWidth: 2,
                                     tension: 0.4,
-                                    pointBackgroundColor: isDark() ? '#0f172a' : '#ffffff',
+                                    pointBackgroundColor: chartCssVar('--chart-point-bg'),
                                     pointBorderColor: '#3b82f6',
+                                    pointHoverBackgroundColor: chartCssVar('--chart-point-hover-bg'),
+                                    pointHoverBorderColor: '#3b82f6',
                                     pointBorderWidth: 2,
                                     pointRadius: 5,
                                     pointHoverRadius: 7
@@ -680,12 +685,14 @@
                                     label: 'Goods Issue',
                                     data: {!! json_encode(array_column($publicDashboard['monthlyData'], 'keluar')) !!},
                                     fill: true,
-                                    backgroundColor: lineGradient(monthlyCtx, isDark() ? 'rgba(16,185,129,0.4)' : 'rgba(16,185,129,0.3)'),
+                                    backgroundColor: lineGradient(monthlyCtx, 'gi'),
                                     borderColor: '#10b981',
                                     borderWidth: 2,
                                     tension: 0.4,
-                                    pointBackgroundColor: isDark() ? '#0f172a' : '#ffffff',
+                                    pointBackgroundColor: chartCssVar('--chart-point-bg'),
                                     pointBorderColor: '#10b981',
+                                    pointHoverBackgroundColor: chartCssVar('--chart-point-hover-bg'),
+                                    pointHoverBorderColor: '#10b981',
                                     pointBorderWidth: 2,
                                     pointRadius: 5,
                                     pointHoverRadius: 7
@@ -731,6 +738,38 @@
                         }
                     });
                 }
+
+                window.refreshPublicDashboardCharts = function() {
+                    if (publicMonthlyChart) {
+                        publicMonthlyChart.options.plugins.legend.labels.color = chartTextColor();
+                        publicMonthlyChart.options.plugins.tooltip.backgroundColor = chartSurfaceColor();
+                        publicMonthlyChart.options.plugins.tooltip.titleColor = isDark() ? '#f8fafc' : '#0f172a';
+                        publicMonthlyChart.options.plugins.tooltip.bodyColor = chartTextColor();
+                        publicMonthlyChart.options.plugins.tooltip.borderColor = isDark() ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.1)';
+                        publicMonthlyChart.options.scales.x.ticks.color = chartMutedColor();
+                        publicMonthlyChart.options.scales.y.ticks.color = chartMutedColor();
+                        publicMonthlyChart.options.scales.y.grid.color = chartGridColor();
+                        publicMonthlyChart.data.datasets[0].backgroundColor = lineGradient(monthlyCtx, 'gr');
+                        publicMonthlyChart.data.datasets[1].backgroundColor = lineGradient(monthlyCtx, 'gi');
+                        publicMonthlyChart.data.datasets.forEach(dataset => {
+                            dataset.pointBackgroundColor = chartCssVar('--chart-point-bg');
+                            dataset.pointHoverBackgroundColor = chartCssVar('--chart-point-hover-bg');
+                        });
+                        publicMonthlyChart.update();
+                    }
+
+                    if (publicShipChart) {
+                        publicShipChart.options.plugins.legend.labels.color = chartMutedColor();
+                        publicShipChart.options.plugins.tooltip.backgroundColor = chartSurfaceColor();
+                        publicShipChart.options.plugins.tooltip.titleColor = isDark() ? '#f8fafc' : '#0f172a';
+                        publicShipChart.options.plugins.tooltip.bodyColor = chartTextColor();
+                        publicShipChart.options.plugins.tooltip.borderColor = isDark() ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.1)';
+                        publicShipChart.data.datasets[0].backgroundColor = catColors
+                            .slice(0, publicShipChart.data.labels.length)
+                            .map(color => donutGradient(shipCtx, color));
+                        publicShipChart.update();
+                    }
+                };
 
                 function changePublicMonthlyChart() {
                     if (!publicMonthlyChart) return;
@@ -785,6 +824,10 @@
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('inventrack-theme', newTheme);
+
+            if (typeof window.refreshPublicDashboardCharts === 'function') {
+                window.refreshPublicDashboardCharts();
+            }
         }
 
         // Multi-line barang: tambah / hapus baris

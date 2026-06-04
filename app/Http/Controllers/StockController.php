@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Models\Item;
 use App\Models\StockRequestLine;
-use App\Models\Transaction;
 use Illuminate\Http\Request;
 
 class StockController extends Controller
@@ -18,13 +17,14 @@ class StockController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                     ->orWhere('category', 'like', "%{$search}%")
+                    ->orWhere('component', 'like', "%{$search}%")
                     ->orWhere('no_normalisasi', 'like', "%{$search}%")
                     ->orWhere('lokasi', 'like', "%{$search}%");
             });
         }
 
         if ($request->filled('category')) {
-            $query->where('category', $request->category);
+            $query->where(auth()->user()?->isTeknik() ? 'component' : 'category', $request->category);
         }
 
         $stockRequestItems = $this->stockRequestTriggerItems();
@@ -39,7 +39,8 @@ class StockController extends Controller
 
         if ($request->filled('stock_status') && $request->stock_status === 'low') {
             $items = $query->get()->filter(fn($item) => $item->is_low_stock);
-            $categories = Item::visibleFor(auth()->user())->select('category')->distinct()->orderBy('category')->pluck('category');
+            $categoryColumn = auth()->user()?->isTeknik() ? 'component' : 'category';
+            $categories = Item::visibleFor(auth()->user())->select($categoryColumn)->whereNotNull($categoryColumn)->distinct()->orderBy($categoryColumn)->pluck($categoryColumn);
 
             return view('stock.index', [
                 'items' => $items,
@@ -52,7 +53,8 @@ class StockController extends Controller
         }
 
         $items = $query->orderBy('name')->paginate(15)->withQueryString();
-        $categories = Item::visibleFor(auth()->user())->select('category')->distinct()->orderBy('category')->pluck('category');
+        $categoryColumn = auth()->user()?->isTeknik() ? 'component' : 'category';
+        $categories = Item::visibleFor(auth()->user())->select($categoryColumn)->whereNotNull($categoryColumn)->distinct()->orderBy($categoryColumn)->pluck($categoryColumn);
 
         return view('stock.index', compact(
             'items',
@@ -65,17 +67,15 @@ class StockController extends Controller
 
     private function stockRequestTriggerItems()
     {
-        $year = now()->year;
-
         return Item::visibleFor(auth()->user())
             ->orderBy('name')
             ->get()
-            ->map(function (Item $item) use ($year) {
+            ->map(function (Item $item) {
                 $stock = $item->current_stock;
 
                 if ($stock <= 0) {
                     $status = 'out_of_stock';
-                } elseif ($stock < $item->min_stock) {
+                } elseif ($stock <= $item->min_stock) {
                     $status = 'request_order';
                 } else {
                     return null;
@@ -86,15 +86,13 @@ class StockController extends Controller
                     'name' => $item->name,
                     'no_normalisasi' => $item->no_normalisasi,
                     'category' => $item->category,
+                    'component' => $item->component,
                     'lokasi' => $item->lokasi,
-                    'volume' => $stock,
+                    'volume' => $item->volume,
                     'ship_unloader' => $item->stock_ship_unloader_label,
                     'unit' => $item->unit,
                     'current_stock' => $stock,
                     'min_stock' => $item->min_stock,
-                    'price' => (int) Transaction::where('item_id', $item->id)
-                        ->whereYear('date', $year)
-                        ->max('price'),
                     'stock_status' => $status,
                 ];
             })
