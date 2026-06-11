@@ -40,6 +40,10 @@ class DashboardController extends Controller
 
         // Stats cards
         $totalItems = Item::visibleFor($user)->count();
+        $totalItemsLastMonth = Item::visibleFor($user)
+            ->where('created_at', '<', $now->copy()->startOfMonth())
+            ->count();
+        $totalItemsMonthlyChange = $this->monthlyPercentageChange($totalItems, $totalItemsLastMonth);
         $masukBulanIni = Transaction::visibleFor($user)->approved()->masuk()
             ->whereMonth('date', $now->month)
             ->whereYear('date', $now->year)
@@ -143,6 +147,7 @@ class DashboardController extends Controller
 
         return view('dashboard.index', compact(
             'totalItems',
+            'totalItemsMonthlyChange',
             'masukBulanIni',
             'keluarBulanIni',
             'pendingCount',
@@ -162,6 +167,15 @@ class DashboardController extends Controller
             'pendingByDate',
             'items'
         ));
+    }
+
+    private function monthlyPercentageChange(int $current, int $previous): float
+    {
+        if ($previous === 0) {
+            return $current > 0 ? 100 : 0;
+        }
+
+        return round((($current - $previous) / $previous) * 100, 1);
     }
 
     public function monthlyData(Request $request)

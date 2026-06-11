@@ -160,7 +160,7 @@
             @endif
 
             {{-- Rekap Stok: All user --}}
-            @if($canUseAdminMenus || auth()->user()->isManager() || auth()->user()->isStaff())
+            @if(!$isTeknik && ($canUseAdminMenus || auth()->user()->isManager() || auth()->user()->isStaff()))
                 <a href="{{ route('stock.index') }}"
                     onclick="switchSection('stockSection', this); return false;"
                     data-section="stockSection"
@@ -171,7 +171,7 @@
             @endif
 
             {{-- Stuff Request: Admin & Staff --}}
-            @if($canUseAdminMenus || auth()->user()->isStaff())
+            @if(!$isTeknik && ($canUseAdminMenus || auth()->user()->isStaff()))
                 <a href="{{ route('stock-requests.index') }}"
                     onclick="switchSection('stockRequestsSection', this); return false;"
                     data-section="stockRequestsSection"
@@ -200,7 +200,7 @@
             @endif
 
             {{-- Laporan: Admin & Manager --}}
-            @if($canUseAdminMenus || auth()->user()->isManager())
+            @if(!$isTeknik && ($canUseAdminMenus || auth()->user()->isManager()))
                 <div class="sidebar-label" style="margin-top: 8px;">Laporan</div>
 
                 <a href="{{ route('reports.index') }}"
@@ -213,7 +213,7 @@
             @endif
 
             {{-- Pengaturan: Admin only --}}
-            @if($canUseAdminMenus)
+            @if(!$isTeknik && $canUseAdminMenus)
                 <div class="sidebar-label" style="margin-top: 8px;">Pengaturan</div>
 
                 <a href="{{ route('users.index') }}"
@@ -296,7 +296,7 @@
                 </div>
             </div>
             <div class="topbar-right">
-                @if(!auth()->user()->isStaff())
+                @if(!auth()->user()->isStaff() && !$isTeknik)
                     @php
                         $lowStockCount = \App\Models\Item::visibleFor(auth()->user())->get()->filter(fn($i) => $i->is_low_stock)->count();
                     @endphp

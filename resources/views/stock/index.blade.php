@@ -18,9 +18,9 @@
                             value="{{ request('search') }}">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">{{ $isTeknik ? 'Komponen' : 'Kategori' }}</label>
+                        <label class="form-label">{{ $isTeknik ? 'Tipe Barang' : 'Kategori' }}</label>
                         <select name="category" class="form-select">
-                            <option value="">Semua Kategori</option>
+                            <option value="">Semua {{ $isTeknik ? 'Tipe Barang' : 'Kategori' }}</option>
                             @foreach($categories as $cat)
                                 <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
                             @endforeach
@@ -70,8 +70,8 @@
                                     <th style="width:50px;">No</th>
                                     <th>No Normalisasi</th>
                                     <th>Nama Barang</th>
-                                    <th>Kategori</th>
                                     <th>Komponen</th>
+                                    <th>Tipe Barang</th>
                                     <th>Ship Unloader</th>
                                     <th>Lokasi</th>
                                     <th class="text-center">Volume</th>
@@ -109,8 +109,8 @@
                                     @if($isTeknik)
                                         <td class="fw-600">{{ $item->no_normalisasi ?? '-' }}</td>
                                         <td class="fw-600">{{ $item->name }}</td>
-                                        <td>{{ $item->category }}</td>
                                         <td>{{ $item->component ?? '-' }}</td>
+                                        <td>{{ $item->category }}</td>
                                         <td>{{ $item->stock_ship_unloader_label }}</td>
                                         <td>{{ $item->lokasi ?? '-' }}</td>
                                         <td class="text-center fw-700">{{ $item->volume === null ? '-' : number_format($item->volume) }}</td>

@@ -43,9 +43,9 @@
                         </div>
 
                         <div class="col-md-3">
-                            <label class="form-label">{{ $isTeknik ? 'Komponen' : 'Kategori' }}</label>
+                            <label class="form-label">{{ $isTeknik ? 'Tipe Barang' : 'Kategori' }}</label>
                             <select name="category" class="form-select">
-                                <option value="">Semua {{ $isTeknik ? 'Komponen' : 'Kategori' }}</option>
+                                <option value="">Semua {{ $isTeknik ? 'Tipe Barang' : 'Kategori' }}</option>
                                 @foreach($categories as $cat)
                                     <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
                                 @endforeach
@@ -78,9 +78,9 @@
                         </div>
 
                         <div class="col-lg-2 col-md-6">
-                            <label class="form-label">{{ $isTeknik ? 'Komponen' : 'Kategori' }}</label>
+                            <label class="form-label">{{ $isTeknik ? 'Tipe Barang' : 'Kategori' }}</label>
                             <select name="category" class="form-select">
-                                <option value="">Semua {{ $isTeknik ? 'Komponen' : 'Kategori' }}</option>
+                                <option value="">Semua {{ $isTeknik ? 'Tipe Barang' : 'Kategori' }}</option>
                                 @foreach($categories as $cat)
                                     <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>
                                         {{ $cat }}
@@ -222,8 +222,8 @@
                                         <th style="width:50px;">No</th>
                                         <th>No Normalisasi</th>
                                         <th>Nama Barang</th>
-                                        <th>Kategori</th>
                                         <th>Komponen</th>
+                                        <th>Tipe Barang</th>
                                         <th>Ship Unloader</th>
                                         <th>Lokasi</th>
                                         <th class="text-center">Volume</th>
@@ -255,8 +255,8 @@
                                         @if($isTeknik)
                                             <td class="fw-600">{{ $row->item->no_normalisasi ?? '-' }}</td>
                                             <td class="fw-600">{{ $row->item->name }}</td>
-                                            <td>{{ $row->item->category }}</td>
                                             <td>{{ $row->item->component ?? '-' }}</td>
+                                            <td>{{ $row->item->category }}</td>
                                             <td>{{ $row->item->stock_ship_unloader_label }}</td>
                                             <td>{{ $row->item->lokasi ?? '-' }}</td>
                                             <td class="text-center fw-700">{{ $row->item->volume === null ? '-' : number_format($row->item->volume) }}</td>
@@ -308,6 +308,7 @@
                                         <th>No Normalisasi</th>
                                         <th>Nama Barang</th>
                                         <th>Komponen</th>
+                                        <th>Tipe Barang</th>
                                         <th>Ship Unloader</th>
                                         <th>Lokasi</th>
                                         <th class="text-center">Volume</th>
@@ -347,6 +348,7 @@
                                             <td class="fw-600">{{ $tx->no_normalisasi ?? $tx->item->no_normalisasi ?? '-' }}</td>
                                             <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
                                             <td>{{ $tx->item->component ?? '-' }}</td>
+                                            <td>{{ $tx->item->category ?? '-' }}</td>
                                             <td>{{ $tx->ship_unloader_label }}</td>
                                             <td>{{ $tx->lokasi ?? $tx->item->lokasi ?? '-' }}</td>
                                             <td class="text-center fw-700">{{ $tx->volume === null ? '-' : number_format($tx->volume) }}</td>
@@ -375,7 +377,7 @@
                                     </tr>
                                 @empty
                                     <tr class="no-data-row">
-                                        <td colspan="{{ $isTeknik ? 13 : 10 }}">
+                                        <td colspan="{{ $isTeknik ? 14 : 10 }}">
                                             <i class="bi bi-inbox"
                                                 style="font-size:40px;display:block;margin-bottom:8px;opacity:0.3;"></i>
                                             Tidak ada data untuk filter ini

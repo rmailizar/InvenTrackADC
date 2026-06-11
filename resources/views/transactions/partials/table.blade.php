@@ -37,6 +37,7 @@
                                 <th>No Normalisasi</th>
                                 <th>Nama Barang</th>
                                 <th>Komponen</th>
+                                <th>Tipe Barang</th>
                                 <th>Ship Unloader</th>
                                 <th>Lokasi</th>
                                 <th class="text-center">Volume</th>
@@ -80,6 +81,7 @@
                                     <td class="fw-600">{{ $tx->no_normalisasi ?? $tx->item->no_normalisasi ?? '-' }}</td>
                                     <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
                                     <td>{{ $tx->item->component ?? '-' }}</td>
+                                    <td>{{ $tx->item->category ?? '-' }}</td>
                                     <td>{{ $tx->ship_unloader_label }}</td>
                                     <td>{{ $tx->lokasi ?? $tx->item->lokasi ?? '-' }}</td>
                                     <td class="text-center fw-700">{{ $tx->volume === null ? '-' : number_format($tx->volume) }}</td>
@@ -132,7 +134,7 @@
                             </tr>
                         @empty
                             <tr class="no-data-row">
-                                <td colspan="{{ $isTeknik ? 12 : 11 }}">
+                                <td colspan="{{ $isTeknik ? 13 : 11 }}">
                                     <i class="bi bi-inbox" style="font-size:40px;display:block;margin-bottom:8px;opacity:0.3;"></i>
                                     Belum ada data transaksi
                                 </td>

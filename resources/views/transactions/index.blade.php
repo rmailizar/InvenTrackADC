@@ -12,7 +12,7 @@
 @section('subtitle', $isTeknik ? 'Input dan riwayat ' . $pageTitle : 'Daftar transaksi barang masuk & keluar')
 
 @section('content')
-    <div class="animate-fade-in">
+    <div class="animate-fade-in {{ $isTeknik ? 'technical-transaction-page' : '' }}">
         <div class="filter-bar">
             <form method="GET" action="{{ route('transactions.index') }}">
                 @if($isTeknik)
@@ -85,7 +85,7 @@
                                                 data-component="{{ $item->component }}"
                                                 data-volume="{{ $item->volume }}"
                                                 data-ship-unloader="{{ $item->stock_ship_unloader }}">
-                                                {{ $item->no_normalisasi ? $item->no_normalisasi . ' - ' : '' }}{{ $item->name }}
+                                                {{ $item->name }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -97,7 +97,7 @@
                                         <input type="text" class="form-control" id="txInlineCategory" readonly>
                                     </div>
                                     <div class="col-6">
-                                        <label class="form-label">Kategori</label>
+                                        <label class="form-label">Tipe Barang</label>
                                         <input type="text" class="form-control" id="txInlineItemCategory" readonly>
                                     </div>
                                     <div class="col-6">
@@ -165,7 +165,7 @@
         @endif
     </div>
 
-    <div class="modal fade inventrack-modal" id="transactionDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade inventrack-modal {{ $isTeknik ? 'technical-transaction-modal' : '' }}" id="transactionDetailModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -182,7 +182,7 @@
         </div>
     </div>
 
-    <div class="modal fade inventrack-modal" id="transactionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade inventrack-modal {{ $isTeknik ? 'technical-transaction-modal' : '' }}" id="transactionModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content" style="position:relative;">
                 <div class="modal-loading-overlay" id="txLoading"><div class="modal-spinner"></div></div>
@@ -286,7 +286,7 @@
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Kategori</label>
+                                <label class="form-label">{{ $isTeknik ? 'Tipe Barang' : 'Kategori' }}</label>
                                 <input type="text" class="form-control" id="txCategoryReadonly" readonly>
                             </div>
                         </div>
@@ -439,8 +439,8 @@
                         if (isTeknikTransaction) {
                             appendTransactionDetail(grid, 'No Normalisasi', data.no_normalisasi);
                             appendTransactionDetail(grid, 'Nama Barang', data.name);
-                            appendTransactionDetail(grid, 'Kategori', data.category);
                             appendTransactionDetail(grid, 'Komponen', data.component);
+                            appendTransactionDetail(grid, 'Tipe Barang', data.category);
                             appendTransactionDetail(grid, 'Ship Unloader', data.ship_unloader);
                             appendTransactionDetail(grid, 'Lokasi', data.lokasi);
                             appendTransactionDetail(grid, 'Volume', data.volume);
@@ -671,4 +671,3 @@
         }
     </script>
 @endpush
-

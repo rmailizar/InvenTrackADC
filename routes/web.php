@@ -22,6 +22,9 @@ Route::get('/stock-request', [StuffRequestController::class, 'publicIndex'])->na
 Route::post('/request-stock', [StuffRequestController::class, 'store'])->name('public.stock-request.store');
 Route::get('/public/api/teknik/monthly-data', [StuffRequestController::class, 'publicMonthlyData'])->name('public.teknik.monthlyData');
 Route::get('/public/api/teknik/ship-unloader-data', [StuffRequestController::class, 'publicShipUnloaderData'])->name('public.teknik.shipUnloaderData');
+Route::post('/public/teknik/transactions', [StuffRequestController::class, 'storePublicTechnicalTransaction'])
+    ->middleware('throttle:30,1')
+    ->name('public.teknik.transactions.store');
 
 // Auth Routes
 Route::get('/login', [LoginController::class, 'showLogin'])->name('login');
@@ -32,7 +35,7 @@ Route::get('/reset-password/{token}', [ForgotPasswordController::class, 'showRes
 Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])->name('password.update');
 
 // Protected Routes
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', \App\Http\Middleware\RestrictTeknikAccess::class])->group(function () {
 
     // Dashboard - admin & manager only
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard')->middleware('userAkses:admin,manajer');

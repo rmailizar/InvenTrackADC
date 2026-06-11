@@ -57,7 +57,11 @@ class LoginController extends Controller
                 return response()->json(['success' => true, 'redirect' => $redirect]);
             }
 
-            return redirect()->intended($redirect)->with('success', 'Selamat datang, ' . $user->name . '!');
+            $response = $user->isTeknik()
+                ? redirect($redirect)
+                : redirect()->intended($redirect);
+
+            return $response->with('success', 'Selamat datang, ' . $user->name . '!');
         }
 
         if ($isAjax) {

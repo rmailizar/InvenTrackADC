@@ -56,9 +56,14 @@ class StuffRequestController extends Controller
                 ->orderByDesc('year')
                 ->pluck('year');
             $selectedYear = $availableYears->first() ?? $now->year;
+            $totalItems = $allTeknikItems->count();
+            $totalItemsLastMonth = Item::where('bidang', 'teknik')
+                ->where('created_at', '<', $now->copy()->startOfMonth())
+                ->count();
 
             $publicDashboard = [
-                'totalItems' => $allTeknikItems->count(),
+                'totalItems' => $totalItems,
+                'totalItemsMonthlyChange' => $this->monthlyPercentageChange($totalItems, $totalItemsLastMonth),
                 'masukBulanIni' => Transaction::where('bidang', 'teknik')->approved()->masuk()
                     ->whereMonth('date', $now->month)
                     ->whereYear('date', $now->year)
@@ -70,6 +75,7 @@ class StuffRequestController extends Controller
                 'lowStockCount' => $allTeknikItems
                     ->filter(fn($item) => $item->current_stock <= $item->min_stock)
                     ->count(),
+                'typeSummary' => $this->publicTechnicalTypeSummary($allTeknikItems),
                 'selectedMonthlyPeriod' => $request->monthly_period ?? 'thisMonth',
                 'monthlyData' => $this->publicMonthlyChartData((int) $selectedYear, $request->monthly_period ?? 'thisMonth'),
                 'categoryData' => $this->publicShipUnloaderStockData($allTeknikItems),
@@ -80,19 +86,40 @@ class StuffRequestController extends Controller
                     ->latest()
                     ->limit(5)
                     ->get(),
-                'topKeluar' => Transaction::with('item')
-                    ->where('bidang', 'teknik')
-                    ->approved()
-                    ->keluar()
-                    ->selectRaw('item_id, SUM(quantity) as total')
-                    ->groupBy('item_id')
-                    ->orderByDesc('total')
-                    ->limit(5)
-                    ->get(),
             ];
         }
 
         return view('public.stuff-request', compact('items', 'categories', 'allItems', 'activeBidang', 'publicDashboard'));
+    }
+
+    private function monthlyPercentageChange(int $current, int $previous): float
+    {
+        if ($previous === 0) {
+            return $current > 0 ? 100 : 0;
+        }
+
+        return round((($current - $previous) / $previous) * 100, 1);
+    }
+
+    private function publicTechnicalTypeSummary($items): array
+    {
+        $grouped = $items
+            ->filter(fn($item) => filled($item->component))
+            ->groupBy(fn($item) => $item->component);
+        $totalItems = max(1, $items->count());
+
+        return [
+            'total_types' => $grouped->count(),
+            'top_types' => $grouped
+                ->map(fn($rows, $component) => [
+                    'name' => $component,
+                    'count' => $rows->count(),
+                    'percentage' => (int) round(($rows->count() / $totalItems) * 100),
+                ])
+                ->sortByDesc('count')
+                ->values()
+                ->all(),
+        ];
     }
 
     public function publicMonthlyData(Request $request)
@@ -109,6 +136,76 @@ class StuffRequestController extends Controller
         $items = Item::where('bidang', 'teknik')->get();
 
         return response()->json($this->publicShipUnloaderStockData($items, $year));
+    }
+
+    public function storePublicTechnicalTransaction(Request $request)
+    {
+        $validated = $request->validate([
+            'date' => 'required|date',
+            'type' => 'required|in:in,out',
+            'item_id' => 'required|exists:items,id',
+            'quantity' => 'required|integer|min:1',
+            'ship_unloader' => 'required|array|min:1',
+            'ship_unloader.*' => 'in:1,2,3,4',
+            'description' => 'nullable|string|max:500',
+        ], [
+            'item_id.required' => 'Spare part wajib dipilih.',
+            'quantity.required' => 'Jumlah wajib diisi.',
+            'ship_unloader.required' => 'Pilih minimal satu Ship Unloader.',
+        ]);
+
+        DB::transaction(function () use ($validated) {
+            $item = Item::where('bidang', 'teknik')
+                ->lockForUpdate()
+                ->find($validated['item_id']);
+
+            if (!$item) {
+                throw ValidationException::withMessages([
+                    'item_id' => 'Spare part Teknik tidak ditemukan.',
+                ]);
+            }
+
+            if ($validated['type'] === 'out' && $item->current_stock < $validated['quantity']) {
+                throw ValidationException::withMessages([
+                    'quantity' => "Stok tidak mencukupi. Stok saat ini: {$item->current_stock} {$item->unit}.",
+                ]);
+            }
+
+            Transaction::create([
+                'item_id' => $item->id,
+                'user_id' => null,
+                'bidang' => 'teknik',
+                'no_normalisasi' => $item->no_normalisasi,
+                'lokasi' => $item->lokasi,
+                'volume' => $item->volume,
+                'ship_unloader' => $this->normalizeShipUnloaders($validated['ship_unloader']),
+                'date' => $validated['date'],
+                'type' => $validated['type'],
+                'quantity' => $validated['quantity'],
+                'price' => null,
+                'description' => $validated['description'] ?? null,
+                'status' => 'approved',
+                'approved_by' => null,
+                'approved_at' => now(),
+            ]);
+        });
+
+        $label = $validated['type'] === 'in' ? 'Goods Receipt' : 'Goods Issue';
+
+        return redirect()
+            ->route('public.stuff-request', ['bidang' => 'teknik'])
+            ->with('success', "{$label} berhasil disimpan.");
+    }
+
+    private function normalizeShipUnloaders(array $ships): string
+    {
+        return collect($ships)
+            ->map(fn($ship) => (string) $ship)
+            ->filter(fn($ship) => in_array($ship, ['1', '2', '3', '4'], true))
+            ->unique()
+            ->sort()
+            ->values()
+            ->implode(',');
     }
 
     private function publicMonthlyChartData(int $year, string $period = 'thisMonth'): array

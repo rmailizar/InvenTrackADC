@@ -29,7 +29,7 @@
     </script>
 
 </head>
-<body class="public-layout">
+<body class="public-layout {{ $activeBidang === 'teknik' ? 'public-technical-layout' : '' }}">
     <!-- Animated Nexus Background -->
     <div class="background-glow-container">
         <div class="nexus-bg"></div>
@@ -72,78 +72,78 @@
         <div class="public-body">
             <div class="container">
                 @if($activeBidang === 'teknik' && $publicDashboard)
-                    <div class="row g-3 mb-4 dashboard-summary-cards">
-                        <div class="col-sm-6 col-xl-3">
-                            <div class="stats-card primary">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="stats-icon">
-                                        <i class="bi bi-box-seam-fill"></i>
-                                    </div>
-                                    <div class="stats-copy">
-                                        <div class="stats-value" style="font-size:22px;">{{ number_format($publicDashboard['totalItems']) }}</div>
-                                        <div class="stats-label">Total Barang</div>
-                                    </div>
+                    <div class="technical-dashboard-cards public-technical-dashboard-cards mb-4">
+                        <div class="technical-dashboard-card technical-total-card">
+                            <div class="technical-dashboard-card-copy">
+                                <div class="technical-dashboard-card-title">Total Spare Parts (SOH)</div>
+                                <div class="technical-dashboard-card-value">
+                                    {{ number_format($publicDashboard['totalItems']) }} <span>Items</span>
+                                </div>
+                                <div class="technical-dashboard-card-trend {{ $publicDashboard['totalItemsMonthlyChange'] < 0 ? 'is-down' : 'is-up' }}">
+                                    <strong>
+                                        <i class="bi bi-graph-{{ $publicDashboard['totalItemsMonthlyChange'] < 0 ? 'down' : 'up' }}-arrow"></i>
+                                        {{ $publicDashboard['totalItemsMonthlyChange'] > 0 ? '+' : '' }}{{ number_format($publicDashboard['totalItemsMonthlyChange'], 1) }}%
+                                    </strong>
+                                    <span>vs last month</span>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-sm-6 col-xl-3">
-                            <div class="stats-card success">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="stats-icon">
-                                        <i class="bi bi-arrow-down-circle-fill"></i>
-                                    </div>
-                                    <div class="stats-copy">
-                                        <div class="stats-value" style="font-size:22px;">{{ number_format($publicDashboard['masukBulanIni']) }}</div>
-                                        <div class="stats-label">Goods Receipt Bulan Ini</div>
-                                    </div>
-                                </div>
+                            <div class="technical-dashboard-card-icon technical-total-icon">
+                                <i class="bi bi-pie-chart-fill"></i>
                             </div>
                         </div>
-                        <div class="col-sm-6 col-xl-3">
-                            <div class="stats-card danger">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="stats-icon">
-                                        <i class="bi bi-arrow-up-circle-fill"></i>
-                                    </div>
-                                    <div class="stats-copy">
-                                        <div class="stats-value" style="font-size:22px;">{{ number_format($publicDashboard['keluarBulanIni']) }}</div>
-                                        <div class="stats-label">Goods Issue Bulan Ini</div>
-                                    </div>
-                                </div>
+
+                        <div class="technical-dashboard-card technical-critical-card">
+                            <div class="technical-dashboard-card-copy">
+                                <div class="technical-dashboard-card-title">Critical Stock</div>
+                                <div class="technical-dashboard-card-value">{{ number_format($publicDashboard['lowStockCount']) }} <span>Items</span></div>
+                                <div class="technical-dashboard-card-link">Items requiring restock</div>
+                            </div>
+                            <div class="technical-dashboard-card-icon technical-critical-icon">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
                             </div>
                         </div>
-                        <div class="col-sm-6 col-xl-3">
-                            <div class="stats-card warning">
-                                <div class="d-flex align-items-center gap-3">
-                                    <div class="stats-icon">
-                                        <i class="bi bi-exclamation-triangle-fill"></i>
+
+                        <div class="technical-dashboard-card technical-type-card">
+                            <div class="technical-dashboard-card-copy">
+                                <div class="technical-type-card-head">
+                                    <div>
+                                        <div class="technical-dashboard-card-title">Total Item Types</div>
+                                        <div class="technical-dashboard-card-subtitle">Tipe barang terdaftar</div>
                                     </div>
-                                    <div class="stats-copy">
-                                        <div class="stats-value" style="font-size:22px;">{{ number_format($publicDashboard['lowStockCount']) }}</div>
-                                        <div class="stats-label">Total Stok Rendah</div>
-                                    </div>
+                                    <div class="technical-type-card-total">{{ number_format($publicDashboard['typeSummary']['total_types'] ?? 0) }}</div>
+                                </div>
+                                <div class="technical-type-card-list">
+                                    @forelse(array_slice($publicDashboard['typeSummary']['top_types'] ?? [], 0, 2) as $type)
+                                        <div class="technical-type-card-row">
+                                            <i class="bi {{ $loop->iteration % 2 === 0 ? 'bi-lightning-fill' : 'bi-gear-fill' }}"></i>
+                                            <span>{{ $type['name'] }}</span>
+                                            <small>{{ $type['percentage'] }}%</small>
+                                        </div>
+                                    @empty
+                                        <div class="technical-type-card-empty">Belum ada tipe barang</div>
+                                    @endforelse
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="row g-3 mb-4">
+                    <div class="row g-3 mb-4 public-technical-chart-row">
                         <div class="col-lg-8">
                             <div class="card">
-                                <div class="card-header d-flex align-items-center justify-content-between">
+                                <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
                                     <span>
                                         <i class="bi bi-graph-up text-primary-custom me-2"></i>
-                                        Goods Receipt vs Goods Issue
+                                        Goods Receipt vs Goods Issue (12 Bulan)
                                     </span>
-                                    <div class="d-flex align-items-center gap-2">
+                                    <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
                                         <select id="publicMonthlyPeriodFilter" class="form-select form-select-sm"
-                                            style="width:auto; min-width:140px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px;">
+                                            style="width:auto; min-width:140px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px; padding:4px 28px 4px 10px;">
                                             <option value="thisMonth" {{ $publicDashboard['selectedMonthlyPeriod'] === 'thisMonth' ? 'selected' : '' }}>Bulan Ini</option>
                                             <option value="6months" {{ $publicDashboard['selectedMonthlyPeriod'] === '6months' ? 'selected' : '' }}>6 Bulan Terakhir</option>
                                             <option value="ytd" {{ $publicDashboard['selectedMonthlyPeriod'] === 'ytd' ? 'selected' : '' }}>12 Bulan</option>
                                         </select>
                                         <select id="publicMonthlyYearFilter" class="form-select form-select-sm"
-                                            style="width:auto; min-width:110px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px;">
+                                            style="width:auto; min-width:120px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px; padding:4px 28px 4px 10px;">
                                             @foreach($publicDashboard['availableYears'] as $year)
                                                 <option value="{{ $year }}" {{ $publicDashboard['selectedYear'] == $year ? 'selected' : '' }}>{{ $year }}</option>
                                             @endforeach
@@ -159,10 +159,10 @@
                         </div>
                         <div class="col-lg-4">
                             <div class="card">
-                                <div class="card-header d-flex align-items-center justify-content-between">
+                                <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
                                     <span><i class="bi bi-pie-chart-fill text-primary-custom me-2"></i>Stok per Ship Unloader</span>
                                     <select id="publicShipYearFilter" class="form-select form-select-sm"
-                                        style="width:auto; min-width:120px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px;">
+                                        style="width:auto; min-width:120px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px; padding:4px 28px 4px 10px;">
                                         <option value="">Semua Tahun</option>
                                         @foreach($publicDashboard['availableYears'] as $year)
                                             <option value="{{ $year }}">{{ $year }}</option>
@@ -178,63 +178,83 @@
                         </div>
                     </div>
 
-                    <div class="row g-3 mb-4 align-items-start">
-                        <div class="col-lg-6">
-                            <div class="card">
+                    <div class="row g-3 mb-4 technical-soh-activity-row">
+                        <div class="col-lg-8">
+                            <div class="card technical-soh-detail-card">
                                 <div class="card-header">
-                                    <span><i class="bi bi-fire text-danger-custom me-2"></i>Goods Issue Terbanyak</span>
+                                    <span><i class="bi bi-table text-primary-custom me-2"></i>Detailed Stock On Hand Table</span>
                                 </div>
-                                <div class="card-body py-2">
-                                    @forelse($publicDashboard['topKeluar'] as $index => $tx)
-                                        <div
-                                            class="d-flex align-items-center justify-content-between gap-3 py-2 {{ !$loop->last ? 'border-bottom' : '' }}">
-                                            <div class="d-flex align-items-center gap-3 min-width-0">
-                                                <span class="fw-700"
-                                                    style="width:24px;height:24px;border-radius:50%;background:var(--primary-bg);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;">{{ $index + 1 }}</span>
-                                                <div class="min-width-0">
-                                                    <div class="fw-600 text-truncate" style="font-size:13px;">{{ $tx->item->name ?? 'Barang dihapus' }}</div>
-                                                    <div class="text-truncate" style="font-size:11px;color:var(--text-secondary);">
-                                                        @if($tx->item?->no_normalisasi)
-                                                            {{ $tx->item->no_normalisasi }} -
-                                                        @endif
-                                                        {{ $tx->item->category ?? '' }}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <span class="fw-700" style="color:#CA5995;flex-shrink:0;">{{ number_format($tx->total) }}</span>
-                                        </div>
-                                    @empty
-                                        <div class="empty-state" style="padding:24px 10px;">
-                                            <i class="bi bi-inbox" style="font-size:36px;"></i>
-                                            <h6 class="mt-2" style="font-size:13px;">Belum ada data</h6>
-                                        </div>
-                                    @endforelse
+                                <div class="card-body p-0">
+                                    <div class="table-responsive">
+                                        <table class="table technical-soh-table mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>No. Norm</th>
+                                                    <th>Spare Part Name</th>
+                                                    <th>Location</th>
+                                                    <th class="text-end">Volume</th>
+                                                    <th>Satuan</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @forelse($publicDashboard['recentTransactions'] as $tx)
+                                                    <tr>
+                                                        <td>
+                                                            <span class="technical-soh-norm {{ $tx->type === 'in' ? 'norm-in' : 'norm-out' }}">
+                                                                {{ $tx->item?->no_normalisasi ?: 'NORM-' . str_pad($tx->item_id, 4, '0', STR_PAD_LEFT) }}
+                                                            </span>
+                                                        </td>
+                                                        <td class="fw-700">{{ $tx->item?->name ?? 'Barang dihapus' }}</td>
+                                                        <td>{{ $tx->item?->lokasi ?: '-' }}</td>
+                                                        <td class="text-end fw-800">{{ number_format($tx->quantity) }}</td>
+                                                        <td>{{ $tx->item?->unit ?? '-' }}</td>
+                                                    </tr>
+                                                @empty
+                                                    <tr>
+                                                        <td colspan="5">
+                                                            <div class="empty-state" style="padding:26px 10px;">
+                                                                <i class="bi bi-inbox" style="font-size:34px;"></i>
+                                                                <h6 class="mt-2" style="font-size:13px;">Belum ada data transaksi terbaru</h6>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                @endforelse
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="col-lg-6">
-                            <div class="card">
+                        <div class="col-lg-4">
+                            <div class="card technical-activity-card">
                                 <div class="card-header">
-                                    <span><i class="bi bi-clock-fill text-primary-custom me-2"></i>Transaksi Terbaru</span>
+                                    <span><i class="bi bi-clock-fill text-primary-custom me-2"></i>Recent Activity Feed</span>
                                 </div>
-                                <div class="card-body py-2">
+                                <div class="card-body technical-activity-feed">
                                     @forelse($publicDashboard['recentTransactions'] as $tx)
-                                        <div class="d-flex align-items-start gap-3 py-2 {{ !$loop->last ? 'border-bottom' : '' }}">
-                                            <div
-                                                style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;{{ $tx->type === 'in' ? 'background:var(--success-bg);color:var(--success);' : 'background:var(--danger-bg);color:var(--danger);' }}">
-                                                <i class="bi bi-arrow-{{ $tx->type === 'in' ? 'down' : 'up' }}-circle-fill"></i>
+                                        <div class="technical-activity-item">
+                                            <div class="technical-activity-icon {{ $tx->type === 'in' ? 'receipt' : 'issue' }}">
+                                                <i class="bi bi-{{ $tx->type === 'in' ? 'boxes' : 'box-arrow-up' }}"></i>
                                             </div>
-                                            <div class="flex-grow-1 min-width-0">
-                                                <div class="fw-600 text-truncate" style="font-size:13px;">{{ $tx->item->name ?? 'Barang dihapus' }}</div>
-                                                <div class="text-truncate" style="font-size:11px;color:var(--text-secondary);">
-                                                    {{ $tx->type_label }} - {{ $tx->quantity }} {{ $tx->item->unit ?? '' }} - {{ $tx->user->name ?? 'System' }}
+                                            <div class="technical-activity-copy">
+                                                <div class="technical-activity-title">
+                                                    <strong>{{ $tx->item?->no_normalisasi ?? 'NORM-' . str_pad($tx->item_id, 4, '0', STR_PAD_LEFT) }}</strong>
+                                                    - {{ number_format($tx->quantity) }} {{ $tx->item?->unit ?? 'Units' }}
                                                 </div>
+                                                <div class="technical-activity-detail">
+                                                    {{ $tx->type === 'in' ? 'Added' : 'Issued' }}
+                                                    @if($tx->item?->lokasi)
+                                                        ({{ $tx->item->lokasi }})
+                                                    @endif
+                                                    -
+                                                </div>
+                                                <time>[{{ \Carbon\Carbon::parse($tx->date ?? $tx->created_at)->format('Y-m-d') }}]</time>
                                             </div>
                                         </div>
                                     @empty
-                                        <div class="empty-state" style="padding:24px 10px;">
-                                            <i class="bi bi-inbox" style="font-size:36px;"></i>
+                                        <div class="empty-state" style="padding:30px 10px;">
+                                            <i class="bi bi-inbox" style="font-size:40px;"></i>
                                             <h6 class="mt-2" style="font-size:13px;">Belum ada transaksi</h6>
                                         </div>
                                     @endforelse
@@ -244,24 +264,27 @@
                     </div>
                 @endif
 
+                <div class="report-tabs mb-3">
+                    <a href="{{ route('public.stuff-request', array_merge(request()->except(['bidang', 'page']), ['bidang' => 'umum'])) }}"
+                        class="report-tab {{ $activeBidang === 'umum' ? 'active' : '' }}">
+                        <i class="bi bi-building"></i>
+                        Barang Bidang Umum
+                    </a>
+                    <a href="{{ route('public.stuff-request', array_merge(request()->except(['bidang', 'page']), ['bidang' => 'teknik'])) }}"
+                        class="report-tab {{ $activeBidang === 'teknik' ? 'active' : '' }}">
+                        <i class="bi bi-tools"></i>
+                        Barang Bidang Teknik
+                    </a>
+                </div>
+
+                @if($activeBidang === 'teknik')
+                    @include('public.partials.technical-transaction-forms')
+                @else
                 <div class="row g-4">
                     {{-- Left: Stock Recap --}}
                     <div class="col-lg-8">
                         <div class="section-title">
                             <i class="bi bi-clipboard-data-fill"></i> Daftar Barang
-                        </div>
-
-                        <div class="report-tabs mb-3">
-                            <a href="{{ route('public.stuff-request', array_merge(request()->except(['bidang', 'page']), ['bidang' => 'umum'])) }}"
-                                class="report-tab {{ $activeBidang === 'umum' ? 'active' : '' }}">
-                                <i class="bi bi-building"></i>
-                                Barang Bidang Umum
-                            </a>
-                            <a href="{{ route('public.stuff-request', array_merge(request()->except(['bidang', 'page']), ['bidang' => 'teknik'])) }}"
-                                class="report-tab {{ $activeBidang === 'teknik' ? 'active' : '' }}">
-                                <i class="bi bi-tools"></i>
-                                Barang Bidang Teknik
-                            </a>
                         </div>
 
                         {{-- Filter --}}
@@ -276,7 +299,7 @@
                                     </div>
                                     <div class="col-md-4">
                                         <select name="category" class="form-select">
-                                            <option value="">Semua {{ $activeBidang === 'teknik' ? 'Komponen' : 'Kategori' }}</option>
+                                            <option value="">Semua {{ $activeBidang === 'teknik' ? 'Tipe Barang' : 'Kategori' }}</option>
                                             @foreach($categories as $cat)
                                                 <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
                                             @endforeach
@@ -302,7 +325,7 @@
                                                     <th>No Normalisasi</th>
                                                 @endif
                                                 <th>Nama Barang</th>
-                                                <th>{{ $activeBidang === 'teknik' ? 'Komponen' : 'Kategori' }}</th>
+                                                <th>{{ $activeBidang === 'teknik' ? 'Tipe Barang' : 'Kategori' }}</th>
                                                 @if($activeBidang === 'teknik')
                                                     <th>Lokasi</th>
                                                 @endif
@@ -320,7 +343,7 @@
                                                     <td class="fw-600">{{ $item->no_normalisasi ?? '-' }}</td>
                                                 @endif
                                                 <td class="fw-600">{{ $item->name }}</td>
-                                                <td>{{ $activeBidang === 'teknik' ? ($item->component ?? '-') : $item->category }}</td>
+                                                <td>{{ $activeBidang === 'teknik' ? ($item->category ?? '-') : $item->category }}</td>
                                                 @if($activeBidang === 'teknik')
                                                     <td>{{ $item->lokasi ?? '-' }}</td>
                                                 @endif
@@ -485,6 +508,7 @@
                         </div>
                     </div>
                 </div>
+                @endif
             </div>
         </div>
     </div> {{-- End .public-page --}}
@@ -829,6 +853,51 @@
                 window.refreshPublicDashboardCharts();
             }
         }
+
+        document.querySelectorAll('[data-public-technical-form]').forEach((form) => {
+            const itemSelect = form.querySelector('[data-public-item-select]');
+            const quantity = form.querySelector('[data-public-quantity]');
+            const warning = form.querySelector('[data-public-stock-warning]');
+            const unit = form.querySelector('[data-public-item-unit]');
+
+            function selectedItem() {
+                return itemSelect?.selectedOptions[0] || null;
+            }
+
+            function updateItemDetails() {
+                const option = selectedItem();
+                form.querySelectorAll('[data-public-item-detail]').forEach((field) => {
+                    const key = field.dataset.publicItemDetail;
+                    const value = option?.value ? option.dataset[key] : '';
+                    field.value = key === 'stock' && option?.value
+                        ? `${value || 0} ${option.dataset.unit || ''}`.trim()
+                        : (value || '');
+                });
+                unit.textContent = option?.value ? (option.dataset.unit || '-') : '-';
+                validateStock();
+            }
+
+            function validateStock() {
+                if (form.dataset.type !== 'out') return true;
+
+                const stock = Number(selectedItem()?.dataset.stock || 0);
+                const requested = Number(quantity?.value || 0);
+                const invalid = requested > stock;
+                warning?.classList.toggle('d-none', !invalid);
+                quantity?.setCustomValidity(invalid ? 'Jumlah melebihi stok tersedia.' : '');
+                return !invalid;
+            }
+
+            itemSelect?.addEventListener('change', updateItemDetails);
+            quantity?.addEventListener('input', validateStock);
+            form.addEventListener('submit', (event) => {
+                if (!validateStock()) {
+                    event.preventDefault();
+                    quantity?.reportValidity();
+                }
+            });
+            updateItemDetails();
+        });
 
         // Multi-line barang: tambah / hapus baris
         (function() {

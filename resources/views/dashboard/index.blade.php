@@ -19,13 +19,18 @@
         @if($isTeknik)
             <div class="technical-dashboard-cards mb-4">
                 <div class="technical-dashboard-card technical-total-card">
-                    <div class="technical-dashboard-card-copy">
-                        <div class="technical-dashboard-card-title">Total Spare Parts (SOH)</div>
-                        <div class="technical-dashboard-card-value">{{ number_format($totalItems) }}</div>
-                        <div class="technical-dashboard-card-meta">
-                            <span><i class="bi bi-box-seam-fill"></i></span>
-                            <span>Total barang terdaftar</span>
-                        </div>
+                        <div class="technical-dashboard-card-copy">
+                            <div class="technical-dashboard-card-title">Total Spare Parts (SOH)</div>
+                            <div class="technical-dashboard-card-value">
+                                {{ number_format($totalItems) }} <span>Items</span>
+                            </div>
+                            <div class="technical-dashboard-card-trend {{ $totalItemsMonthlyChange < 0 ? 'is-down' : 'is-up' }}">
+                                <strong>
+                                    <i class="bi bi-graph-{{ $totalItemsMonthlyChange < 0 ? 'down' : 'up' }}-arrow"></i>
+                                    {{ $totalItemsMonthlyChange > 0 ? '+' : '' }}{{ number_format($totalItemsMonthlyChange, 1) }}%
+                                </strong>
+                                <span>vs last month</span>
+                            </div>
                     </div>
                     <div class="technical-dashboard-card-icon technical-total-icon">
                         <i class="bi bi-pie-chart-fill"></i>
@@ -36,7 +41,7 @@
                     <a href="{{ route('items.index', ['stock_status' => 'critical']) }}" class="technical-dashboard-card technical-critical-card">
                         <div class="technical-dashboard-card-copy">
                             <div class="technical-dashboard-card-title">Critical Stock</div>
-                            <div class="technical-dashboard-card-value">{{ number_format($criticalStockCount) }}</div>
+                            <div class="technical-dashboard-card-value">{{ number_format($criticalStockCount) }} <span>Items</span></div>
                             <div class="technical-dashboard-card-link">View items requiring restock <i class="bi bi-arrow-right"></i></div>
                         </div>
                         <div class="technical-dashboard-card-icon technical-critical-icon">
@@ -47,7 +52,7 @@
                     <div class="technical-dashboard-card technical-critical-card">
                         <div class="technical-dashboard-card-copy">
                             <div class="technical-dashboard-card-title">Critical Stock</div>
-                            <div class="technical-dashboard-card-value">{{ number_format($criticalStockCount) }}</div>
+                            <div class="technical-dashboard-card-value">{{ number_format($criticalStockCount) }} <span>Items</span></div>
                             <div class="technical-dashboard-card-link">Items requiring restock</div>
                         </div>
                         <div class="technical-dashboard-card-icon technical-critical-icon">
@@ -61,7 +66,7 @@
                         <div class="technical-type-card-head">
                             <div>
                                 <div class="technical-dashboard-card-title">Total Item Types</div>
-                                <div class="technical-dashboard-card-subtitle">Categories registered</div>
+                                <div class="technical-dashboard-card-subtitle">Tipe barang terdaftar</div>
                             </div>
                             <div class="technical-type-card-total">{{ number_format($technicalTypeSummary['total_types'] ?? 0) }}</div>
                         </div>
@@ -73,7 +78,7 @@
                                     <small>{{ $type['percentage'] }}%</small>
                                 </div>
                             @empty
-                                <div class="technical-type-card-empty">Belum ada kategori</div>
+                                <div class="technical-type-card-empty">Belum ada tipe barang</div>
                             @endforelse
                         </div>
                     </div>
@@ -439,15 +444,18 @@
                                         <i class="bi bi-{{ $tx->type === 'in' ? 'boxes' : 'box-arrow-up' }}"></i>
                                     </div>
                                     <div class="technical-activity-copy">
-                                        <div>
+                                        <div class="technical-activity-title">
                                             <strong>{{ $tx->item?->no_normalisasi ?? 'NORM-' . str_pad($tx->item_id, 4, '0', STR_PAD_LEFT) }}</strong>
                                             - {{ number_format($tx->quantity) }} {{ $tx->item?->unit ?? 'Units' }}
+                                        </div>
+                                        <div class="technical-activity-detail">
                                             {{ $tx->type === 'in' ? 'Added' : 'Issued' }}
                                             @if($tx->item?->lokasi)
                                                 ({{ $tx->item->lokasi }})
                                             @endif
+                                            -
                                         </div>
-                                        <span>{{ $tx->created_at ? $tx->created_at->diffForHumans() : \Carbon\Carbon::parse($tx->date)->diffForHumans() }}</span>
+                                        <time>[{{ \Carbon\Carbon::parse($tx->date ?? $tx->created_at)->format('Y-m-d') }}]</time>
                                     </div>
                                 </div>
                             @empty
@@ -654,7 +662,7 @@
 
     {{-- Transaction Edit Modal --}}
     @if(auth()->user()->isAdmin())
-        <div class="modal fade inventrack-modal" id="dashTxModal" tabindex="-1" aria-hidden="true">
+        <div class="modal fade inventrack-modal {{ $isTeknik ? 'technical-transaction-modal' : '' }}" id="dashTxModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content" style="position:relative;">
                     <div class="modal-loading-overlay" id="dashTxLoading">
@@ -1220,7 +1228,7 @@
                 dashTxItemSelect.addEventListener('change', function () {
                     const selected = this.options[this.selectedIndex];
                     if (this.value) {
-                        dashTxCategoryInput.value = @json($isTeknik) ? (selected.dataset.component || '') : (selected.dataset.category || '');
+                dashTxCategoryInput.value = @json($isTeknik) ? (selected.dataset.component || '') : (selected.dataset.category || '');
                         dashTxUnitInput.value = selected.dataset.unit || '';
                         dashTxStockInput.value = selected.dataset.stock || '0';
                         if (dashTxPriceInput && document.getElementById('dashTxType').value === 'out') {

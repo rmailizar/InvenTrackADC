@@ -829,7 +829,7 @@ body.public-layout .public-page {
     transition: var(--transition);
 }
 
-.public-header > .container {
+.public-header>.container {
     max-width: none;
     padding-left: clamp(20px, 3vw, 56px);
     padding-right: clamp(20px, 3vw, 56px);
@@ -1057,10 +1057,36 @@ body.public-layout .public-body {
     overflow: hidden;
 }
 
+.public-technical-transaction-forms .request-form-card {
+    border: 1px solid var(--border-color);
+    background: #ffffff;
+    box-shadow: var(--shadow-sm);
+}
+
+.public-technical-transaction-card .request-form-body {
+    height: calc(100% - 92px);
+}
+
+.public-technical-transaction-card form {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.public-technical-transaction-card form>.btn {
+    margin-top: auto !important;
+}
+
 .request-form-header {
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     padding: 20px 24px;
     color: white;
+}
+
+.public-technical-transaction-card .request-form-header {
+    background: #ffffff;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
 }
 
 .request-form-header h5 {
@@ -1078,6 +1104,59 @@ body.public-layout .public-body {
 .request-form-body {
     padding: 24px;
     background: var(--card-bg);
+}
+
+.public-technical-transaction-card .request-form-body {
+    background: #ffffff;
+}
+
+.public-technical-transaction-card .form-control,
+.public-technical-transaction-card .form-select,
+.public-technical-transaction-card .input-group-text {
+    background: #ffffff;
+    border-color: var(--border-color);
+}
+
+.public-technical-transaction-card .form-label,
+.public-technical-transaction-card .form-check-label {
+    color: var(--text-primary);
+}
+
+.public-technical-transaction-card .form-control:focus,
+.public-technical-transaction-card .form-select:focus {
+    border-color: #64748b;
+    box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.14);
+}
+
+.public-technical-transaction-card .form-check-input {
+    border-color: #94a3b8;
+}
+
+.public-technical-transaction-card .form-check-input:checked {
+    background-color: #475569;
+    border-color: #475569;
+}
+
+.public-technical-layout .public-technical-transaction-forms+*,
+.public-technical-layout .section-title i,
+.technical-transaction-page .card-header .text-primary-custom,
+.technical-transaction-modal .modal-title i,
+.technical-transaction-modal .text-primary-custom {
+    color: var(--text-secondary) !important;
+}
+
+[data-theme="dark"] .public-technical-transaction-forms .request-form-card,
+[data-theme="dark"] .public-technical-transaction-card .request-form-header,
+[data-theme="dark"] .public-technical-transaction-card .request-form-body {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .public-technical-transaction-card .form-control,
+[data-theme="dark"] .public-technical-transaction-card .form-select,
+[data-theme="dark"] .public-technical-transaction-card .input-group-text {
+    background: var(--input-bg);
+    border-color: var(--border-color);
 }
 
 /* Public Stuff Request item rows: keep the compact mobile layout on every viewport. */
@@ -1575,10 +1654,11 @@ body.public-layout .public-body {
     justify-content: space-between;
     gap: 10px;
     padding: 12px 14px;
-    border: 1px solid var(--border-color);
+    border: 1px solid rgba(255, 255, 255, 0.34);
     border-radius: var(--radius);
-    background: rgba(255, 255, 255, 0.82);
-    box-shadow: var(--shadow-sm);
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.15)),
+        rgba(255, 255, 255, 0.15);
     color: var(--text-primary);
     text-decoration: none;
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
@@ -1587,7 +1667,9 @@ body.public-layout .public-body {
 .technical-dashboard-card:hover {
     color: var(--text-primary);
     transform: translateY(-2px);
-    box-shadow: var(--shadow);
+    box-shadow:
+        0 22px 60px rgba(15, 23, 42, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 .technical-dashboard-card-copy {
@@ -1610,6 +1692,40 @@ body.public-layout .public-body {
     letter-spacing: 0;
 }
 
+.technical-dashboard-card-value span {
+    font-size: 0.52em;
+    font-weight: 500;
+    opacity: 0.48;
+}
+
+.technical-dashboard-card-trend {
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.technical-dashboard-card-trend strong {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 7px;
+    border: 1px solid rgba(59, 130, 246, 0.34);
+    border-radius: 6px;
+    background: rgba(59, 130, 246, 0.12);
+    color: #2563eb;
+    font-weight: 800;
+}
+
+.technical-dashboard-card-trend.is-down strong {
+    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+}
+
 .technical-dashboard-card-meta,
 .technical-dashboard-card-link,
 .technical-type-card-empty {
@@ -1629,8 +1745,8 @@ body.public-layout .public-body {
     align-items: center;
     justify-content: center;
     border-radius: 6px;
-    background: rgba(16, 185, 129, 0.14);
-    color: var(--primary);
+    background: rgba(59, 130, 246, 0.14);
+    color: #2563eb;
 }
 
 .technical-dashboard-card-link {
@@ -1668,10 +1784,6 @@ body.public-layout .public-body {
     color: #ef4444;
     background: rgba(239, 68, 68, 0.13);
     box-shadow: 0 12px 28px rgba(239, 68, 68, 0.14);
-}
-
-.technical-type-card {
-    background: rgba(255, 255, 255, 0.86);
 }
 
 .technical-type-card .technical-dashboard-card-copy {
@@ -1717,7 +1829,7 @@ body.public-layout .public-body {
 
 .technical-type-card-row i {
     width: 14px;
-    color: var(--primary);
+    color: #2563eb;
     font-size: 11px;
     text-align: center;
 }
@@ -1739,9 +1851,109 @@ body.public-layout .public-body {
     font-weight: 600;
 }
 
+@media (min-width: 992px) {
+    .page-content {
+        padding: 28px clamp(110px, 13vw, 260px) 28px clamp(32px, 3.5vw, 68px);
+    }
+
+    .topbar {
+        padding-left: clamp(32px, 3.5vw, 68px);
+    }
+
+    .technical-dashboard-page {
+        width: 100%;
+        margin-inline: 0;
+        padding-inline: 0;
+    }
+
+    .technical-dashboard-cards {
+        gap: 18px;
+    }
+
+    .technical-dashboard-card {
+        min-height: 148px;
+        gap: 18px;
+        padding: 20px 22px;
+        border-radius: 16px;
+    }
+
+    .technical-dashboard-card-title {
+        font-size: 17px;
+        line-height: 1.25;
+    }
+
+    .technical-dashboard-card-value {
+        margin-top: 14px;
+        font-size: clamp(42px, 3.25vw, 52px);
+    }
+
+    .technical-dashboard-card-meta,
+    .technical-dashboard-card-link,
+    .technical-type-card-empty {
+        margin-top: 16px;
+        gap: 9px;
+        font-size: 13px;
+    }
+
+    .technical-dashboard-card-trend {
+        margin-top: 16px;
+        gap: 10px;
+        font-size: 13px;
+    }
+
+    .technical-dashboard-card-trend strong {
+        padding: 4px 8px;
+    }
+
+    .technical-dashboard-card-meta span:first-child {
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        font-size: 14px;
+    }
+
+    .technical-dashboard-card-icon {
+        width: 50px;
+        height: 50px;
+        flex-basis: 50px;
+        border-radius: 14px;
+        font-size: 23px;
+    }
+
+    .technical-dashboard-card-subtitle {
+        margin-top: 5px;
+        font-size: 12px;
+    }
+
+    .technical-type-card-total {
+        font-size: 40px;
+    }
+
+    .technical-type-card-list {
+        margin-top: 18px;
+        gap: 10px;
+    }
+
+    .technical-type-card-row {
+        gap: 10px;
+        font-size: 14px;
+    }
+
+    .technical-type-card-row i {
+        width: 18px;
+        font-size: 15px;
+    }
+
+    .technical-type-card-row small {
+        font-size: 13px;
+    }
+}
+
 [data-theme="dark"] .technical-dashboard-card {
-    background: rgba(30, 41, 59, 0.84);
-    border-color: rgba(148, 163, 184, 0.18);
+    background:
+        linear-gradient(135deg, rgba(30, 41, 59, 0.66), rgba(15, 23, 42, 0.36)),
+        rgba(15, 23, 42, 0.46);
+    border-color: rgba(148, 163, 184, 0.22);
 }
 
 [data-theme="dark"] .technical-dashboard-card-value {
@@ -1759,7 +1971,9 @@ body.public-layout .public-body {
 }
 
 [data-theme="dark"] .technical-type-card {
-    background: rgba(15, 23, 42, 0.84);
+    background:
+        linear-gradient(135deg, rgba(15, 23, 42, 0.66), rgba(30, 41, 59, 0.38)),
+        rgba(15, 23, 42, 0.46);
     border-color: rgba(59, 130, 246, 0.18);
 }
 
@@ -1771,6 +1985,21 @@ body.public-layout .public-body {
 .technical-activity-card {
     height: 100%;
     overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.30);
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08)),
+        rgba(255, 255, 255, 0.08);
+    box-shadow:
+        0 22px 60px rgba(15, 23, 42, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.48);
+}
+
+[data-theme="dark"] .technical-soh-detail-card,
+[data-theme="dark"] .technical-activity-card {
+    border-color: rgba(148, 163, 184, 0.22);
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08)),
+        rgba(255, 255, 255, 0.08);
 }
 
 .technical-soh-detail-card .card-header,
@@ -1849,41 +2078,114 @@ body.public-layout .public-body {
     border-color: rgba(14, 165, 233, 0.28);
 }
 
-.technical-activity-feed {
-    max-height: 330px;
-    overflow-y: auto;
-    padding-top: 8px;
+.technical-transaction-page .form-label,
+.technical-transaction-page .form-check-label,
+.technical-transaction-modal .form-label,
+.technical-transaction-modal .form-check-label {
+    color: var(--text-primary);
+}
+
+.technical-transaction-page .card:has(#txInlineForm),
+.technical-transaction-modal .modal-content {
+    background: #ffffff;
+    border-color: var(--border-color);
+}
+
+.technical-transaction-page .card:has(#txInlineForm) .card-header,
+.technical-transaction-modal .modal-header,
+.technical-transaction-modal .modal-footer {
+    background: #ffffff;
+    border-color: var(--border-color);
+}
+
+.technical-transaction-page .form-control,
+.technical-transaction-page .form-select,
+.technical-transaction-page .input-group-text,
+.technical-transaction-modal .form-control,
+.technical-transaction-modal .form-select,
+.technical-transaction-modal .input-group-text {
+    background: #ffffff;
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .technical-transaction-page .card:has(#txInlineForm),
+[data-theme="dark"] .technical-transaction-modal .modal-content,
+[data-theme="dark"] .technical-transaction-page .card:has(#txInlineForm) .card-header,
+[data-theme="dark"] .technical-transaction-modal .modal-header,
+[data-theme="dark"] .technical-transaction-modal .modal-footer {
+    background: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .technical-transaction-page .form-control,
+[data-theme="dark"] .technical-transaction-page .form-select,
+[data-theme="dark"] .technical-transaction-page .input-group-text,
+[data-theme="dark"] .technical-transaction-modal .form-control,
+[data-theme="dark"] .technical-transaction-modal .form-select,
+[data-theme="dark"] .technical-transaction-modal .input-group-text {
+    background: var(--input-bg);
+    border-color: var(--border-color);
+}
+
+.technical-transaction-page .form-control:focus,
+.technical-transaction-page .form-select:focus,
+.technical-transaction-modal .form-control:focus,
+.technical-transaction-modal .form-select:focus {
+    border-color: #64748b;
+    box-shadow: 0 0 0 3px rgba(100, 116, 139, 0.14);
+}
+
+.technical-transaction-page .form-check-input:checked,
+.technical-transaction-modal .form-check-input:checked {
+    background-color: #475569;
+    border-color: #475569;
+}
+
+/* ---------- Public Teknik: Chart card opacity ---------- */
+.public-technical-chart-row .card {
+    background:
+        linear-gradient(135deg,
+            rgba(255, 255, 255, 0.25),
+            rgba(255, 255, 255, 0.25)) !important;
 }
 
 .technical-activity-item {
+    position: relative;
     display: grid;
-    grid-template-columns: 36px minmax(0, 1fr);
-    gap: 12px;
-    padding: 12px 0;
+    grid-template-columns: 26px minmax(0, 1fr);
+    gap: 14px;
+    padding: 10px 0 18px;
 }
 
-.technical-activity-item + .technical-activity-item {
-    border-top: 1px solid rgba(148, 163, 184, 0.14);
+.technical-activity-item:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 34px;
+    bottom: -4px;
+    left: 12px;
+    width: 1px;
+    background: rgba(96, 165, 250, 0.28);
 }
 
 .technical-activity-icon {
-    width: 32px;
-    height: 32px;
+    position: relative;
+    z-index: 1;
+    width: 26px;
+    height: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    font-size: 15px;
+    font-size: 20px;
+    background: transparent;
+    box-shadow: none;
 }
 
 .technical-activity-icon.receipt {
-    color: #2563eb;
-    background: rgba(59, 130, 246, 0.12);
+    color: #60a5fa;
 }
 
 .technical-activity-icon.issue {
-    color: var(--primary);
-    background: rgba(16, 185, 129, 0.12);
+    color: #2dd4bf;
 }
 
 .technical-activity-copy {
@@ -1894,12 +2196,25 @@ body.public-layout .public-body {
     line-height: 1.25;
 }
 
-.technical-activity-copy span {
+.technical-activity-title,
+.technical-activity-detail {
+    overflow-wrap: anywhere;
+}
+
+.technical-activity-detail {
+    margin-top: 1px;
+}
+
+.technical-activity-copy time {
     display: block;
-    margin-top: 4px;
+    margin-top: 2px;
     color: var(--text-muted);
     font-size: 12px;
     font-weight: 600;
+}
+
+[data-theme="dark"] .technical-activity-item:not(:last-child)::after {
+    background: rgba(96, 165, 250, 0.34);
 }
 
 [data-theme="dark"] .technical-soh-table thead th {
@@ -1944,7 +2259,7 @@ body.public-layout .public-body {
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
-.soh-filter-card > div:first-child {
+.soh-filter-card>div:first-child {
     min-width: 0;
 }
 
@@ -2112,6 +2427,7 @@ body.public-layout .public-body {
 }
 
 @media (min-width: 1400px) {
+
     .report-summary-cards .stats-card .stats-copy,
     .dashboard-summary-cards .stats-card .stats-copy {
         display: flex;
@@ -4645,68 +4961,52 @@ body.login-page.reset-password-page .reset-password-shell {
     overflow: hidden;
 
     background:
-        radial-gradient(
-            circle at 0% 50%,
+        radial-gradient(circle at 0% 50%,
             var(--nexus-ambient-primary) 0%,
             rgba(16, 185, 129, 0.10) 28%,
             rgba(16, 185, 129, 0.04) 48%,
-            transparent 68%
-        ),
+            transparent 68%),
 
-        radial-gradient(
-            circle at 100% 50%,
+        radial-gradient(circle at 100% 50%,
             var(--nexus-ambient-secondary) 0%,
             rgba(14, 165, 233, 0.09) 30%,
             rgba(14, 165, 233, 0.03) 50%,
-            transparent 68%
-        ),
+            transparent 68%),
 
-        radial-gradient(
-            circle at 50% 50%,
+        radial-gradient(circle at 50% 50%,
             var(--nexus-ambient-center) 0%,
             rgba(255, 255, 255, 0.10) 35%,
-            transparent 70%
-        ),
+            transparent 70%),
 
-        linear-gradient(
-            135deg,
+        linear-gradient(135deg,
             #f0f4f2 0%,
             #f7fbf9 45%,
-            #eef7fb 100%
-        );
+            #eef7fb 100%);
 }
 
 [data-theme="dark"] .nexus-bg {
     background:
-        radial-gradient(
-            circle at 0% 50%,
+        radial-gradient(circle at 0% 50%,
             var(--nexus-ambient-primary) 0%,
             rgba(16, 185, 129, 0.13) 24%,
             rgba(16, 185, 129, 0.06) 44%,
-            transparent 68%
-        ),
+            transparent 68%),
 
-        radial-gradient(
-            circle at 100% 50%,
+        radial-gradient(circle at 100% 50%,
             var(--nexus-ambient-secondary) 0%,
             rgba(14, 165, 233, 0.11) 28%,
             rgba(14, 165, 233, 0.05) 48%,
-            transparent 68%
-        ),
+            transparent 68%),
 
-        radial-gradient(
-            circle at 50% 50%,
+        radial-gradient(circle at 50% 50%,
             var(--nexus-ambient-center) 0%,
             rgba(15, 23, 42, 0.12) 35%,
-            transparent 70%
-        ),
+            transparent 70%),
 
-        linear-gradient(
-            135deg,
+        linear-gradient(135deg,
             #03130f 0%,
             #040914 45%,
-            #06111f 100%
-        );
+            #06111f 100%);
 }
 
 .nexus-grid {
@@ -4733,6 +5033,7 @@ body.login-page.reset-password-page .reset-password-shell {
 }
 
 @keyframes nexusShootingStar {
+
     0%,
     76% {
         opacity: 0;
@@ -4776,6 +5077,7 @@ body::before,
 }
 
 @media (max-width: 767.98px) {
+
     body,
     .background-glow-container,
     .nexus-bg,
@@ -4801,6 +5103,7 @@ body::before,
 }
 
 @media (prefers-reduced-motion: reduce) {
+
     *,
     *::before,
     *::after {
