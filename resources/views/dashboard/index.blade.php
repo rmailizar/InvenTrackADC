@@ -275,7 +275,7 @@
         </div>
 
         <!-- Charts Row: Monthly + Category -->
-        <div class="row g-3 mb-4">
+        <div class="row g-3 mb-4 public-technical-chart-row">
             <div class="{{ $isTeknik ? 'col-lg-8' : 'col-lg-8' }}">
                 <div class="card">
                     <div class="card-header d-flex align-items-center justify-content-between">
@@ -333,7 +333,7 @@
         </div>
 
         <!-- Yearly Chart Row -->
-        <div class="row g-3 mb-4">
+        <div class="row g-3 mb-4 public-technical-chart-row">
             <div class="{{ $isTeknik ? 'col-lg-12' : 'col-lg-8' }}">
                 <div class="card">
                     <div class="card-header d-flex align-items-center justify-content-between">
@@ -475,7 +475,7 @@
             <div class="row g-3">
             <!-- Low Stock Alert -->
             <div class="col-lg-4">
-                <div class="card">
+                <div class="card low-stock-card">
                     <div class="card-header">
                         <span><i class="bi bi-exclamation-triangle-fill text-warning-custom me-2"></i>Stok Menipis</span>
                         @if($lowStockItems->count() > 0)

@@ -160,7 +160,7 @@
                                 <tr>
                                     <td>{{ $items->firstItem() + $index }}</td>
                                     @if($isTeknik)
-                                        <td class="fw-600">{{ $item->no_normalisasi ?? '-' }}</td>
+                                        <td> <span class="technical-soh-norm norm-in">{{ $item->no_normalisasi ?? '-' }}</span></td>
                                         <td class="fw-600">{{ $item->name }}</td>
                                         <td>{{ $item->category }}</td>
                                         <td>{{ $item->component ?? '-' }}</td>
@@ -379,7 +379,7 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> Batal</button>
                     <button type="button" class="btn btn-primary" id="itemSubmitBtn" onclick="submitItemForm()">
                         <i class="bi bi-check-lg"></i> Simpan
                     </button>

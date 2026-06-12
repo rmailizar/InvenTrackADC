@@ -78,7 +78,7 @@
                                 <td>{{ $transactions->firstItem() + $index }}</td>
                                 <td>{{ $tx->date->format('d/m/Y') }}</td>
                                 @if($isTeknik)
-                                    <td class="fw-600">{{ $tx->no_normalisasi ?? $tx->item->no_normalisasi ?? '-' }}</td>
+                                    <td><span class="technical-soh-norm {{ $tx->type === 'in' ? 'norm-in' : 'norm-out' }}">{{ $tx->no_normalisasi ?? $tx->item->no_normalisasi ?? '-' }}</span></td>
                                     <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
                                     <td>{{ $tx->item->component ?? '-' }}</td>
                                     <td>{{ $tx->item->category ?? '-' }}</td>

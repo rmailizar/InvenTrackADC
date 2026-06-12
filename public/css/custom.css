@@ -1078,13 +1078,11 @@ body.public-layout .public-body {
 }
 
 .request-form-header {
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     padding: 20px 24px;
     color: white;
 }
 
 .public-technical-transaction-card .request-form-header {
-    background: #ffffff;
     border-bottom: 1px solid var(--border-color);
     color: var(--text-primary);
 }
@@ -1987,18 +1985,17 @@ body.public-layout .public-body {
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.30);
     background:
-        linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08)),
-        rgba(255, 255, 255, 0.08);
-    box-shadow:
-        0 22px 60px rgba(15, 23, 42, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.48);
+        linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.05)),
+        rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(1px);
 }
 
 [data-theme="dark"] .technical-soh-detail-card,
 [data-theme="dark"] .technical-activity-card {
     border-color: rgba(148, 163, 184, 0.22);
     background:
-        linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08)),
+        linear-gradient(135deg, rgba(41, 41, 41, 0.08), rgba(255, 255, 255, 0.08)),
         rgba(255, 255, 255, 0.08);
 }
 
@@ -2041,12 +2038,47 @@ body.public-layout .public-body {
     font-weight: 800;
 }
 
-.technical-soh-norm.norm-in {
-    color: #2563eb;
+/* ==========================================
+   KATEGORI BADGE GLASSMORPH NEON (HIGH CONTRAST)
+   ========================================== */
+.technical-soh-norm {
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700 !important;
+    /* Dibuat tebal agar struktur huruf tegas */
+    letter-spacing: 0.5px;
+    /* Memberi ruang antar-huruf */
+    transition: all 0.2s ease;
 }
 
+/* 2. VARIAN TRANSAKSI MASUK (norm-in) - Efek Kaca Biru Terang */
+.technical-soh-norm.norm-in {
+    color: #2563eb !important;
+    /* Warna teks biru tajam */
+    background: rgba(37, 99, 235, 0.12) !important;
+    /* Background transparan biru */
+    border: 1px solid rgba(37, 99, 235, 0.25) !important;
+    /* Border tipis mengikat */
+
+    /* Efek pendaran neon pada huruf */
+    text-shadow: 0 0 6px rgba(37, 99, 235, 0.45),
+        0 0 1px rgba(37, 99, 235, 0.2);
+}
+
+/* 3. VARIAN TRANSAKSI KELUAR (norm-out) - Efek Kaca Jingga/Oranye */
 .technical-soh-norm.norm-out {
-    color: var(--warning-dark);
+    color: #d97706 !important;
+    /* Warna teks jingga tajam */
+    background: rgba(217, 119, 6, 0.12) !important;
+    /* Background transparan oranye */
+    border: 1px solid rgba(217, 119, 6, 0.25) !important;
+    /* Border tipis mengikat */
+
+    /* Efek pendaran neon pada huruf */
+    text-shadow: 0 0 6px rgba(217, 119, 6, 0.45),
+        0 0 1px rgba(217, 119, 6, 0.2);
 }
 
 .technical-soh-table th:nth-child(1),
@@ -2144,9 +2176,28 @@ body.public-layout .public-body {
 /* ---------- Public Teknik: Chart card opacity ---------- */
 .public-technical-chart-row .card {
     background:
-        linear-gradient(135deg,
-            rgba(255, 255, 255, 0.25),
-            rgba(255, 255, 255, 0.25)) !important;
+        linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.05)),
+        rgba(255, 255, 255, 0.15);
+    /* 1. Efek Blur Utama */
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(1px);
+    /* Wajib untuk dukungan browser Safari */
+
+    /* 2. Garis Tepi Kaca (Membuat efek potongan kaca lebih tegas) */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .public-technical-chart-row .card {
+    background:
+        linear-gradient(135deg, rgba(41, 41, 41, 0.08), rgba(255, 255, 255, 0.08)),
+        rgba(255, 255, 255, 0.08);
+    /* 1. Efek Blur Utama */
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(1px);
+    /* Wajib untuk dukungan browser Safari */
+
+    /* 2. Garis Tepi Kaca (Membuat efek potongan kaca lebih tegas) */
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .technical-activity-item {
@@ -2501,7 +2552,7 @@ body.public-layout .public-body {
 }
 
 .table thead th {
-    background: var(--body-bg) !important;
+    background: var(--body-bg);
     border-bottom: 2px solid var(--border-color) !important;
     font-weight: 600;
     color: var(--text-secondary) !important;
@@ -5179,4 +5230,250 @@ body::before,
 
 .separator {
     color: rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================
+   GLASSMORPHISM STYLING FOR TABLES, FORMS, MODALS & FILTERS
+   [UPDATED: PREMIUM HIGH-CONTRAST GLASS LOGIC]
+   ========================================== */
+
+/* ------------------------------------------
+   1. BASE GLASSMORPHISM (DEFAULT / LIGHT MODE)
+   ------------------------------------------ */
+
+/* Efek Kaca untuk Container Utama, Kartu, dan Tabel */
+.card:has(.table),
+.card:has(.table-container),
+.card:has(.table-responsive),
+.card:has(table),
+.card:has(form),
+.card:has(input),
+.card:has(select),
+.card:has(textarea),
+.card:has(.form-control),
+.card:has(.form-select),
+.filter-bar,
+.technical-soh-detail-card,
+.technical-activity-card,
+.low-stock-card,
+.card:has(.low-stock-item),
+.card:has(.bi-fire),
+.card:has(.bi-clock-fill),
+.stats-card,
+.soh-filter-card,
+.request-form-card,
+.public-technical-transaction-card {
+    /* backdrop-filter: blur(5px) !important;
+    -webkit-backdrop-filter: blur(16px) !important; */
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.15)) !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
+    border-radius: 1rem !important;
+    overflow: hidden;
+}
+
+.request-form-card .request-form-header,
+.request-form-card .request-form-body,
+.public-technical-transaction-card .request-form-body {
+    background: transparent !important;
+    background-color: transparent !important;
+    padding: 1.5rem !important;
+}
+
+.soh-filter-card:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.25)) !important;
+    transform: translateY(-2px);
+}
+
+/* KHUSUS MODAL CONTENT (Light Mode): Dibuat extra terang agar tidak terkontaminasi background hitam luar */
+.modal-content:not(#loginModal .modal-content) {
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.4)) !important;
+    background-color: rgba(255, 255, 255, 0.45) !important;
+    border: 1px solid rgba(255, 255, 255, 0.55) !important;
+    border-radius: 1.25rem !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08) !important;
+    overflow: hidden;
+}
+
+/* Mengurangi kepekatan backdrop hitam bawaan agar efek kaca modal lebih bersinar */
+.modal-backdrop {
+    background-color: rgba(15, 23, 42, 0.15) !important;
+    backdrop-filter: blur(4px);
+}
+
+/* ------------------------------------------
+   2. DARK MODE OVERRIDES
+   ------------------------------------------ */
+
+[data-theme="dark"] .card:has(.table),
+[data-theme="dark"] .card:has(.table-container),
+[data-theme="dark"] .card:has(.table-responsive),
+[data-theme="dark"] .card:has(table),
+[data-theme="dark"] .card:has(form),
+[data-theme="dark"] .card:has(input),
+[data-theme="dark"] .card:has(select),
+[data-theme="dark"] .card:has(textarea),
+[data-theme="dark"] .card:has(.form-control),
+[data-theme="dark"] .card:has(.form-select),
+[data-theme="dark"] .filter-bar,
+[data-theme="dark"] .technical-soh-detail-card,
+[data-theme="dark"] .technical-activity-card,
+[data-theme="dark"] .soh-filter-card,
+[data-theme="dark"] .request-form-card,
+[data-theme="dark"] .public-technical-transaction-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(41, 41, 41, 0.12)) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Khusus Modal Content saat Dark Mode */
+[data-theme="dark"] .modal-content:not(#loginModal .modal-content) {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(30, 30, 30, 0.2)) !important;
+    background-color: rgba(26, 26, 26, 0.5) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Mengembalikan kegelapan backdrop luar khusus di Dark Mode */
+[data-theme="dark"] .modal-backdrop {
+    background-color: rgba(0, 0, 0, 0.65) !important;
+    backdrop-filter: none;
+}
+
+/* ------------------------------------------
+   3. INTERNAL COMPONENTS (MODALS & FORMS)
+   ------------------------------------------ */
+
+/* Struktur Utama Modal & Form */
+.modal-header,
+.modal-body,
+.modal-footer,
+.request-form-header,
+.card-header {
+    background: transparent !important;
+    background-color: transparent !important;
+    border-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Kontras Label Teks (Modal & Form) */
+.modal-body label,
+.request-form-body label,
+#txInlineForm label {
+    color: var(--text-primary) !important;
+    font-weight: 500;
+    opacity: 0.9 !important;
+    margin-bottom: 0.35rem !important;
+}
+
+/* Komponen Input Field, Dropdown, & Input Group Text (Light Mode) */
+.modal-body .form-control,
+.modal-body .form-select,
+.modal-body .input-group-text,
+.request-form-body .form-control,
+.request-form-body .form-select,
+.request-form-body .input-group-text,
+#txInlineForm .form-control,
+#txInlineForm .form-select {
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    background-color: rgba(255, 255, 255, 0.4) !important;
+    /* Dibuat sedikit transparan */
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    color: #1e293b !important;
+    border-radius: 0.5rem !important;
+}
+
+.modal-body .form-control::placeholder,
+.request-form-body .form-control::placeholder,
+#txInlineForm .form-control::placeholder {
+    color: #64748b !important;
+    opacity: 0.7;
+}
+
+/* Komponen Input Field, Dropdown, & Input Group Text (Dark Mode) */
+[data-theme="dark"] .modal-body .form-control,
+[data-theme="dark"] .modal-body .form-select,
+[data-theme="dark"] .modal-body .input-group-text,
+[data-theme="dark"] .request-form-body .form-control,
+[data-theme="dark"] .request-form-body .form-select,
+[data-theme="dark"] .request-form-body .input-group-text,
+[data-theme="dark"] #txInlineForm .form-control,
+[data-theme="dark"] #txInlineForm .form-select {
+    background-color: rgba(0, 0, 0, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+}
+
+/* ------------------------------------------
+   4. BUTTON STYLING (TOMBOL BATAL)
+   ------------------------------------------ */
+
+/* Mengubah Tombol Batal agar Menyatu dengan Tema Glassmorphism */
+.modal-footer .btn-secondary,
+.modal-footer .btn-light {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    color: #334155 !important;
+    backdrop-filter: blur(4px) !important;
+    border-radius: 0.5rem !important;
+    transition: all 0.2s ease;
+}
+
+.modal-footer .btn-secondary:hover,
+.modal-footer .btn-light:hover {
+    background-color: rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="dark"] .modal-footer .btn-secondary {
+    background-color: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .modal-footer .btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* ------------------------------------------
+   5. TABLES & OTHER INHERITED STYLES
+   ------------------------------------------ */
+
+/* Transparansi Tabel agar Efek Kaca di Bawahnya Terlihat */
+.table,
+.table-container,
+.table-responsive,
+.table tbody,
+.table tbody tr,
+.table tbody td,
+.table thead,
+.table thead th {
+    background-color: transparent !important;
+    background: transparent !important;
+}
+
+/* Efek Hover Baris Tabel */
+.table tbody tr:hover,
+.table tbody tr:hover td {
+    background-color: var(--table-hover-bg) !important;
+}
+
+[data-theme="dark"] .table tbody tr:hover,
+[data-theme="dark"] .table tbody tr:hover td {
+    background-color: rgba(16, 185, 129, 0.05) !important;
+}
+
+/* Judul dan Tombol Close Modal */
+.inventrack-modal .modal-header .modal-title,
+.inventrack-modal .modal-header .modal-title i {
+    color: var(--text-primary) !important;
+}
+
+.inventrack-modal .modal-header .btn-close {
+    filter: none !important;
+    opacity: 0.7;
+}
+
+[data-theme="dark"] .inventrack-modal .modal-header .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%) !important;
 }

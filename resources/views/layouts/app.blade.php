@@ -55,7 +55,8 @@
     <link href="{{ asset('css/custom.css') }}?v={{ filemtime(public_path('css/custom.css')) }}" rel="stylesheet">
     <!-- Logo  -->
     <link rel="icon" type="image/png" href="{{ asset('images/logo-web-top.png') }}">
-
+    <!-- Icon Teknik -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Prevent flash: apply theme before render -->
     <script>
         (function () {
@@ -109,7 +110,7 @@
                     onclick="switchSection('dashboardSection', this); return false;"
                     data-section="dashboardSection"
                     class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                    <i class="bi bi-grid-1x2-fill"></i>
+                    <i class="{{ $isTeknik ? 'fa-solid fa-chart-pie' : 'bi bi-grid-1x2-fill' }}"></i>
                     <span>Dashboard</span>
                     @if(auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
                         @php $pendingTxCount = \App\Models\Transaction::visibleFor(auth()->user())->pending()->count(); @endphp
@@ -126,7 +127,7 @@
                     onclick="switchSection('itemsSection', this); return false;"
                     data-section="itemsSection"
                     class="sidebar-link {{ request()->routeIs('items.*') ? 'active' : '' }}">
-                    <i class="bi bi-box-fill"></i>
+                    <i class="{{ $isTeknik ? 'fa-solid fa-box-open' : 'bi bi-box-fill' }}"></i>
                     <span>{{ $isTeknik ? 'Master SOH' : 'Master Barang' }}</span>
                 </a>
             @endif
@@ -138,14 +139,14 @@
                         onclick="switchSection('transactionsReceiptSection', this); return false;"
                         data-section="transactionsReceiptSection"
                         class="sidebar-link {{ request()->routeIs('transactions.*') && request('type', 'in') === 'in' ? 'active' : '' }}">
-                        <i class="bi bi-box-arrow-in-down"></i>
+                        <i class="{{ $isTeknik ? 'fa-solid fa-dolly' : 'bi bi-box-arrow-in-down' }}"></i>
                         <span>Goods Receipt</span>
                     </a>
                     <a href="{{ route('transactions.index', ['type' => 'out']) }}"
                         onclick="switchSection('transactionsIssueSection', this); return false;"
                         data-section="transactionsIssueSection"
                         class="sidebar-link {{ request()->routeIs('transactions.*') && request('type') === 'out' ? 'active' : '' }}">
-                        <i class="bi bi-box-arrow-up"></i>
+                        <i class="{{ $isTeknik ? 'fa-solid fa-cubes-stacked' : 'bi bi-box-arrow-in-up' }}"></i>
                         <span>Goods Issue</span>
                     </a>
                 @else
