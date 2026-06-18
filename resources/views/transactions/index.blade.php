@@ -68,7 +68,7 @@
 
                                 <div class="mb-3">
                                     <label class="form-label">Tanggal <span class="text-danger">*</span></label>
-                                    <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required>
+                                    <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required min="{{ date('Y-m-d') }}">
                                 </div>
 
                                 <div class="mb-3">
@@ -120,11 +120,11 @@
 
                                 <div class="mb-3">
                                     <label class="form-label">Ship Unloader <span class="text-danger">*</span></label>
-                                    <div class="d-flex flex-wrap gap-2">
+                                    <div class="d-flex flex-nowrap align-items-center gap-1 ship-input-group">
                                         @foreach([1, 2, 3, 4] as $ship)
-                                            <label class="form-check form-check-inline mb-0">
-                                                <input class="form-check-input tx-inline-ship-checkbox" type="checkbox" name="ship_unloader[]" value="{{ $ship }}">
-                                                <span class="form-check-label">Ship {{ $ship }}</span>
+                                            <label class="ship-checkbox-label">
+                                                <input class="ship-checkbox-input" type="checkbox" name="ship_unloader[]" value="{{ $ship }}">
+                                                <span class="ship-checkbox-box">{{ $ship }}</span>
                                             </label>
                                         @endforeach
                                     </div>
@@ -202,7 +202,7 @@
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Tanggal <span class="text-danger">*</span></label>
-                                <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required id="txDate">
+                                <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required id="txDate" min="{{ date('Y-m-d') }}>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Jenis Transaksi <span class="text-danger">*</span></label>
@@ -395,7 +395,9 @@
                 getInlineField('txInlineLokasi').value = hasItem ? (selected.dataset.lokasi || '') : '';
 
                 var ships = hasItem ? (selected.dataset.shipUnloader || '').split(',').filter(Boolean) : [];
-                root.querySelectorAll('.tx-inline-ship-checkbox').forEach(el => el.checked = ships.includes(el.value));
+                root.querySelectorAll('.ship-checkbox-input').forEach(el => {
+                    el.checked = ships.includes(el.value.toString());
+                });
                 checkInlineStock();
             }
 
@@ -514,7 +516,9 @@
                     txLokasi.value = selected.dataset.lokasi || '';
                     txVolume.value = selected.dataset.volume || '';
                     var ships = (selected.dataset.shipUnloader || '').split(',').filter(Boolean);
-                    document.querySelectorAll('.tx-ship-checkbox').forEach(el => el.checked = ships.includes(el.value));
+                    document.querySelectorAll('.tx-ship-checkbox').forEach(el => {
+                        el.checked = ships.includes(el.value.toString());
+                    });
                 }
             } else {
                 txCategoryInput.value = '';
@@ -597,7 +601,10 @@
                             txNoNormalisasi.value = data.no_normalisasi || data.item.no_normalisasi || '';
                             txLokasi.value = data.lokasi || data.item.lokasi || '';
                             txVolume.value = data.volume || data.item.volume || '';
-                            document.querySelectorAll('.tx-ship-checkbox').forEach(el => el.checked = (data.ship_unloader || []).includes(el.value));
+                            var dbShips = (data.ship_unloader || []);
+                            document.querySelectorAll('.tx-ship-checkbox').forEach(el => {
+                                el.checked = dbShips.map(String).includes(el.value.toString());
+                            });
                         }
                         togglePriceInput();
                     })

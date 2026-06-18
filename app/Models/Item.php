@@ -115,4 +115,48 @@ class Item extends Model
 
         return $query->where('bidang', $user->bidang);
     }
+
+    public function getCurrentShipUnloaderAttribute(): ?string
+    {
+        $activeShips = [];
+
+        $transactions = $this->transactions()
+            ->where('status', 'approved')
+            ->orderBy('id')
+            ->get();
+
+        foreach ($transactions as $tx) {
+
+            $ships = collect(explode(',', $tx->ship_unloader))
+                ->map(fn($s) => trim($s))
+                ->filter()
+                ->toArray();
+
+            if ($tx->type === 'in') {
+
+                foreach ($ships as $ship) {
+                    $activeShips[$ship] = true;
+                }
+
+            } elseif ($tx->type === 'out') {
+
+                foreach ($ships as $ship) {
+                    unset($activeShips[$ship]);
+                }
+            }
+        }
+
+        return empty($activeShips)
+            ? null
+            : collect(array_keys($activeShips))
+                ->sort()
+                ->implode(',');
+    }
+
+    public function getCurrentShipUnloaderLabelAttribute(): string
+    {
+        return self::formatShipUnloader(
+            $this->current_ship_unloader
+        );
+    }
 }

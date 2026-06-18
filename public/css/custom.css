@@ -393,7 +393,7 @@ a:hover {
     inset: -18px;
     border-radius: 999px;
     pointer-events: none;
-    background: radial-gradient(circle at 50% 50%, rgba(52, 211, 153, 0.26), transparent 64%);
+    background: radial-gradient(circle at 50% 50%, rgba(27, 8, 240, 0.26), transparent 64%);
     filter: blur(16px);
     opacity: 0;
     transition: opacity 0.16s ease;
@@ -2055,13 +2055,9 @@ body.public-layout .public-body {
 
 /* 2. VARIAN TRANSAKSI MASUK (norm-in) - Efek Kaca Biru Terang */
 .technical-soh-norm.norm-in {
-    color: #2563eb !important;
+    color: #60a5fa !important;
     /* Warna teks biru tajam */
     background: rgba(37, 99, 235, 0.12) !important;
-    /* Background transparan biru */
-    border: 1px solid rgba(37, 99, 235, 0.25) !important;
-    /* Border tipis mengikat */
-
     /* Efek pendaran neon pada huruf */
     text-shadow: 0 0 6px rgba(37, 99, 235, 0.45),
         0 0 1px rgba(37, 99, 235, 0.2);
@@ -2069,16 +2065,11 @@ body.public-layout .public-body {
 
 /* 3. VARIAN TRANSAKSI KELUAR (norm-out) - Efek Kaca Jingga/Oranye */
 .technical-soh-norm.norm-out {
-    color: #d97706 !important;
+    color: #fbbf24 !important;
     /* Warna teks jingga tajam */
     background: rgba(217, 119, 6, 0.12) !important;
     /* Background transparan oranye */
-    border: 1px solid rgba(217, 119, 6, 0.25) !important;
-    /* Border tipis mengikat */
 
-    /* Efek pendaran neon pada huruf */
-    text-shadow: 0 0 6px rgba(217, 119, 6, 0.45),
-        0 0 1px rgba(217, 119, 6, 0.2);
 }
 
 .technical-soh-table th:nth-child(1),
@@ -2394,13 +2385,13 @@ body.public-layout .public-body {
 
 .soh-filter-card.soh-low .soh-filter-title,
 .soh-filter-card.soh-low .soh-filter-value {
-    color: #f59e0b;
+    color: #fbbf24;
 }
 
 .soh-filter-card.soh-low .soh-filter-icon {
     background: rgba(245, 158, 11, 0.12);
     border: 1px solid rgba(245, 158, 11, 0.2);
-    color: #f59e0b;
+    color: #fbbf24;
 }
 
 .soh-filter-card.soh-critical {
@@ -2634,7 +2625,7 @@ body.public-layout .public-body {
 }
 
 .table tbody td.stock-value-low {
-    color: var(--warning-dark) !important;
+    color: #fbbf24 !important;
 }
 
 .table tbody td.stock-value-critical {
@@ -2648,7 +2639,7 @@ body.public-layout .public-body {
 /* ---------- Badges ---------- */
 .badge-status {
     padding: 5px 12px;
-    border-radius: 20px;
+    border-radius: 5px;
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.3px;
@@ -2658,9 +2649,126 @@ body.public-layout .public-body {
     gap: 5px;
 }
 
+/* Style dasar untuk badge ship unloader yang aktif */
+td .badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;  /* Sesuaikan dengan ukuran .badge-ship-active Anda */
+    height: 24px; /* Sesuaikan dengan ukuran .badge-ship-active Anda */
+    padding: 0 !important;
+
+}
+
+   .badge-ship-inactive {
+    background-color: #f1f5f9 !important; /* Abu-abu terang bersih (Sleek Light) */
+    color: #64748b !important;            /* Teks abu-abu gelap */
+    border: 1px solid #e2e8f0 !important;  /* Border tipis */
+}
+
+[data-theme="dark"] .badge-ship-inactive {
+    background-color: rgba(255, 255, 255, 0.06) !important; /* Gelap transparan */
+    color: rgba(255, 255, 255, 0.4) !important;             /* Teks redup agar tidak mencolok */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;   /* Border samar */
+}
+
+.badge-ship-active {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;   /* Sesuaikan ukuran lingkaran jika diperlukan */
+    height: 24px;  /* Sesuaikan ukuran lingkaran jika diperlukan */
+    padding: 0 !important;
+ /* Membuat bulat sempurna */
+    color: #ffffff !important;
+    font-weight: 600;
+    position: relative;
+    z-index: 1;
+    overflow: visible; /* Diubah agar efek glow box-shadow keluar tidak terpotong */
+    
+    /* Mengadopsi background transparan & gradasi hijau dari sidebar */
+    background: 
+        radial-gradient(circle at 50% 50%, rgba(52, 211, 153, 0.35), transparent 70%),
+        linear-gradient(135deg, rgba(6, 78, 59, 0.40), rgba(5, 150, 105, 0.25)) !important;
+    
+    /* Bingkai hijau semi transparan */
+    border: 1px solid rgba(110, 231, 183, 0.7) !important;
+    
+    /* Efek Glow (Box Shadow) berlapis dari sidebar active */
+    box-shadow:
+        0 0 8px rgba(110, 231, 183, 0.5),
+        0 0 16px rgba(52, 211, 153, 0.35),
+        inset 0 0 8px rgba(16, 185, 129, 0.3) !important;
+        
+    /* Efek blur background di belakang badge */
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+/* Opsional: Efek subtle ketika cursor diarahkan ke angka aktif */
+.badge-ship-active:hover {
+    box-shadow:
+        0 0 12px rgba(110, 231, 183, 0.7),
+        0 0 20px rgba(52, 211, 153, 0.5),
+        inset 0 0 10px rgba(16, 185, 129, 0.4) !important;
+    border-color: rgba(167, 243, 208, 0.9) !important;
+}
+
 .badge-pending {
     background: var(--warning-bg);
     color: var(--warning-dark);
+}
+
+/* Container pembungkus dot diletakkan tepat di pojok kanan atas badge */
+.ping-container {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 10px;
+    height: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+/* Titik Merah Inti (Diam di tengah) */
+.ping-dot-core {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background-color: #ff4d4d; /* Merah solid terang */
+    border-radius: 50%;
+}
+
+/* Lingkaran luar yang membesar dan memudar (Efek radar berkedip) */
+.ping-dot-pulse {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background-color: rgba(255, 77, 77, 0.6);
+    border-radius: 50%;
+    animation: critical-pulse 1.8s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+}
+
+/* Animasi Pulse Radar */
+@keyframes critical-pulse {
+    0% {
+        transform: scale(0.6);
+        opacity: 0.9;
+    }
+    50% {
+        opacity: 0.4;
+    }
+    100% {
+        transform: scale(2.4);
+        opacity: 0;
+    }
+}
+
+/* Opsional: Menghindari overflow terpotong pada komponen badge kustom Anda */
+.badge-critical-teknik {
+    overflow: visible !important;
 }
 
 .badge-pending::before {
@@ -5321,7 +5429,9 @@ body::before,
 [data-theme="dark"] .technical-activity-card,
 [data-theme="dark"] .soh-filter-card,
 [data-theme="dark"] .request-form-card,
-[data-theme="dark"] .public-technical-transaction-card {
+[data-theme="dark"] .public-technical-transaction-card,
+[data-theme="dark"] .dashboard-summary-cards .stats-card,
+[data-theme="dark"] .report-summary-cards .stats-card {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(41, 41, 41, 0.12)) !important;
     border-color: rgba(255, 255, 255, 0.1) !important;
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25) !important;
@@ -5476,4 +5586,184 @@ body::before,
 
 [data-theme="dark"] .inventrack-modal .modal-header .btn-close {
     filter: invert(1) grayscale(100%) brightness(200%) !important;
+}
+
+/* Pastikan pembungkus utama menampung posisi absolut */
+#searchWrapper {
+    position: relative !important;
+}
+
+/* Mengatur style kotak suggestion agar melayang dan tidak merusak layout */
+.autocomplete-suggestions {
+    position: absolute !important;
+    top: 100% !important; /* Tepat di bawah input bar */
+    left: 0 !important;
+    right: 0 !important;
+    background-color: #ffffff !important; /* Sesuaikan dengan tema dark/light Anda, contoh: var(--body-bg) atau #1e293b jika dark mode */
+    border: 1px solid var(--border-color, #e2e8f0) !important;
+    border-radius: 8px !important;
+    margin-top: 5px !important;
+    max-height: 250px !important; /* Batas tinggi box scroll */
+    overflow-y: auto !important; /* Aktifkan scroll jika item banyak */
+    
+    /* PENTING: Mengangkat posisi komponen agar berada di atas tabel/elemen lain */
+    z-index: 9999 !important; 
+    
+    /* Memberi bayangan agar terlihat melayang (floating effect) */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Pastikan card atau container di atasnya tidak memotong elemen yang keluar */
+#searchCard, 
+.card, 
+.card-body {
+    overflow: visible !important; 
+}
+
+/* Style tambahan untuk item di dalam suggestion agar rapi */
+.autocomplete-item {
+    padding: 10px 14px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    color: var(--text-color, #334155) !important;
+    transition: background 0.2s ease !important;
+}
+
+/* Efek hover atau saat dipilih menggunakan keyboard arrow */
+.autocomplete-item:hover, 
+.autocomplete-item.active {
+    background-color: rgba(52, 211, 153, 0.15) !important; /* Highlight hijau semi-transparan */
+    color: var(--primary, #10b981) !important;
+}
+
+/* Tampilan ketika tidak ada hasil */
+.autocomplete-no-result {
+    padding: 12px 14px !important;
+    color: var(--text-secondary, #64748b) !important;
+    font-size: 14px !important;
+    text-align: center !important;
+}
+
+/* Saat tema dark aktif, paksa select dan option-nya berubah warna */
+[data-theme="dark"] select,
+[data-theme="dark"] select option {
+    background-color: #1e293b !important; /* Warna gelap background Anda (misal: slate-800) */
+    color: #f8fafc !important;            /* Warna teks terang */
+}
+
+/* Trik Tambahan: Memberitahu sistem browser untuk me-render elemen native ke mode gelap */
+[data-theme="dark"] select {
+    color-scheme: dark !important;
+}
+
+/* ==================================================================
+   1. INPUT TANGGAL (Kondisi Default / Light Mode)
+   ================================================================== */
+   input[type="date"] {
+    background-color: #ffffff !important;
+    color: #334155 !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+/* ==================================================================
+   2. INPUT TANGGAL (Kondisi saat [data-theme="dark"] Aktif)
+   ================================================================== */
+[data-theme="dark"] input[type="date"] {
+    background-color: #1e293b !important; /* Samakan dengan warna background input/card darkmode Anda */
+    color: #f8fafc !important;            /* Warna teks putih terang */
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    
+    /* PENTING: Memaksa pop-up kalender bawaan browser menjadi tema gelap */
+    color-scheme: dark !important; 
+}
+
+/* Trik Tambahan: Mengubah warna ikon kalender di pojok kanan input agar tidak mati warna */
+[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) cubic-bezier(0.4, 0, 0.2, 1); /* Membalik warna ikon menjadi putih */
+    cursor: pointer;
+}
+
+/* Container label utama */
+.ship-checkbox-label {
+    cursor: pointer;
+    user-select: none;
+    margin: 0 !important;
+}
+
+/* Sembunyikan checkbox asli bawaan browser secara total */
+.ship-checkbox-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* Style Kotak Visual Dasar (Kondisi Kosong / Default / Light Mode) */
+.ship-checkbox-box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;  
+    height: 30px; 
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    overflow: visible;
+    
+    /* Mengadopsi style .badge-ship-inactive Light Mode */
+    background-color: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+}
+
+/* Kondisi Kosong ketika [data-theme="dark"] Aktif */
+[data-theme="dark"] .ship-checkbox-box {
+    background-color: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* ==================================================================
+   3. KONDISI AKTIF (KETIKA INPUT DICENTANG / CHECKED)
+   ================================================================== */
+.ship-checkbox-input:checked + .ship-checkbox-box {
+    color: #ffffff;
+    font-weight: 600;
+    position: relative;
+    z-index: 1;
+    
+    /* Mengadopsi gradasi hijau .badge-ship-active Anda */
+    background: 
+        radial-gradient(circle at 50% 50%, rgba(52, 211, 153, 0.35), transparent 70%),
+        linear-gradient(135deg, rgba(6, 78, 59, 0.40), rgba(5, 150, 105, 0.25));
+    
+    border: 1px solid rgba(110, 231, 183, 0.7);
+    
+    /* Efek Glow pendaran hijau */
+    box-shadow:
+        0 0 8px rgba(110, 231, 183, 0.5),
+        0 0 16px rgba(52, 211, 153, 0.35),
+        inset 0 0 8px rgba(16, 185, 129, 0.3);
+        
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+/* Efek Hover saat cursor berada di atas kotak tombol */
+.ship-checkbox-label:hover .ship-checkbox-box {
+    border-color: rgba(167, 243, 208, 0.9);
+    box-shadow: 0 0 8px rgba(110, 231, 183, 0.3);
+}
+
+/* Efek Hover ekstra jika kotak tersebut sudah berstatus checked */
+.ship-checkbox-input:checked:hover + .ship-checkbox-box {
+    box-shadow:
+        0 0 12px rgba(110, 231, 183, 0.7),
+        0 0 20px rgba(52, 211, 153, 0.5),
+        inset 0 0 10px rgba(16, 185, 129, 0.4);
 }

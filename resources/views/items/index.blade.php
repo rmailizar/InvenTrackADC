@@ -132,10 +132,11 @@
                                     <th>Komponen</th>
                                     <th>Lokasi</th>
                                     <th>Ship Unloader</th>
+                                    <th>Low Limit
+                                    (Aktual)</th>
+                                    <th>Min Stok</th>
                                     <th>Volume</th>
                                     <th>Satuan</th>
-                                    <th>Min Stok</th>
-                                    <th>Stok Saat Ini</th>
                                     <th>Status</th>
                                     <th style="width:100px;">Aksi</th>
                                 </tr>
@@ -164,15 +165,27 @@
                                         <td class="fw-600">{{ $item->name }}</td>
                                         <td>{{ $item->category }}</td>
                                         <td>{{ $item->component ?? '-' }}</td>
-                                        <td>{{ $item->lokasi ?? '-' }}</td>
-                                        <td>
-                                            @php $activeShips = collect(explode(',', (string) $item->stock_ship_unloader))->filter()->all(); @endphp
-                                            <div class="d-flex flex-wrap gap-1">
+                                        <td class="text-nowrap align-middle">
+                                            <div class="d-flex flex-nowrap align-items-center gap-1"> 
+                                                {{ $item->lokasi ?? '-' }}
+                                            </div>
+                                        </td>
+                                        <td class="text-nowrap align-middle">
+                                            @php 
+                                                $activeShips = collect(explode(',', (string) $item->stock_ship_unloader))->filter()->all(); 
+                                            @endphp
+                                            <div class="d-flex flex-nowrap align-items-center gap-1">
                                                 @foreach([1, 2, 3, 4] as $ship)
-                                                    <span class="badge rounded-pill {{ in_array((string) $ship, $activeShips, true) ? 'bg-primary' : 'bg-light text-muted border' }}">{{ $ship }}</span>
+                                                    <span class="badge {{ in_array((string) $ship, $activeShips, true) ? 'badge-ship-active' : 'badge-ship-inactive' }}">
+                                                        {{ $ship }}
+                                                    </span>
                                                 @endforeach
                                             </div>
                                         </td>
+                                        <td class="fw-700 text-center {{ $item->current_stock <= 0 ? 'stock-value-critical' : ($item->current_stock <= $item->min_stock ? 'stock-value-low' : 'stock-value-ready') }}">
+                                            {{ $item->current_stock }}
+                                        </td>                                                             
+                                        <td>{{ $item->min_stock }}</td>
                                         <td>{{ $item->volume ?? '-' }}</td>
                                         <td>{{ $item->unit }}</td>
                                     @else
@@ -182,28 +195,41 @@
                                             <td>{{ ucfirst($item->bidang) }}</td>
                                         @endif
                                         <td>{{ $item->unit }}</td>
+                                        <td>{{ $item->min_stock }}</td>
+                                        <td class="fw-700 {{ $item->current_stock <= 0 ? 'stock-value-critical' : ($item->current_stock <= $item->min_stock ? 'stock-value-low' : 'stock-value-ready') }}">
+                                            {{ $item->current_stock }}
+                                        </td>
                                     @endif
-                                    <td>{{ $item->min_stock }}</td>
-                                    <td class="fw-700 {{ $item->current_stock <= 0 ? 'stock-value-critical' : ($item->current_stock <= $item->min_stock ? 'stock-value-low' : 'stock-value-ready') }}">
-                                        {{ $item->current_stock }}
-                                    </td>
 
-                                    <td>
+                                    <td class="text-nowrap align-middle">
+                                        <div class="d-flex flex-nowrap align-items-center gap-1"> 
                                         @if($item->current_stock <= 0)
-                                            <span class="badge-status badge-rejected">
-                                                <i class="bi bi-x-circle-fill"></i> {{ $isTeknik ? 'Critical' : 'Out of Stock' }}
+                                            <span class="badge-status badge-rejected {{ $isTeknik ? 'position-relative badge-critical-teknik' : '' }}">
+                                                @if(!$isTeknik)
+                                                    <i class="bi bi-x-circle-fill"></i> 
+                                                    Out of Stock
+                                                @else
+                                                    Critical
+                                                    <span class="ping-container">
+                                                        <span class="ping-dot-pulse"></span>
+                                                        <span class="ping-dot-core"></span>
+                                                    </span>
+                                                @endif
                                             </span>
 
                                         @elseif($item->current_stock <= $item->min_stock)
-                                            <span class="badge-status badge-pending">
-                                                <i class="bi bi-exclamation-triangle-fill"></i> {{ $isTeknik ? 'Low Stock' : 'Request Order' }}
+                                            <span class="badge-status technical-soh-norm norm-out">
+                                                @if(!$isTeknik) <i class="bi bi-exclamation-triangle-fill"></i> @endif 
+                                                {{ $isTeknik ? 'Low Stock' : 'Request Order' }}
                                             </span>
 
                                         @else
                                             <span class="badge-status badge-approved">
-                                                <i class="bi bi-check-circle-fill"></i> {{ $isTeknik ? 'In Stock' : 'Ready' }}
+                                                @if(!$isTeknik) <i class="bi bi-check-circle-fill"></i> @endif 
+                                                {{ $isTeknik ? 'In Stock' : 'Ready' }}
                                             </span>
                                         @endif
+                                        </div>
                                     </td>
                                     <td>
                                         <div class="action-buttons">

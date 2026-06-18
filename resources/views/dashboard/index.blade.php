@@ -426,7 +426,7 @@
                     <div class="card technical-activity-card">
                         <div class="card-header">
                             <span><i class="bi bi-clock-fill text-primary-custom me-2"></i>Recent Activity Feed</span>
-                            @if(auth()->user()->isAdmin())
+                            @if(auth()->user()->isAdmin() && auth()->user()->bidang !== 'teknik')
                                 <form action="{{ route('sync.sheets') }}" method="POST" style="display:inline;" id="syncSheetsForm">
                                     @csrf
                                     <button type="button" class="btn btn-sm btn-outline-primary"
