@@ -43,8 +43,8 @@
                     </div>
                     <div class="col-lg-2 col-md-6">
                         <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-search"></i> Cari</button>
-                            <a href="{{ $isTeknik ? route('transactions.index', ['type' => $activeTransactionType]) : route('transactions.index') }}" class="btn btn-outline-secondary flex-fill"><i class="bi bi-x-lg"></i> Reset</a>
+                            
+                            <a href="{{ $isTeknik ? route('transactions.index', ['type' => $activeTransactionType]) : route('transactions.index') }}" class="btn btn-reset"><i class="bi bi-arrow-repeat"></i></a>
                         </div>
                     </div>
                 </div>
@@ -72,6 +72,11 @@
                                 </div>
 
                                 <div class="mb-3">
+                                <label class="form-label">No Normalisasi</label>
+                                <input type="text" class="form-control" id="txInlineNoNormalisasi" readonly placeholder="000-000-000">
+                                </div>
+
+                                <div class="mb-3">
                                     <label class="form-label">Spare Part <span class="text-danger">*</span></label>
                                     <select name="item_id" class="form-select" required id="txInlineItemSelect">
                                         <option value="">-- Pilih Spare Part --</option>
@@ -94,39 +99,42 @@
                                 <div class="row g-2 mb-3">
                                     <div class="col-6">
                                         <label class="form-label">Komponen</label>
-                                        <input type="text" class="form-control" id="txInlineCategory" readonly>
+                                        <input type="text" class="form-control" id="txInlineCategory" readonly placeholder="Auto Fill">
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label">Tipe Barang</label>
-                                        <input type="text" class="form-control" id="txInlineItemCategory" readonly>
+                                        <input type="text" class="form-control" id="txInlineItemCategory" readonly placeholder="Auto Fill">
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label">Stok</label>
-                                        <input type="text" class="form-control" id="txInlineStock" readonly>
+                                        <input type="text" class="form-control" id="txInlineStock" readonly placeholder="Auto Fill">
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label">Volume</label>
-                                        <input type="text" class="form-control" id="txInlineVolume" readonly>
+                                        <input type="text" class="form-control" id="txInlineVolume" readonly placeholder="Auto Fill">
                                     </div>
-                                    <div class="col-6">
-                                        <label class="form-label">No Normalisasi</label>
-                                        <input type="text" class="form-control" id="txInlineNoNormalisasi" readonly>
-                                    </div>
-                                    <div class="col-6">
+                                    <div class="col-12">
                                         <label class="form-label">Lokasi</label>
-                                        <input type="text" class="form-control" id="txInlineLokasi" readonly>
+                                        <input type="text" class="form-control" id="txInlineLokasi" readonly placeholder="Auto Fill">
                                     </div>
                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Ship Unloader <span class="text-danger">*</span></label>
-                                    <div class="d-flex flex-nowrap align-items-center gap-1 ship-input-group">
+                                    <div class="d-flex flex-nowrap align-items-center gap-1 ship-input-group" id="itemShipBadges">
+
                                         @foreach([1, 2, 3, 4] as $ship)
                                             <label class="ship-checkbox-label">
-                                                <input class="ship-checkbox-input" type="checkbox" name="ship_unloader[]" value="{{ $ship }}">
+                                                <input class="ship-checkbox-input tx-ship-checkbox" type="checkbox" name="ship_unloader[]" value="{{ $ship }}" data-ship="{{ $ship }}">
                                                 <span class="ship-checkbox-box">{{ $ship }}</span>
                                             </label>
                                         @endforeach
+
+                                        <label class="ship-checkbox-label">
+                                            <input class="ship-checkbox-input" type="checkbox" id="txShipAll" data-ship="all">
+                                            <span class="ship-checkbox-box px-2" style="width: auto; min-width: 24px;">ALL</span>
+                                        </label>
+
                                     </div>
                                 </div>
 
@@ -140,13 +148,8 @@
                                     </div>
                                     <div class="col-6">
                                         <label class="form-label">Satuan</label>
-                                        <input type="text" class="form-control" id="txInlineUnit" readonly>
+                                        <input type="text" class="form-control" id="txInlineUnit" readonly placeholder="Auto Fill">
                                     </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">Keterangan</label>
-                                    <textarea name="description" class="form-control" rows="3" placeholder="Keterangan tambahan (opsional)"></textarea>
                                 </div>
 
                                 <button type="submit" class="btn btn-primary w-100">
@@ -358,6 +361,105 @@
         var isTeknikTransaction = @json($isTeknik);
         var activeTransactionType = @json($activeTransactionType);
 
+        function setBadgeState(badge, isActive) {
+            if (!badge) return;
+            if (isActive) {
+                badge.classList.remove('bg-light', 'text-muted', 'border');
+                badge.classList.add('badge-ship-active'); // Mengaktifkan efek glowing hijau Anda
+            } else {
+                badge.classList.remove('badge-ship-active');
+                badge.classList.add('bg-light', 'text-muted', 'border');
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function () {
+            const container = document.getElementById('itemShipBadges');
+            if (!container) return;
+
+            const allBadge = container.querySelector('[data-ship="all"]');
+            const numberBadges = container.querySelectorAll('.badge:not([data-ship="all"])');
+
+            // Fungsi untuk memeriksa apakah semua badge angka sedang aktif
+            function checkAllNumbersActive() {
+                if (numberBadges.length === 0) return false;
+                return Array.from(numberBadges).every(badge => badge.classList.contains('badge-ship-active'));
+            }
+
+            // Event Delegation saat area badge diklik oleh user
+            container.addEventListener('click', function (e) {
+                const clickedBadge = e.target.closest('.badge');
+                if (!clickedBadge) return;
+
+                const shipValue = clickedBadge.dataset.ship;
+
+                if (shipValue === 'all') {
+                    // Kasus A: Jika badge "ALL" yang diklik
+                    const isCurrentlyActive = clickedBadge.classList.contains('badge-ship-active');
+                    const newState = !isCurrentlyActive; // Toggle state
+
+                    // Set status untuk ALL itu sendiri dan SEMUA badge angka
+                    setBadgeState(allBadge, newState);
+                    numberBadges.forEach(badge => setBadgeState(badge, newState));
+
+                } else {
+                    // Kasus B: Jika badge ANGKA (1, 2, 3, 4) yang diklik
+                    const isCurrentlyActive = clickedBadge.classList.contains('badge-ship-active');
+                    setBadgeState(clickedBadge, !isCurrentlyActive); // Toggle status angka yang diklik
+
+                    // Sinkronisasi tombol ALL: Jika semua angka aktif, nyalakan ALL. Jika ada 1 saja yang mati, matikan ALL.
+                    setBadgeState(allBadge, checkAllNumbersActive());
+                }
+
+                /* ==================================================================
+                SINKRONISASI KE INPUT FORM (CHIPS FORM/MODAL JIKA ADA)
+                Jika Anda menggunakan checkbox input di belakang layar, picu sinkronisasinya di sini
+                ================================================================== */
+                numberBadges.forEach(badge => {
+                    const num = badge.dataset.ship;
+                    // Cari input checkbox asli yang nilainya sama dengan data-ship badge
+                    const correspondingInput = document.querySelector(`.tx-ship-checkbox[value="${num}"]`);
+                    if (correspondingInput) {
+                        correspondingInput.checked = badge.classList.contains('badge-ship-active');
+                    }
+                });
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+
+        const allCheckbox = document.getElementById('txShipAll');
+
+        const shipCheckboxes = document.querySelectorAll(
+            '.tx-ship-checkbox'
+        );
+
+        if (!allCheckbox) return;
+
+        // Klik ALL
+        allCheckbox.addEventListener('change', function () {
+
+            shipCheckboxes.forEach(cb => {
+                cb.checked = this.checked;
+            });
+
+        });
+
+        // Klik salah satu SU
+        shipCheckboxes.forEach(cb => {
+
+            cb.addEventListener('change', function () {
+
+                const allChecked = [...shipCheckboxes]
+                    .every(x => x.checked);
+
+                allCheckbox.checked = allChecked;
+
+            });
+
+        });
+
+        });
+
         (function bindInlineTransactionForm() {
             var root = transactionSectionRoot;
             var txInlineItemSelect = root.querySelector('#txInlineItemSelect');
@@ -511,11 +613,33 @@
                 if (txCategoryReadonly) txCategoryReadonly.value = selected.dataset.category || '';
                 txUnitInput.value = selected.dataset.unit || '';
                 txStockInput.value = selected.dataset.stock || '0';
+                
                 if (isTeknikTransaction) {
                     txNoNormalisasi.value = selected.dataset.noNormalisasi || '';
                     txLokasi.value = selected.dataset.lokasi || '';
                     txVolume.value = selected.dataset.volume || '';
+                    
+                    // Ambil data array ship unloader dari item terpilih di database
                     var ships = (selected.dataset.shipUnloader || '').split(',').filter(Boolean);
+                    
+                    // Ambil elemen container & seluruh elemen badge untuk kustomisasi visual
+                    const container = document.getElementById('itemShipBadges');
+                    if (container) {
+                        const allBadge = container.querySelector('[data-ship="all"]');
+                        const numberBadges = container.querySelectorAll('.badge:not([data-ship="all"])');
+                        
+                        // 1. Nyalakan/Matikan badge angka berdasarkan kecocokan database
+                        numberBadges.forEach(badge => {
+                            const isActive = ships.includes(badge.dataset.ship.toString());
+                            setBadgeState(badge, isActive);
+                        });
+
+                        // 2. Cek apakah semua badge angka menyala. Jika ya, ikut nyalakan kotak "ALL" otomatis
+                        const allNumbersAreActive = numberBadges.length > 0 && Array.from(numberBadges).every(b => b.classList.contains('badge-ship-active'));
+                        setBadgeState(allBadge, ships.length > 0 && allNumbersAreActive);
+                    }
+
+                    // Tetap pertahankan status keaslian form input checkbox bawaan backend Anda
                     document.querySelectorAll('.tx-ship-checkbox').forEach(el => {
                         el.checked = ships.includes(el.value.toString());
                     });
@@ -529,6 +653,13 @@
                     txNoNormalisasi.value = '';
                     txLokasi.value = '';
                     txVolume.value = '';
+                    
+                    // Reset semua badge visual ke kondisi kosong jika dropdown dikosongkan
+                    const container = document.getElementById('itemShipBadges');
+                    if (container) {
+                        container.querySelectorAll('.badge').forEach(badge => setBadgeState(badge, false));
+                    }
+                    
                     document.querySelectorAll('.tx-ship-checkbox').forEach(el => el.checked = false);
                 }
             }

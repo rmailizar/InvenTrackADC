@@ -82,30 +82,58 @@
                                     <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
                                     <td>{{ $tx->item->component ?? '-' }}</td>
                                     <td>{{ $tx->item->category ?? '-' }}</td>
-                                    <td>{{ $tx->ship_unloader_label }}</td>
+                                    <td class="text-nowrap align-middle">
+                                        @php
+                                            $activeShips = collect(explode(',', (string) $tx->ship_unloader))
+                                                ->filter()
+                                                ->all();
+                                        @endphp
+
+                                        <div class="d-flex flex-nowrap align-items-center gap-1">
+                                            @foreach([1, 2, 3, 4] as $ship)
+                                                <span class="badge {{ in_array((string) $ship, $activeShips, true) ? 'badge-ship-active' : 'badge-ship-inactive' }}">
+                                                    {{ $ship }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    </td>
                                     <td>{{ $tx->lokasi ?? $tx->item->lokasi ?? '-' }}</td>
                                     <td class="text-center fw-700">{{ $tx->volume === null ? '-' : number_format($tx->volume) }}</td>
                                     <td class="text-center fw-700">{{ number_format($tx->quantity) }}</td>
                                     <td>{{ $tx->item->unit ?? '-' }}</td>
                                     <td>{{ $tx->user->name ?? '-' }}</td>
                                     <td class="text-center">
-                                        <div class="d-flex justify-content-center gap-1">
-                                            <button type="button" class="btn btn-sm btn-outline-primary btn-transaction-detail-open"
-                                                title="Lihat Detail" data-transaction-id="{{ $tx->id }}">
-                                                <i class="bi bi-eye-fill"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-warning"
-                                                title="Edit" onclick="openTransactionModal({{ $tx->id }})">
-                                                <i class="bi bi-pencil-fill"></i>
-                                            </button>
-                                            <form action="{{ route('transactions.destroy', $tx) }}" method="POST" id="deleteTx-{{ $tx->id }}">
+                                        <div class="d-flex justify-content-center gap-2">
+
+                                            <a href="javascript:void(0)"
+                                                class="action-icon text-primary btn-transaction-detail-open"
+                                                title="Lihat Detail"
+                                                data-transaction-id="{{ $tx->id }}">
+                                                <i class="bi bi-info-circle-fill fs-5"></i>
+                                            </a>
+
+                                            <a href="javascript:void(0)"
+                                                class="action-icon text-warning"
+                                                title="Edit"
+                                                onclick="openTransactionModal({{ $tx->id }})">
+                                                <i class="bi bi-pencil-fill fs-5"></i>
+                                            </a>
+
+                                            <a href="javascript:void(0)"
+                                                class="action-icon text-danger"
+                                                title="Hapus"
+                                                onclick="swalConfirm(...)">
+                                                <i class="bi bi-trash-fill fs-5"></i>
+                                            </a>
+
+                                            <form action="{{ route('transactions.destroy', $tx) }}"
+                                                method="POST"
+                                                id="deleteTx-{{ $tx->id }}"
+                                                class="d-none">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="button" class="btn btn-sm btn-outline-danger" title="Hapus"
-                                                    onclick="swalConfirm('Hapus Transaksi', 'Yakin hapus transaksi ini? Data yang sudah dihapus tidak bisa dikembalikan.', 'warning', 'Ya, Hapus', '#deleteTx-{{ $tx->id }}')">
-                                                    <i class="bi bi-trash-fill"></i>
-                                                </button>
                                             </form>
+
                                         </div>
                                     </td>
                                 @else

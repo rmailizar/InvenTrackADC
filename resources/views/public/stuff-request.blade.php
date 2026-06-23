@@ -17,6 +17,8 @@
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <link href="{{ asset('css/custom.css') }}?v={{ filemtime(public_path('css/custom.css')) }}" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Icon Teknik -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/png" href="{{ asset('images/logo-web-top.png') }}">
     @if($activeBidang === 'teknik')
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
@@ -565,7 +567,7 @@
                                 </div>
                             </div>
                             <button type="submit" class="btn btn-primary w-30 mx-auto d-block" id="loginSubmitBtn">
-                                <i class="bi bi-box-arrow-in-right text-center"></i> Masuk
+                                <i class="fa-solid fa-unlock-keyhole text-center"></i> Secure Login
                             </button>
                             <button type="button" class="btn btn-link w-100 mt-2 p-0" id="showForgotPasswordBtn">
                                 Lupa password?

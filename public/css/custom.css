@@ -806,7 +806,7 @@ body.public-layout .public-page {
 
 .public-header {
     /* Menggunakan warna dasar yang sama dengan sidebar (Hitam Keabuan Gelap) */
-    background: rgba(15, 18, 20, 0.70);
+    background: rgba(15, 18, 20, 0.80);
 
     /* Efek Glassmorphism yang diselaraskan dengan sidebar */
     /* Menggunakan blur 20px dan saturasi 160% agar identik */
@@ -1078,6 +1078,11 @@ body.public-layout .public-body {
 }
 
 .request-form-header {
+    padding: 20px 24px;
+    color: black;
+}
+
+[data-theme="dark"] .request-form-header {
     padding: 20px 24px;
     color: white;
 }
@@ -1711,10 +1716,10 @@ body.public-layout .public-body {
     align-items: center;
     gap: 5px;
     padding: 3px 7px;
-    border: 1px solid rgba(59, 130, 246, 0.34);
+    border: 1px solid rgba(59, 246, 112, 0.34);
     border-radius: 6px;
-    background: rgba(59, 130, 246, 0.12);
-    color: #2563eb;
+    background: rgba(79, 255, 52, 0.12);
+    color: var(--primary);
     font-weight: 800;
 }
 
@@ -1769,8 +1774,9 @@ body.public-layout .public-body {
 }
 
 .technical-critical-card {
-    background: rgba(239, 68, 68, 0.08);
+    background: rgba(239, 68, 68, 0.12);
     border-color: rgba(239, 68, 68, 0.34);
+    backdrop-filter: blur(5px);
 }
 
 .technical-critical-card .technical-dashboard-card-title,
@@ -3174,6 +3180,7 @@ td .badge {
     margin-bottom: 20px;
     border: 1px solid var(--border-color);
     box-shadow: var(--shadow-sm);
+    overflow: visible !important;
 }
 
 .filter-bar .row {
@@ -4763,12 +4770,12 @@ body.login-page.reset-password-page .reset-password-shell {
     width: 100% !important;
     min-height: 58px;
     border: 0;
+    font-size: 16px;
     border-radius: 16px;
     background: linear-gradient(135deg, #047857 0%, #059669 100%);
     box-shadow: 0 18px 34px rgba(5, 150, 105, 0.28);
     font-weight: 800;
     letter-spacing: 0.02em;
-    text-transform: uppercase;
 }
 
 #loginModal #loginSubmitBtn:hover,
@@ -5368,7 +5375,6 @@ body::before,
 .card:has(.bi-fire),
 .card:has(.bi-clock-fill),
 .stats-card,
-.soh-filter-card,
 .request-form-card,
 .public-technical-transaction-card {
     /* backdrop-filter: blur(5px) !important;
@@ -5389,6 +5395,11 @@ body::before,
 
 .soh-filter-card:hover {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.25)) !important;
+    transform: translateY(-2px);
+}
+
+[data-theme="dark"] .soh-filter-card:hover {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.25)) !important;
     transform: translateY(-2px);
 }
 
@@ -5413,7 +5424,7 @@ body::before,
 /* ------------------------------------------
    2. DARK MODE OVERRIDES
    ------------------------------------------ */
-
+[data-theme="dark"] .card,
 [data-theme="dark"] .card:has(.table),
 [data-theme="dark"] .card:has(.table-container),
 [data-theme="dark"] .card:has(.table-responsive),
@@ -5427,11 +5438,11 @@ body::before,
 [data-theme="dark"] .filter-bar,
 [data-theme="dark"] .technical-soh-detail-card,
 [data-theme="dark"] .technical-activity-card,
-[data-theme="dark"] .soh-filter-card,
 [data-theme="dark"] .request-form-card,
 [data-theme="dark"] .public-technical-transaction-card,
 [data-theme="dark"] .dashboard-summary-cards .stats-card,
-[data-theme="dark"] .report-summary-cards .stats-card {
+[data-theme="dark"] .report-summary-cards .stats-card,
+[data-theme="dark"] .low-stock-card {
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(41, 41, 41, 0.12)) !important;
     border-color: rgba(255, 255, 255, 0.1) !important;
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25) !important;
@@ -5487,7 +5498,7 @@ body::before,
 #txInlineForm .form-select {
     backdrop-filter: blur(4px) !important;
     -webkit-backdrop-filter: blur(4px) !important;
-    background-color: rgba(255, 255, 255, 0.4) !important;
+    background-color: rgba(255, 255, 255, 0.4);
     /* Dibuat sedikit transparan */
     border: 1px solid rgba(0, 0, 0, 0.08) !important;
     color: #1e293b !important;
@@ -5766,4 +5777,132 @@ body::before,
         0 0 12px rgba(110, 231, 183, 0.7),
         0 0 20px rgba(52, 211, 153, 0.5),
         inset 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+#txInlineNoNormalisasi,
+#txInlineCategory,
+#txInlineItemCategory,
+#txInlineStock,
+#txInlineVolume,
+#txInlineLokasi,
+#txInlineUnit {
+    background-color: #e5e7eb !important;
+    color: #4b5563 !important;
+}
+
+.autocomplete-suggestions{
+    position:absolute;
+    top:calc(100% + 8px);
+    left:0;
+    right:0;
+
+    z-index:9999;
+
+    background:var(--card-bg);
+    border:1px solid var(--border-color);
+    border-radius:14px;
+
+    overflow:hidden;
+
+    box-shadow:0 12px 30px rgba(0,0,0,.2);
+}
+
+.autocomplete-item{
+    display:flex;
+    align-items:flex-start;
+    gap:12px;
+
+    padding:12px 14px;
+    cursor:pointer;
+
+    transition:.2s;
+}
+
+.autocomplete-item:hover{
+    background:rgba(var(--bs-primary-rgb), .08);
+}
+
+.autocomplete-icon{
+    width:38px;
+    height:38px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    flex-shrink:0;
+
+    border-radius:10px;
+
+    background:rgba(var(--bs-primary-rgb), .12);
+    color:var(--primary);
+}
+
+.autocomplete-content{
+    flex:1;
+    min-width:0;
+}
+
+.autocomplete-title{
+    font-weight:600;
+    color:var(--text-color);
+
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.autocomplete-subtitle{
+    margin-top:2px;
+
+    font-size:13px;
+    color:var(--text-secondary);
+
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+/* State Normal: Glassmorphism Merah Transparan */
+.btn-reset {
+    background: rgba(239, 68, 68, 0.15); /* Merah transparan tipis */
+    color: #ef4444; /* Warna ikon/teks merah */
+    border: 1px solid rgba(239, 68, 68, 0.3); /* Border merah transparan */
+    
+    /* Efek Blur Kaca */
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    
+    /* Transisi halus saat di-hover */
+    transition: all 0.3s ease; 
+}
+
+/* State Hover: Glassmorphism Merah Agak Gelap */
+.btn-reset:hover {
+    background: rgba(185, 28, 28, 0.3); /* Menggunakan merah yang lebih gelap (dark red) dan lebih pekat */
+    color: #ffffff; /* Mengubah warna ikon/teks jadi putih agar kontras */
+    border-color: rgba(185, 28, 28, 0.5); /* Border ikut menyesuaikan */
+    
+    /* Efek blur sedikit dipertebal saat di-hover */
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    
+    /* Opsional: Efek bayangan halus khas glassmorphism */
+    box-shadow: 0 8px 32px 0 rgba(185, 28, 28, 0.2); 
+}
+
+.action-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 34px;
+    border-radius: 8px;
+    transition: all .2s ease;
+    text-decoration: none;
+}
+
+.action-icon:hover {
+    background: rgba(var(--bs-primary-rgb), .08);
+    transform: translateY(-1px);
 }

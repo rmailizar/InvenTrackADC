@@ -134,7 +134,7 @@
                                             $roleColors = ['superadmin' => 'dark', 'admin' => 'primary', 'manajer' => 'warning', 'staf' => 'info'];
                                         @endphp
                                         <span class="badge bg-{{ $roleColors[$user->role] ?? 'secondary' }}"
-                                            style="font-size:11px; padding:4px 10px; border-radius:20px;">
+                                            style="font-size:11px; padding:14px 25px !important; border-radius:20px;">
                                             {{ ucfirst($user->role) }}
                                         </span>
                                     </td>

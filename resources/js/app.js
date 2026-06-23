@@ -343,6 +343,51 @@ async function fetchSection(sectionId, href) {
     return section;
 }
 
+function resetTransactionForm(sectionId) {
+
+    const section = document.getElementById(sectionId);
+
+    if (!section) {
+        console.log('SECTION TIDAK DITEMUKAN');
+        return;
+    }
+
+    const form = section.querySelector('#txInlineForm');
+
+    if (!form) {
+        console.log('FORM TIDAK DITEMUKAN');
+        return;
+    }
+
+    console.log('RESET FORM:', sectionId);
+
+    form.reset();
+
+    // reset field readonly
+    section.querySelectorAll(
+        '#txInlineNoNormalisasi, #txInlineCategory, #txInlineItemCategory, #txInlineStock, #txInlineVolume, #txInlineLokasi, #txInlineUnit'
+    ).forEach(el => {
+        el.value = '';
+    });
+
+    // reset ship checkbox
+    section.querySelectorAll('.tx-ship-checkbox').forEach(cb => {
+        cb.checked = false;
+    });
+
+    const allShip = section.querySelector('#txShipAll');
+
+    if (allShip) {
+        allShip.checked = false;
+    }
+
+    const warning = section.querySelector('#txInlineStockWarning');
+
+    if (warning) {
+        warning.style.display = 'none';
+    }
+}
+
 async function switchSection(sectionId, trigger, options = {}) {
     const link = trigger || getSectionLink(sectionId);
     if (!link || !sectionShell) return true;
@@ -360,6 +405,12 @@ async function switchSection(sectionId, trigger, options = {}) {
         if (!targetSection) return true;
 
         setActiveSection(sectionId);
+        if (
+            sectionId === 'transactionsReceiptSection' ||
+            sectionId === 'transactionsIssueSection'
+        ) {
+            resetTransactionForm(sectionId);
+        }
         updatePageHeading(targetSection.dataset.title || link.textContent.trim(), targetSection.dataset.subtitle || '');
         closeMobileSidebarAfterNavigation();
 

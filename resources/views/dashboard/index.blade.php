@@ -254,7 +254,7 @@
                 <div class="position-relative" id="searchWrapper">
                     <div class="d-flex align-items-center gap-2">
                         <i class="bi bi-search" style="color:var(--text-secondary); font-size:18px;"></i>
-                        <input type="text" id="itemSearchInput" class="form-control"
+                        <input type="text" id="dashboardSearchInput" class="form-control"
                             placeholder="Cari barang untuk filter grafik..." autocomplete="off"
                             style="background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); padding:10px 14px; border-radius:10px; font-size:14px;">
                         <button type="button" id="clearSearchBtn" class="btn btn-sm btn-outline-secondary"
@@ -515,7 +515,7 @@
 
             <!-- Top Items Keluar -->
             <div class="col-lg-4">
-                <div class="card">
+                <div class="card item-keluar">
                     <div class="card-header">
                         <span><i class="bi bi-fire text-danger-custom me-2"></i>{{ $isTeknik ? 'Goods Issue Terbanyak' : 'Barang Paling Sering Keluar' }}</span>
                     </div>
@@ -763,6 +763,7 @@
 
 @push('scripts')
     <script>
+    (function () {
         // ===== Theme detection =====
         const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
         const chartTextColor = () => isDark() ? '#cbd5e1' : '#475569';
@@ -1049,7 +1050,7 @@
         });
 
         // ===== Autocomplete Search =====
-        const searchInput = document.getElementById('itemSearchInput');
+        const searchInput = document.getElementById('dashboardSearchInput');
         const suggestionsBox = document.getElementById('searchSuggestions');
         const clearBtn = document.getElementById('clearSearchBtn');
         const activeFilter = document.getElementById('activeFilter');
@@ -1076,18 +1077,31 @@
                             suggestionsBox.innerHTML = '<div class="autocomplete-no-result"><i class="bi bi-search me-1"></i>Tidak ada barang ditemukan</div>';
                         } else {
                             suggestionsBox.innerHTML = items.map((item, idx) => `
-                                                                                                                                                <div class="autocomplete-item" data-id="${item.id}" data-name="${item.name}" data-index="${idx}">
-                                                                                                                                                    <div class="item-icon"><i class="bi bi-box-seam"></i></div>
-                                                                                                                                                    <div>
-                                                                                                                                                        <div class="item-name">${highlightMatch(item.name, q)}</div>
-                                                                                                                                                        <div class="item-category">${item.no_normalisasi ? item.no_normalisasi + ' · ' : ''}${item.category || ''}</div>
-                                                                                                                                                    </div>
-                                                                                                                                                </div>
-                                                                                                                                            `).join('');
+                                <div class="autocomplete-item"
+                                    data-id="${item.id}"
+                                    data-name="${item.name}"
+                                    data-index="${idx}">
+                                    
+                                    <div class="item-icon">
+                                        <i class="bi bi-box-seam"></i>
+                                    </div>
 
-                            // Click event on suggestion items
-                            suggestionsBox.querySelectorAll('.autocomplete-item').forEach(el => {
-                                el.addEventListener('click', function () {
+                                    <div>
+                                        <div class="item-name">
+                                            ${highlightMatch(item.name, q)}
+                                        </div>
+
+                                        <div class="item-category">
+                                            ${item.no_normalisasi ? item.no_normalisasi + ' · ' : ''}
+                                            ${item.category || ''}
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('');
+
+                            // Event klik pada item autocomplete
+                            suggestionsBox.querySelectorAll('.autocomplete-item').forEach(itemEl => {
+                                itemEl.addEventListener('click', function () {
                                     selectItem(this.dataset.id, this.dataset.name);
                                 });
                             });
@@ -1373,5 +1387,15 @@
                 });
             }
         @endif
+
+        // Expose functions globally for inline event handlers and app.js theme toggle
+        window.updateChartTheme = updateChartTheme;
+        window.changeMonthlyChart = changeMonthlyChart;
+        window.changeYearRange = changeYearRange;
+        @if(auth()->user()->isAdmin())
+            window.openTxEditModal = openTxEditModal;
+            window.submitDashTxForm = submitDashTxForm;
+        @endif
+    })();
     </script>
 @endpush

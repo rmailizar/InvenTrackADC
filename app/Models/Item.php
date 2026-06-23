@@ -54,14 +54,7 @@ class Item extends Model
 
     public function getStockShipUnloaderAttribute(): ?string
     {
-        $values = $this->transactions()
-            ->where('status', 'approved')
-            ->whereNotNull('ship_unloader')
-            ->pluck('ship_unloader')
-            ->filter()
-            ->all();
-
-        return self::mergeShipUnloaders($values);
+        return $this->ship_unloader;
     }
 
     public function getStockShipUnloaderLabelAttribute(): string
@@ -158,5 +151,32 @@ class Item extends Model
         return self::formatShipUnloader(
             $this->current_ship_unloader
         );
+    }
+
+    public function applyShipUnloader(?string $shipUnloader): void
+    {
+        if ($this->bidang !== 'teknik') {
+            return;
+        }
+
+        if ($this->ship_unloader !== $shipUnloader) {
+            $this->forceFill(['ship_unloader' => $shipUnloader])->saveQuietly();
+        }
+    }
+
+    public function refreshShipUnloaderFromLatestTransaction(): void
+    {
+        if ($this->bidang !== 'teknik') {
+            return;
+        }
+
+        $shipUnloader = $this->transactions()
+            ->where('status', 'approved')
+            ->whereNotNull('ship_unloader')
+            ->orderByDesc('date')
+            ->orderByDesc('id')
+            ->value('ship_unloader');
+
+        $this->applyShipUnloader($shipUnloader);
     }
 }

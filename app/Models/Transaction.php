@@ -35,6 +35,38 @@ class Transaction extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::saved(function (Transaction $transaction): void {
+            if ($transaction->bidang !== 'teknik' || !$transaction->item_id) {
+                return;
+            }
+
+            $item = $transaction->relationLoaded('item')
+                ? $transaction->item
+                : Item::find($transaction->item_id);
+
+            if (!$item) {
+                return;
+            }
+
+            if ($transaction->status === 'approved' && $transaction->ship_unloader) {
+                $item->applyShipUnloader($transaction->ship_unloader);
+                return;
+            }
+
+            $item->refreshShipUnloaderFromLatestTransaction();
+        });
+
+        static::deleted(function (Transaction $transaction): void {
+            if ($transaction->bidang !== 'teknik' || !$transaction->item_id) {
+                return;
+            }
+
+            Item::find($transaction->item_id)?->refreshShipUnloaderFromLatestTransaction();
+        });
+    }
+
     public function item()
     {
         return $this->belongsTo(Item::class);
