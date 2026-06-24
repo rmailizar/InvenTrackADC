@@ -6283,3 +6283,52 @@ body::before,
     border-color: #f57c00;
     color: #fff;
 }
+
+/* Orange theme for Goods Issue Ship Unloader badges & checkboxes */
+.badge-ship-active-issue {
+    background: 
+        radial-gradient(circle at 50% 50%, rgba(253, 186, 116, 0.40), transparent 70%),
+        linear-gradient(135deg, rgba(194, 65, 12, 0.40), rgba(253, 186, 116, 0.25)) !important;
+    border: 1px solid rgba(253, 186, 116, 0.7) !important;
+    box-shadow:
+        0 0 8px rgba(253, 186, 116, 0.5),
+        0 0 16px rgba(251, 146, 60, 0.40),
+        inset 0 0 8px rgba(234, 88, 12, 0.3) !important;
+}
+
+.badge-ship-active-issue:hover {
+    box-shadow:
+        0 0 12px rgba(253, 186, 116, 0.7),
+        0 0 20px rgba(251, 146, 60, 0.50),
+        inset 0 0 10px rgba(234, 88, 12, 0.4) !important;
+    border-color: rgba(254, 215, 170, 0.9) !important;
+}
+
+.ship-checkbox-input:checked + .ship-checkbox-box-issue {
+    color: #ffffff;
+    font-weight: 600;
+    position: relative;
+    z-index: 1;
+    background: 
+        radial-gradient(circle at 50% 50%, rgba(251, 146, 60, 0.35), transparent 70%),
+        linear-gradient(135deg, rgba(124, 45, 18, 0.40), rgba(234, 88, 12, 0.25)) !important;
+    border: 1px solid rgba(253, 186, 116, 0.7) !important;
+    box-shadow:
+        0 0 8px rgba(253, 186, 116, 0.5),
+        0 0 16px rgba(251, 146, 60, 0.35),
+        inset 0 0 8px rgba(234, 88, 12, 0.3) !important;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.ship-checkbox-input:checked:hover + .ship-checkbox-box-issue {
+    box-shadow:
+        0 0 12px rgba(253, 186, 116, 0.7),
+        0 0 20px rgba(251, 146, 60, 0.5),
+        inset 0 0 10px rgba(234, 88, 12, 0.4) !important;
+}
+
+.ship-checkbox-label:hover .ship-checkbox-box-issue {
+    border-color: rgba(253, 186, 116, 0.9);
+    box-shadow: 0 0 8px rgba(253, 186, 116, 0.3);
+}

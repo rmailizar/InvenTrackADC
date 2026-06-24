@@ -22,8 +22,9 @@ class ReportController extends Controller
             ->distinct()
             ->orderBy($categoryColumn)
             ->pluck($categoryColumn);
+        $yearExpr = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y', date) as year" : 'YEAR(date) as year';
         $years = Transaction::visibleFor(auth()->user())
-            ->selectRaw('YEAR(date) as year')
+            ->selectRaw($yearExpr)
             ->distinct()
             ->orderBy('year', 'desc')
             ->pluck('year');

@@ -49,9 +49,10 @@ class StuffRequestController extends Controller
         if ($activeBidang === 'teknik') {
             $now = Carbon::now();
             $allTeknikItems = Item::where('bidang', 'teknik')->get();
+            $yearExpr = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y', date) as year" : 'YEAR(date) as year';
             $availableYears = Transaction::where('bidang', 'teknik')
                 ->approved()
-                ->selectRaw('YEAR(date) as year')
+                ->selectRaw($yearExpr)
                 ->distinct()
                 ->orderByDesc('year')
                 ->pluck('year');
@@ -375,8 +376,9 @@ class StuffRequestController extends Controller
 
         $pendingCount = StuffRequest::visibleFor(auth()->user())->pending()->count();
 
+        $yearExpr = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y', created_at) as year" : 'YEAR(created_at) as year';
         $years = StuffRequest::visibleFor(auth()->user())
-            ->selectRaw('YEAR(created_at) as year')
+            ->selectRaw($yearExpr)
             ->distinct()
             ->orderBy('year', 'desc')
             ->pluck('year')

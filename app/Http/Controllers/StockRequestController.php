@@ -46,8 +46,9 @@ class StockRequestController extends Controller
         $categories = Item::visibleFor(auth()->user())->select('category')->distinct()->orderBy('category')->pluck('category');
         $pendingCount = StockRequest::visibleFor(auth()->user())->pending()->count();
 
+        $yearExpr = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y', created_at) as year" : 'YEAR(created_at) as year';
         $years = StockRequest::visibleFor(auth()->user())
-            ->selectRaw('YEAR(created_at) as year')
+            ->selectRaw($yearExpr)
             ->distinct()
             ->orderBy('year', 'desc')
             ->pluck('year')

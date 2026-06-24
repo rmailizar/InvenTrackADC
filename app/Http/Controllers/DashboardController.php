@@ -24,13 +24,14 @@ class DashboardController extends Controller
         }
 
         $now = Carbon::now();
+        $yearExpr = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y', date) as year" : 'YEAR(date) as year';
 
         // ========================
         // 🔥 YEAR FILTER
         // ========================
         $availableYears = Transaction::visibleFor($user)
             ->approved()
-            ->selectRaw('YEAR(date) as year')
+            ->selectRaw($yearExpr)
             ->distinct()
             ->orderByDesc('year')
             ->pluck('year');
@@ -71,7 +72,7 @@ class DashboardController extends Controller
         // Available years for category filter
         $availableYears = Transaction::visibleFor($user)
             ->approved()
-            ->selectRaw('YEAR(date) as year')
+            ->selectRaw($yearExpr)
             ->distinct()
             ->orderByDesc('year')
             ->pluck('year');

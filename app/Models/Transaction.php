@@ -50,11 +50,6 @@ class Transaction extends Model
                 return;
             }
 
-            if ($transaction->status === 'approved' && $transaction->ship_unloader) {
-                $item->applyShipUnloader($transaction->ship_unloader);
-                return;
-            }
-
             $item->refreshShipUnloaderFromLatestTransaction();
         });
 

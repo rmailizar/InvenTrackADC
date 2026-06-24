@@ -64,8 +64,9 @@ class TransactionController extends Controller
         $items = Item::visibleFor(auth()->user())->orderBy('name')->get();
         $transactionDetailData = $this->transactionDetailData($transactions);
         
+        $yearExpr = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y', date) as year" : 'YEAR(date) as year';
         $years = Transaction::visibleFor(auth()->user())
-            ->selectRaw('YEAR(date) as year')
+            ->selectRaw($yearExpr)
             ->distinct()
             ->orderBy('year', 'desc')
             ->pluck('year')
@@ -107,6 +108,14 @@ class TransactionController extends Controller
 
         $item = Item::findOrFail($validated['item_id']);
         abort_unless(auth()->user()->canAccessBidang($item->bidang), 403, 'Anda tidak memiliki akses ke barang bidang ini.');
+
+        $shipValidationError = $this->validateShipUnloaderForIssue($request, $item);
+        if ($shipValidationError) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $shipValidationError], 422);
+            }
+            return back()->withInput()->with('error', $shipValidationError);
+        }
 
         if ($validated['type'] === 'out') {
             if ($item->current_stock < $validated['quantity']) {
@@ -217,6 +226,14 @@ class TransactionController extends Controller
 
         $item = Item::findOrFail($validated['item_id']);
         abort_unless(auth()->user()->canAccessBidang($item->bidang), 403, 'Anda tidak memiliki akses ke barang bidang ini.');
+
+        $shipValidationError = $this->validateShipUnloaderForIssue($request, $item, $transaction);
+        if ($shipValidationError) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $shipValidationError], 422);
+            }
+            return back()->withInput()->with('error', $shipValidationError);
+        }
 
         if ($transaction->status === 'approved') {
             $stockError = $this->stockErrorForApprovedUpdate($transaction, $item, $validated['type'], (int) $validated['quantity']);
@@ -457,5 +474,63 @@ class TransactionController extends Controller
         }
 
         return $data;
+    }
+
+    private function availableShipsForUpdate(Transaction $transaction, Item $item): array
+    {
+        $activeShips = collect(explode(',', (string) $item->stock_ship_unloader))
+            ->map(fn($s) => trim($s))
+            ->filter()
+            ->toArray();
+
+        if (
+            $transaction->status === 'approved'
+            && $transaction->type === 'out'
+            && (int) $transaction->item_id === (int) $item->id
+            && $transaction->ship_unloader
+        ) {
+            $txShips = collect(explode(',', $transaction->ship_unloader))
+                ->map(fn($s) => trim($s))
+                ->filter()
+                ->toArray();
+            
+            $activeShips = collect(array_merge($activeShips, $txShips))
+                ->unique()
+                ->sort()
+                ->values()
+                ->toArray();
+        }
+
+        return $activeShips;
+    }
+
+    private function validateShipUnloaderForIssue(Request $request, Item $item, ?Transaction $transaction = null): ?string
+    {
+        if ($item->bidang !== 'teknik' || $request->input('type') !== 'out') {
+            return null;
+        }
+
+        $inputShips = $request->input('ship_unloader');
+        if (empty($inputShips)) {
+            return null;
+        }
+
+        $availableShips = [];
+        if ($transaction) {
+            $availableShips = $this->availableShipsForUpdate($transaction, $item);
+        } else {
+            $availableShips = collect(explode(',', (string) $item->stock_ship_unloader))
+                ->map(fn($s) => trim($s))
+                ->filter()
+                ->toArray();
+        }
+
+        foreach ($inputShips as $ship) {
+            if (!in_array((string) $ship, $availableShips, true)) {
+                return "Ship Unloader {$ship} tidak tersedia/tidak aktif pada barang ini.";
+            }
+        }
+
+        return null;
     }
 }

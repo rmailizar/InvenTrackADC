@@ -91,7 +91,7 @@
 
                                         <div class="d-flex flex-nowrap align-items-center gap-1">
                                             @foreach([1, 2, 3, 4] as $ship)
-                                                <span class="badge {{ in_array((string) $ship, $activeShips, true) ? 'badge-ship-active' : 'badge-ship-inactive' }}">
+                                                <span class="badge {{ in_array((string) $ship, $activeShips, true) ? ($tx->type === 'out' ? 'badge-ship-active badge-ship-active-issue' : 'badge-ship-active') : 'badge-ship-inactive' }}">
                                                     {{ $ship }}
                                                 </span>
                                             @endforeach

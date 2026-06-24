@@ -140,13 +140,13 @@
                                         @foreach([1, 2, 3, 4] as $ship)
                                             <label class="ship-checkbox-label">
                                                 <input class="ship-checkbox-input tx-ship-checkbox" type="checkbox" name="ship_unloader[]" value="{{ $ship }}" data-ship="{{ $ship }}">
-                                                <span class="ship-checkbox-box">{{ $ship }}</span>
+                                                <span class="ship-checkbox-box {{ $activeTransactionType === 'out' ? 'ship-checkbox-box-issue' : '' }}">{{ $ship }}</span>
                                             </label>
                                         @endforeach
 
                                         <label class="ship-checkbox-label">
                                             <input class="ship-checkbox-input" type="checkbox" id="txShipAll" data-ship="all">
-                                            <span class="ship-checkbox-box px-2" style="width: auto; min-width: 24px;">ALL</span>
+                                            <span class="ship-checkbox-box {{ $activeTransactionType === 'out' ? 'ship-checkbox-box-issue' : '' }} px-2" style="width: auto; min-width: 24px;">ALL</span>
                                         </label>
 
                                     </div>
@@ -519,7 +519,7 @@
                 getInlineField('txInlineNoNormalisasi').value = hasItem ? (selected.dataset.noNormalisasi || '') : '';
                 getInlineField('txInlineLokasi').value = hasItem ? (selected.dataset.lokasi || '') : '';
 
-                var ships = hasItem ? (selected.dataset.shipUnloader || '').split(',').filter(Boolean) : [];
+                var ships = [];
                 root.querySelectorAll('.ship-checkbox-input').forEach(el => {
                     el.checked = ships.includes(el.value.toString());
                 });
@@ -642,11 +642,10 @@
                     txLokasi.value = selected.dataset.lokasi || '';
                     txVolume.value = selected.dataset.volume || '';
                     
-                    // Ambil data array ship unloader dari item terpilih di database
-                    var ships = (selected.dataset.shipUnloader || '').split(',').filter(Boolean);
+                    var ships = [];
                     
-                    // Ambil elemen container & seluruh elemen badge untuk kustomisasi visual
-                    const container = document.getElementById('itemShipBadges');
+                    // Ambil elemen container & seluruh elemen badge untuk kustomisasi visual (jika ada di modal)
+                    const container = txModalEl.querySelector('#itemShipBadges');
                     if (container) {
                         const allBadge = container.querySelector('[data-ship="all"]');
                         const numberBadges = container.querySelectorAll('.badge:not([data-ship="all"])');
@@ -662,8 +661,8 @@
                         setBadgeState(allBadge, ships.length > 0 && allNumbersAreActive);
                     }
 
-                    // Tetap pertahankan status keaslian form input checkbox bawaan backend Anda
-                    document.querySelectorAll('.tx-ship-checkbox').forEach(el => {
+                    // Tetap pertahankan status keaslian form input checkbox bawaan backend Anda (di dalam modal)
+                    txModalEl.querySelectorAll('.tx-ship-checkbox').forEach(el => {
                         el.checked = ships.includes(el.value.toString());
                     });
                 }
@@ -756,7 +755,7 @@
                             txLokasi.value = data.lokasi || data.item.lokasi || '';
                             txVolume.value = data.volume || data.item.volume || '';
                             var dbShips = (data.ship_unloader || []);
-                            document.querySelectorAll('.tx-ship-checkbox').forEach(el => {
+                            txModalEl.querySelectorAll('.tx-ship-checkbox').forEach(el => {
                                 el.checked = dbShips.map(String).includes(el.value.toString());
                             });
                         }

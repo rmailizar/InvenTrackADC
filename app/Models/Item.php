@@ -170,13 +170,6 @@ class Item extends Model
             return;
         }
 
-        $shipUnloader = $this->transactions()
-            ->where('status', 'approved')
-            ->whereNotNull('ship_unloader')
-            ->orderByDesc('date')
-            ->orderByDesc('id')
-            ->value('ship_unloader');
-
-        $this->applyShipUnloader($shipUnloader);
+        $this->applyShipUnloader($this->current_ship_unloader);
     }
 }
