@@ -44,12 +44,12 @@ class TransactionController extends Controller
             $query->where('status', $request->status);
         }
 
-        if ($request->filled('date_from')) {
-            $query->whereDate('date', '>=', $request->date_from);
+        if ($request->filled('year')) {
+            $query->whereYear('date', $request->year);
         }
 
-        if ($request->filled('date_to')) {
-            $query->whereDate('date', '<=', $request->date_to);
+        if ($request->filled('month')) {
+            $query->whereMonth('date', $request->month);
         }
 
         $sort = $request->input('sort', 'latest') === 'oldest' ? 'asc' : 'desc';
@@ -63,6 +63,14 @@ class TransactionController extends Controller
         // Pass items for modal dropdown
         $items = Item::visibleFor(auth()->user())->orderBy('name')->get();
         $transactionDetailData = $this->transactionDetailData($transactions);
+        
+        $years = Transaction::visibleFor(auth()->user())
+            ->selectRaw('YEAR(date) as year')
+            ->distinct()
+            ->orderBy('year', 'desc')
+            ->pluck('year')
+            ->filter()
+            ->values();
 
         if (!$request->has('inventrack_section') && ($request->ajax() || $request->wantsJson())) {
             return response()->json([
@@ -76,7 +84,7 @@ class TransactionController extends Controller
             ]);
         }
 
-        return view('transactions.index', compact('transactions', 'items', 'transactionDetailData'));
+        return view('transactions.index', compact('transactions', 'items', 'transactionDetailData', 'years'));
     }
 
     public function create()

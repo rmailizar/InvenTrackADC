@@ -118,8 +118,8 @@
     --chart-gi-fill-end: rgba(16, 185, 129, 0.08);
     --chart-point-bg: #0f172a;
     --chart-point-hover-bg: #ffffff;
-    --chart-donut-alpha-start: 0.9;
-    --chart-donut-alpha-end: 0.45;
+    --chart-donut-alpha-start: 0.5;
+    --chart-donut-alpha-end: 0.12;
     --nexus-burst-bg: url("data:image/svg+xml,%3Csvg width='500' height='500' viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cstyle%3E.g%7Bstroke:%231e293b;stroke-width:3;fill:%23060b19;opacity:.8%7D.c%7Bstroke:%23334155;stroke-width:1;fill:none;stroke-dasharray:2 8;opacity:.6%7D.cp%7Bstroke:%230ea5e9;stroke-width:1.5;fill:none;stroke-dasharray:10 400;animation:mv 15s linear infinite;filter:drop-shadow(0 0 4px %230ea5e9);opacity:.6%7D@keyframes mv%7Bto%7Bstroke-dashoffset:400%7D%7D%3C/style%3E%3Cpath class='g' d='M200 0 L400 115 L400 285 L200 400 L0 285 L0 115 Z'/%3E%3Cline class='g' x1='0' y1='115' x2='400' y2='285'/%3E%3Cline class='g' x1='0' y1='285' x2='400' y2='115'/%3E%3Cline class='g' x1='200' y1='0' x2='200' y2='400'/%3E%3Cpath class='c' d='M100 57 L150 57 L200 115 L200 200'/%3E%3Cpath class='c' d='M300 342 L250 342 L200 285 L200 200'/%3E%3Cpath class='c' d='M100 342 L150 342 L200 285'/%3E%3Cpath class='c' d='M300 57 L250 57 L200 115'/%3E%3Cpath class='cp' d='M100 57 L150 57 L200 115 L200 200'/%3E%3Cpath class='cp' d='M300 342 L250 342 L200 285 L200 200' style='animation-delay:-5s'/%3E%3Cpath class='cp' d='M100 342 L150 342 L200 285' style='animation-delay:-10s'/%3E%3Cpath class='cp' d='M300 57 L250 57 L200 115' style='animation-delay:-15s'/%3E%3C/svg%3E");
 }
 
@@ -492,7 +492,6 @@ a:hover {
 
 .sidebar-footer {
     padding: 16px 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .sidebar-user {
@@ -2692,19 +2691,19 @@ td .badge {
     z-index: 1;
     overflow: visible; /* Diubah agar efek glow box-shadow keluar tidak terpotong */
     
-    /* Mengadopsi background transparan & gradasi hijau dari sidebar */
-    background: 
-        radial-gradient(circle at 50% 50%, rgba(52, 211, 153, 0.35), transparent 70%),
-        linear-gradient(135deg, rgba(6, 78, 59, 0.40), rgba(5, 150, 105, 0.25)) !important;
-    
-    /* Bingkai hijau semi transparan */
-    border: 1px solid rgba(110, 231, 183, 0.7) !important;
-    
-    /* Efek Glow (Box Shadow) berlapis dari sidebar active */
-    box-shadow:
-        0 0 8px rgba(110, 231, 183, 0.5),
-        0 0 16px rgba(52, 211, 153, 0.35),
-        inset 0 0 8px rgba(16, 185, 129, 0.3) !important;
+    /* Mengadopsi background transparan & gradasi BIRU terang */
+background: 
+    radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.40), transparent 70%),
+    linear-gradient(135deg, rgba(3, 105, 161, 0.40), rgba(56, 189, 248, 0.25)) !important;
+
+/* Bingkai biru semi transparan (TETAP TERANG) */
+border: 1px solid rgba(125, 211, 252, 0.7) !important;
+
+/* Efek Glow (Box Shadow) berlapis warna biru langit */
+box-shadow:
+    0 0 8px rgba(125, 211, 252, 0.5),
+    0 0 16px rgba(56, 189, 248, 0.40),
+    inset 0 0 8px rgba(14, 165, 233, 0.3) !important;
         
     /* Efek blur background di belakang badge */
     backdrop-filter: blur(4px);
@@ -2714,10 +2713,11 @@ td .badge {
 /* Opsional: Efek subtle ketika cursor diarahkan ke angka aktif */
 .badge-ship-active:hover {
     box-shadow:
-        0 0 12px rgba(110, 231, 183, 0.7),
-        0 0 20px rgba(52, 211, 153, 0.5),
-        inset 0 0 10px rgba(16, 185, 129, 0.4) !important;
-    border-color: rgba(167, 243, 208, 0.9) !important;
+        0 0 12px rgba(125, 211, 252, 0.7),          /* Biru langit muda terang */
+        0 0 20px rgba(56, 189, 248, 0.50),          /* Biru langit utama */
+        inset 0 0 10px rgba(14, 165, 233, 0.4) !important; /* Pendaran dalam (inset) biru tajam */
+    
+    border-color: rgba(186, 230, 253, 0.9) !important; /* Bingkai menjadi hampir putih-biru menyala */
 }
 
 .badge-pending {
@@ -2870,6 +2870,12 @@ td .badge {
 }
 
 .btn-primary {
+    background: linear-gradient(135deg, #0f3b32, var(--primary-dark));
+    color: white;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.btn-gi {
     background: linear-gradient(135deg, #0f3b32, var(--primary-dark));
     color: white;
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
@@ -5865,9 +5871,8 @@ body::before,
 
 /* State Normal: Glassmorphism Merah Transparan */
 .btn-reset {
-    background: rgba(239, 68, 68, 0.15); /* Merah transparan tipis */
-    color: #ef4444; /* Warna ikon/teks merah */
-    border: 1px solid rgba(239, 68, 68, 0.3); /* Border merah transparan */
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--primary-dark);
     
     /* Efek Blur Kaca */
     -webkit-backdrop-filter: blur(8px);
@@ -5879,7 +5884,7 @@ body::before,
 
 /* State Hover: Glassmorphism Merah Agak Gelap */
 .btn-reset:hover {
-    background: rgba(185, 28, 28, 0.3); /* Menggunakan merah yang lebih gelap (dark red) dan lebih pekat */
+    background: rgba(16, 185, 129, 0.3); /* Menggunakan merah yang lebih gelap (dark red) dan lebih pekat */
     color: #ffffff; /* Mengubah warna ikon/teks jadi putih agar kontras */
     border-color: rgba(185, 28, 28, 0.5); /* Border ikut menyesuaikan */
     
@@ -5888,7 +5893,11 @@ body::before,
     backdrop-filter: blur(12px);
     
     /* Opsional: Efek bayangan halus khas glassmorphism */
-    box-shadow: 0 8px 32px 0 rgba(185, 28, 28, 0.2); 
+    box-shadow: 0 8px 32px 0 rgba(16, 185, 129, 0.3); 
+}
+
+.bi-arrow-repeat:hover {
+    transform: rotate(30deg);
 }
 
 .action-icon {
@@ -5942,4 +5951,335 @@ body::before,
     font-weight: 900;
 }
 
+/* ---------- Custom Sidebar Footer Widgets ---------- */
+.sidebar-widgets {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+    justify-content: flex-start;
+    transition: var(--transition);
+}
 
+.sidebar.collapsed .sidebar-widgets {
+    justify-content: center;
+}
+
+.sidebar.collapsed:hover .sidebar-widgets {
+    justify-content: flex-start;
+}
+
+.sidebar-widgets .btn-theme-toggle {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+    border-radius: 20px !important;
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: var(--transition) !important;
+}
+
+.sidebar-widgets .btn-theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: white !important;
+}
+
+.sidebar-clock-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    line-height: 1.3;
+}
+
+.sidebar-clock-container .text-muted {
+    color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.sidebar-clock-container #live-clock {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 600;
+}
+
+.sidebar.collapsed .sidebar-clock-container {
+    display: none;
+}
+
+.sidebar.collapsed:hover .sidebar-clock-container {
+    display: revert;
+}
+
+/* ---------- Custom Transparent Header Styling ---------- */
+.topbar {
+    background: transparent !important;
+    border-bottom: none !important;
+    padding: 24px 28px 16px !important;
+    position: sticky !important; /* Mobile/Tablet: scrolls with page */
+    z-index: 1030;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    background-image: linear-gradient(to bottom, var(--body-bg) 70%, rgba(240, 242, 245, 0) 100%) !important;
+    transition: var(--transition);
+    box-shadow: none !important;
+}
+
+[data-theme="dark"] .topbar {
+    background-image: linear-gradient(to bottom, var(--body-bg) 70%, rgba(15, 23, 42, 0) 100%) !important;
+}
+
+@media (min-width: 992px) {
+    .topbar {
+        position: relative !important; /* Desktop: fixed/sticky at the top */
+        top: 0 !important;
+        background: transparent !important;
+        background-image: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        box-shadow: none !important;
+        border-bottom: none !important;
+    }
+
+    [data-theme="dark"] .topbar {
+        background-image: none !important;
+    }
+
+    .page-content {
+        padding-top: 16px !important;
+    }
+}
+
+.topbar-container {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+}
+
+.topbar-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 24px;
+}
+
+.topbar-titles {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.topbar .page-title {
+    font-size: 26px !important;
+    font-weight: 800 !important;
+    color: var(--text-primary) !important;
+    line-height: 1.2 !important;
+    letter-spacing: -0.5px !important;
+}
+
+.topbar .page-subtitle {
+    font-size: 13px !important;
+    color: var(--text-secondary) !important;
+    opacity: 0.8 !important;
+}
+
+.topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.topbar-right-actions {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.topbar-right-actions form,
+.topbar-right-actions .section-header-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    align-items: center;
+}
+
+.topbar-right-actions .action-row-1,
+.topbar-right-actions .action-row-2 {
+    display: contents;
+}
+
+.topbar-right-actions .form-control,
+.topbar-right-actions .form-select {
+    height: 34px !important;
+    padding: 4px 12px !important;
+    font-size: 13px !important;
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--radius-sm) !important;
+}
+
+.topbar-right-actions .btn {
+    height: 34px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 4px 14px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    border-radius: var(--radius-sm) !important;
+}
+
+.topbar-right-actions .autocomplete-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 1050;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+/* ---------- Responsive Actions / Filters (Mobile/Tablet < 992px) ---------- */
+.header-action-wrapper .action-row-1,
+.header-action-wrapper .action-row-2 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+@media (max-width: 991.98px) {
+    .header-action-wrapper {
+        display: block !important;
+        margin-bottom: 20px !important;
+    }
+
+    .header-action-wrapper .section-header-actions form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        padding: 16px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .header-action-wrapper .action-row-1,
+    .header-action-wrapper .action-row-2 {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        width: 100%;
+    }
+
+    .header-action-wrapper .action-row-1 > *,
+    .header-action-wrapper .action-row-2 > * {
+        flex: 1 1 auto;
+        min-width: 120px;
+        height: 38px !important;
+    }
+
+    .header-action-wrapper #itemSearchWrapper {
+        flex: 1 1 100%;
+    }
+
+    /* Style form control inputs and buttons inside wrapper for mobile size */
+    .header-action-wrapper .form-control,
+    .header-action-wrapper .form-select {
+        height: 38px !important;
+        font-size: 14px !important;
+        padding: 6px 12px !important;
+        background: var(--card-bg) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: var(--radius-sm) !important;
+    }
+
+    .header-action-wrapper .btn {
+        height: 38px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 14px !important;
+        border-radius: var(--radius-sm) !important;
+    }
+
+    /* Autocomplete suggestions box sizing for mobile */
+    .header-action-wrapper .autocomplete-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        z-index: 1050;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        box-shadow: var(--shadow-lg);
+        max-height: 250px;
+        overflow-y: auto;
+    }
+}
+
+.technical-activity-icon {
+    width: 32px;  /* Sesuaikan ukurannya */
+    height: 32px; /* Harus sama dengan width */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+/* Menambahkan efek glow murni pada ikon di dalamnya */
+.technical-activity-icon i {
+    filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.6));
+}
+
+/* --- MODE GELAP (DARK THEME) --- */
+[data-theme="dark"] .technical-activity-icon {
+    /* Menggunakan warna biru gelap transparan agar efek glow bawaan menyatu seperti gambar */
+    background-color: rgba(30, 41, 59, 0.5); 
+}
+
+/* Goods Receipt */
+.btn-receipt-submit{
+    background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%) !important;
+    /* Efek pendaran neon pada huruf */
+    text-shadow: 0 0 6px rgba(37, 99, 235, 0.45),
+        0 0 1px rgba(37, 99, 235, 0.2);
+    color: #fff;
+    justify-content: center;
+}
+
+.btn-receipt-submit:hover{
+    background: linear-gradient(135deg,#00b248,#00963c);
+    border-color: #00b248;
+    color: #fff;
+}
+
+/* Goods Issue */
+.btn-issue-submit{
+    background: linear-gradient(135deg,#ff9800,#ff6f00);
+    border-color: #ff9800;
+    color: #fff;
+    justify-content: center;
+}
+
+.btn-issue-submit:hover{
+    background: linear-gradient(135deg,#f57c00,#ef6c00);
+    border-color: #f57c00;
+    color: #fff;
+}

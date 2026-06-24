@@ -6,6 +6,20 @@
     $pageTitle = $isTeknik
         ? ($activeTransactionType === 'out' ? 'Goods Issue' : 'Goods Receipt')
         : 'Transaksi';
+    $months = [
+        1 => 'Januari',
+        2 => 'Februari',
+        3 => 'Maret',
+        4 => 'April',
+        5 => 'Mei',
+        6 => 'Juni',
+        7 => 'Juli',
+        8 => 'Agustus',
+        9 => 'September',
+        10 => 'Oktober',
+        11 => 'November',
+        12 => 'Desember'
+    ];
 @endphp
 
 @section('title', $pageTitle)
@@ -13,42 +27,42 @@
 
 @section('content')
     <div class="animate-fade-in {{ $isTeknik ? 'technical-transaction-page' : '' }}">
-        <div class="filter-bar">
-            <form method="GET" action="{{ route('transactions.index') }}">
-                @if($isTeknik)
-                    <input type="hidden" name="type" value="{{ $activeTransactionType }}">
-                @endif
-                <div class="row align-items-end g-3">
-                    <div class="col-lg-3 col-md-6">
-                        <label class="form-label">Cari Barang</label>
-                        <input type="text" name="search" class="form-control" placeholder="Nama barang..." value="{{ request('search') }}">
-                    </div>
-                    @unless($isTeknik)
-                        <div class="col-lg-2 col-md-6">
-                            <label class="form-label">Jenis</label>
-                            <select name="type" class="form-select">
-                                <option value="">Semua</option>
+        <!-- Header Actions Wrapper -->
+        <div class="header-action-wrapper d-none">
+            <div class="section-header-actions">
+                <form method="GET" action="{{ route('transactions.index') }}">
+                    @if($isTeknik)
+                        <input type="hidden" name="type" value="{{ $activeTransactionType }}">
+                    @endif
+                    <div class="action-row-1">
+                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari barang..." value="{{ request('search') }}" style="width: 180px;">
+                        @unless($isTeknik)
+                            <select name="type" class="form-select form-select-sm" style="width: 100px;" onchange="this.form.submit()">
+                                <option value="">Semua Jenis</option>
                                 <option value="in" {{ request('type') == 'in' ? 'selected' : '' }}>In</option>
                                 <option value="out" {{ request('type') == 'out' ? 'selected' : '' }}>Out</option>
                             </select>
-                        </div>
-                    @endunless
-                    <div class="col-lg-2 col-md-6">
-                        <label class="form-label">Dari Tanggal</label>
-                        <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
+                        @endunless
+                        <select name="year" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
+                            <option value="">Semua Tahun</option>
+                            @foreach($years as $yr)
+                                <option value="{{ $yr }}" {{ request('year') == $yr ? 'selected' : '' }}>{{ $yr }}</option>
+                            @endforeach
+                        </select>
+                        <select name="month" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
+                            <option value="">Semua Bulan</option>
+                            @foreach($months as $num => $name)
+                                <option value="{{ $num }}" {{ request('month') == $num ? 'selected' : '' }}>{{ $name }}</option>
+                            @endforeach
+                        </select>
                     </div>
-                    <div class="col-lg-2 col-md-6">
-                        <label class="form-label">Sampai Tanggal</label>
-                        <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
+                    <div class="action-row-2">
+                        <a href="{{ $isTeknik ? route('transactions.index', ['type' => $activeTransactionType]) : route('transactions.index') }}" class="btn btn-reset btn-sm" title="Reset Filter">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </a>
                     </div>
-                    <div class="col-lg-2 col-md-6">
-                        <div class="d-flex gap-2">
-                            
-                            <a href="{{ $isTeknik ? route('transactions.index', ['type' => $activeTransactionType]) : route('transactions.index') }}" class="btn btn-reset"><i class="bi bi-arrow-repeat"></i></a>
-                        </div>
-                    </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
 
         @if($isTeknik)
@@ -152,8 +166,17 @@
                                     </div>
                                 </div>
 
-                                <button type="submit" class="btn btn-primary w-100">
-                                    <i class="bi bi-send-fill"></i> Simpan {{ $pageTitle }}
+                                <button type="submit"
+                                    class="btn w-100
+                                    @if($isTeknik && $activeTransactionType === 'in')
+                                        btn-receipt-submit
+                                    @elseif($isTeknik && $activeTransactionType === 'out')
+                                        btn-issue-submit
+                                    @else
+                                        btn-primary
+                                    @endif">
+                                    <i class="bi bi-send-fill"></i>
+                                    Simpan {{ $pageTitle }}
                                 </button>
                             </form>
                         </div>

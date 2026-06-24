@@ -363,19 +363,27 @@ class StuffRequestController extends Controller
             $query->where('status', $request->status);
         }
 
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
+        if ($request->filled('year')) {
+            $query->whereYear('created_at', $request->year);
         }
 
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
+        if ($request->filled('month')) {
+            $query->whereMonth('created_at', $request->month);
         }
 
         $requests = $query->paginate(15)->withQueryString();
 
         $pendingCount = StuffRequest::visibleFor(auth()->user())->pending()->count();
 
-        return view('stuff-requests.index', compact('requests', 'pendingCount'));
+        $years = StuffRequest::visibleFor(auth()->user())
+            ->selectRaw('YEAR(created_at) as year')
+            ->distinct()
+            ->orderBy('year', 'desc')
+            ->pluck('year')
+            ->filter()
+            ->values();
+
+        return view('stuff-requests.index', compact('requests', 'pendingCount', 'years'));
     }
 
     /**

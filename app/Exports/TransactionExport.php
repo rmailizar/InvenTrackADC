@@ -13,11 +13,10 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 class TransactionExport implements FromQuery, WithHeadings, WithMapping, WithStyles, ShouldAutoSize
 {
     public function __construct(
-        protected $dateFrom = null,
-        protected $dateTo = null,
+        protected $year = null,
+        protected $month = null,
         protected $category = null,
         protected $type = null,
-        protected $year = null,
         protected $priceFilter = null,
         protected $sort = 'latest'
     ) {
@@ -30,16 +29,12 @@ class TransactionExport implements FromQuery, WithHeadings, WithMapping, WithSty
             ->visibleFor(auth()->user())
             ->approved();
 
-        if ($this->dateFrom) {
-            $query->whereDate('date', '>=', $this->dateFrom);
-        }
-
-        if ($this->dateTo) {
-            $query->whereDate('date', '<=', $this->dateTo);
-        }
-
         if ($this->year) {
             $query->whereYear('date', $this->year);
+        }
+
+        if ($this->month) {
+            $query->whereMonth('date', $this->month);
         }
 
         if ($this->category) {

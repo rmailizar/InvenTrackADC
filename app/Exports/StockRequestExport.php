@@ -23,8 +23,8 @@ class StockRequestExport implements FromCollection, WithHeadings, WithMapping, W
         return StockRequest::with(['lines.item', 'user', 'processor'])
             ->visibleFor(auth()->user())
             ->when(auth()->user()->isStaff(), fn($query) => $query->where('user_id', auth()->id()))
-            ->when($this->request->filled('date_from'), fn($query) => $query->whereDate('created_at', '>=', $this->request->date_from))
-            ->when($this->request->filled('date_to'), fn($query) => $query->whereDate('created_at', '<=', $this->request->date_to))
+            ->when($this->request->filled('year'), fn($query) => $query->whereYear('created_at', $this->request->year))
+            ->when($this->request->filled('month'), fn($query) => $query->whereMonth('created_at', $this->request->month))
             ->when($this->request->filled('status'), fn($query) => $query->where('status', $this->request->status))
             ->when($this->request->filled('category'), function ($query) {
                 $query->where(function ($q) {

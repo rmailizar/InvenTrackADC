@@ -14,18 +14,13 @@
 @section('content')
     <div class="animate-fade-in">
         <!-- Filter Bar -->
-        <div class="filter-bar">
-            <form method="GET"
-                action="{{ $isApprovalManager ? route('pendingUsers.index') : route('users.index') }}">
-                <div class="row align-items-end g-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Cari User</label>
-                        <input type="text" name="search" class="form-control" placeholder="Nama, username, atau email..."
-                            value="{{ request('search') }}">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Role</label>
-                        <select name="role" class="form-select">
+        <!-- Header Actions Wrapper -->
+        <div class="header-action-wrapper d-none">
+            <div class="section-header-actions">
+                <form method="GET" action="{{ $isApprovalManager ? route('pendingUsers.index') : route('users.index') }}">
+                    <div class="action-row-1">
+                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari user..." value="{{ request('search') }}" style="width: 180px;">
+                        <select name="role" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
                             <option value="">Semua Role</option>
                             @if(auth()->user()->isSuperAdmin())
                                 <option value="superadmin" {{ request('role') == 'superadmin' ? 'selected' : '' }}>Superadmin</option>
@@ -36,50 +31,35 @@
                                 <option value="staf" {{ request('role') == 'staf' ? 'selected' : '' }}>Staf</option>
                             @endif
                         </select>
-                    </div>
-                    @if(auth()->user()->isSuperAdmin())
-                        <div class="col-md-2">
-                            <label class="form-label">Bidang</label>
-                            <select name="bidang" class="form-select">
-                                <option value="">Semua</option>
+                        @if(auth()->user()->isSuperAdmin())
+                            <select name="bidang" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
+                                <option value="">Semua Bidang</option>
                                 <option value="umum" {{ request('bidang') == 'umum' ? 'selected' : '' }}>Umum</option>
                                 <option value="teknik" {{ request('bidang') == 'teknik' ? 'selected' : '' }}>Teknik</option>
                             </select>
-                        </div>
-                    @endif
-                    @if($canManageUsers)
-                        <div class="col-md-2">
-                            <label class="form-label">Status Akun</label>
-                            <select name="account_status" class="form-select">
-                                <option value="">Semua</option>
-                                <option value="pending" {{ request('account_status') == 'pending' ? 'selected' : '' }}>Pending
-                                </option>
-                                <option value="approved" {{ request('account_status') == 'approved' ? 'selected' : '' }}>Approved
-                                </option>
-                                <option value="rejected" {{ request('account_status') == 'rejected' ? 'selected' : '' }}>Rejected
-                                </option>
+                        @endif
+                        @if($canManageUsers)
+                            <select name="account_status" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
+                                <option value="">Semua Status</option>
+                                <option value="pending" {{ request('account_status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="approved" {{ request('account_status') == 'approved' ? 'selected' : '' }}>Approved</option>
+                                <option value="rejected" {{ request('account_status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                             </select>
-                        </div>
-                    @endif
-                    <div class="col-md-3">
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-search"></i>
-                                Filter</button>
-                            <a href="{{ $isApprovalManager ? route('pendingUsers.index') : route('users.index') }}"
-                                class="btn btn-outline-secondary flex-fill"><i class="bi bi-x-lg"></i> Reset</a>
-                        </div>
+                        @endif
+                        @if($canManageUsers)
+                            <button type="button" class="btn btn-primary btn-sm" onclick="openUserModal()">
+                                <i class="bi bi-person-plus-fill"></i> Tambah User
+                            </button>
+                        @endif
                     </div>
-                </div>
-            </form>
-        </div>
-
-        @if($canManageUsers)
-            <div class="d-flex justify-content-end mb-3">
-                <button type="button" class="btn btn-primary" onclick="openUserModal()">
-                    <i class="bi bi-person-plus-fill"></i> Tambah User
-                </button>
+                    <div class="action-row-2">
+                        <a href="{{ $isApprovalManager ? route('pendingUsers.index') : route('users.index') }}" class="btn btn-reset btn-sm" title="Reset Filter">
+                            <i class="bi bi-arrow-repeat"></i> 
+                        </a>
+                    </div>
+                </form>
             </div>
-        @endif
+        </div>
 
         <!-- Table -->
         <div class="card">

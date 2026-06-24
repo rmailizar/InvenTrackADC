@@ -261,6 +261,49 @@ function getSectionLink(sectionId) {
     return document.querySelector(`.sidebar-link[data-section="${sectionId}"]`);
 }
 
+function updateTopbarActions(sectionId) {
+    const topbarActions = document.getElementById('topbarRightActions');
+    if (!topbarActions) return;
+
+    // 1. Move any currently active actions back to their wrappers
+    const currentActions = topbarActions.querySelector('.section-header-actions');
+    if (currentActions) {
+        const originalWrapperId = currentActions.dataset.originalWrapper;
+        if (originalWrapperId) {
+            const wrapper = document.getElementById(originalWrapperId);
+            if (wrapper) {
+                wrapper.appendChild(currentActions);
+            }
+        }
+    }
+
+    // Clear topbar actions
+    topbarActions.innerHTML = '';
+
+    // 2. Find actions in the new active section
+    const activeSection = document.getElementById(sectionId);
+    if (!activeSection) return;
+
+    const wrapper = activeSection.querySelector('.header-action-wrapper');
+    if (wrapper) {
+        const actions = wrapper.querySelector('.section-header-actions');
+        if (actions) {
+            if (!wrapper.id) {
+                wrapper.id = 'wrapper-' + sectionId;
+            }
+            actions.dataset.originalWrapper = wrapper.id;
+            
+            // Move to header only on desktop (min-width: 992px)
+            if (window.matchMedia('(min-width: 992px)').matches) {
+                topbarActions.appendChild(actions);
+            } else {
+                // Return to table wrapper on mobile/tablet
+                wrapper.appendChild(actions);
+            }
+        }
+    }
+}
+
 function setActiveSection(sectionId) {
     document.querySelectorAll('.content-section').forEach((section) => {
         section.hidden = section.id !== sectionId;
@@ -270,6 +313,8 @@ function setActiveSection(sectionId) {
     document.querySelectorAll('.sidebar-link[data-section]').forEach((link) => {
         link.classList.toggle('active', link.dataset.section === sectionId);
     });
+
+    updateTopbarActions(sectionId);
 
     if (typeof window.Chart !== 'undefined') {
         Object.values(window.Chart.instances || {}).forEach((chart) => chart.resize());
@@ -434,3 +479,14 @@ window.addEventListener('popstate', () => {
     const sectionId = sectionIdFromUrl(window.location.href);
     switchSection(sectionId, getSectionLink(sectionId), { replace: true });
 });
+
+function syncTopbarActions() {
+    if (config.currentSectionId) {
+        updateTopbarActions(config.currentSectionId);
+    }
+}
+window.addEventListener('resize', syncTopbarActions);
+
+if (config.currentSectionId) {
+    updateTopbarActions(config.currentSectionId);
+}

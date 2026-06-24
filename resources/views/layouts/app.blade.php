@@ -262,6 +262,21 @@
         </nav>
 
         <div class="sidebar-footer">
+            <div class="sidebar-widgets">
+                <!-- Dark/Light Mode Toggle -->
+                <button class="btn-theme-toggle" onclick="toggleTheme()" title="Ganti tema" id="themeToggle">
+                    <i class="bi bi-sun-fill icon-sun"></i>
+                    <i class="bi bi-moon-fill icon-moon"></i>
+                </button>
+
+                <div class="sidebar-clock-container">
+                    <span class="text-muted" style="font-size:12px;">
+                        {{ now()->translatedFormat('l, d M Y') }}
+                        <span id="live-clock" class="ms-1 fw-bold"></span>
+                    </span>
+                </div>
+            </div>
+
             <div class="sidebar-user">
                 <div class="user-avatar">
                     {{ strtoupper(substr(auth()->user()->name, 0, 2)) }}
@@ -276,7 +291,7 @@
                         onclick="swalConfirm('Logout', 'Apakah Anda yakin ingin keluar?', 'warning', 'Ya, Logout', '#logoutForm')"
                         style="background:rgba(255,255,255,0.08);border:none;color:rgba(255,255,255,0.5);width:34px;height:34px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;"
                         title="Logout">
-                        <i class="bi bi-box-arrow-right"></i>
+                        <i class="bi bi-power"></i>
                     </button>
                 </form>
             </div>
@@ -287,40 +302,18 @@
     <main class="main-content sidebar-collapsed">
         <!-- Topbar -->
         <header class="topbar">
-            <div class="topbar-left">
+            <div class="topbar-container">
                 <button class="btn-sidebar-toggle" onclick="toggleSidebar()" aria-label="Buka menu">
                     <i class="bi bi-list"></i>
                 </button>
-                <div>
-                    <div class="page-title" id="pageTitle">@yield('title', 'Dashboard')</div>
-                    <div class="page-subtitle" id="pageSubtitle">@yield('subtitle', '')</div>
-                </div>
-            </div>
-            <div class="topbar-right">
-                @if(!auth()->user()->isStaff() && !$isTeknik)
-                    @php
-                        $lowStockCount = \App\Models\Item::visibleFor(auth()->user())->get()->filter(fn($i) => $i->is_low_stock)->count();
-                    @endphp
-                    @if($lowStockCount > 0)
-                        <a href="{{ route('stock.index', ['stock_status' => 'low']) }}" class="btn-icon"
-                            title="{{ $lowStockCount }} barang stok rendah">
-                            <i class="bi bi-bell-fill"></i>
-                            <span class="notification-dot"></span>
-                        </a>
-                    @endif
-                @endif
-
-                <!-- Dark/Light Mode Toggle -->
-                <button class="btn-theme-toggle" onclick="toggleTheme()" title="Ganti tema" id="themeToggle">
-                    <i class="bi bi-sun-fill icon-sun"></i>
-                    <i class="bi bi-moon-fill icon-moon"></i>
-                </button>
-
-                <div class="d-none d-md-flex align-items-center gap-2 ms-2">
-                    <span class="text-muted" style="font-size:12px;">
-                        {{ now()->translatedFormat('l, d M Y') }}
-                        <span id="live-clock" class="ms-1 fw-bold"></span>
-                    </span>
+                <div class="topbar-main">
+                    <div class="topbar-titles">
+                        <div class="page-title" id="pageTitle">@yield('title', 'Dashboard')</div>
+                        <div class="page-subtitle" id="pageSubtitle">@yield('subtitle', '')</div>
+                    </div>
+                    <div class="topbar-right">
+                        <div class="topbar-right-actions" id="topbarRightActions"></div>
+                    </div>
                 </div>
             </div>
         </header>

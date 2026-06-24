@@ -95,11 +95,10 @@ class ReportController extends Controller
         $filename = 'laporan_transaksi_' . now()->format('Y-m-d_His') . '.xlsx';
 
         return Excel::download(new TransactionExport(
-            $request->date_from,
-            $request->date_to,
+            $request->year,
+            $request->month,
             $request->category,
             $request->type,
-            $request->year,
             $request->price_filter,
             $request->sort
         ), $filename);
@@ -111,16 +110,12 @@ class ReportController extends Controller
             ->visibleFor(auth()->user())
             ->approved();
 
-        if ($request->filled('date_from')) {
-            $query->whereDate('date', '>=', $request->date_from);
-        }
-
-        if ($request->filled('date_to')) {
-            $query->whereDate('date', '<=', $request->date_to);
-        }
-
         if ($request->filled('year')) {
             $query->whereYear('date', $request->year);
+        }
+
+        if ($request->filled('month')) {
+            $query->whereMonth('date', $request->month);
         }
 
         if ($request->filled('category')) {

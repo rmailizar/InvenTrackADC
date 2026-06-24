@@ -440,8 +440,12 @@
                         <div class="card-body technical-activity-feed">
                             @forelse($recentTransactions as $tx)
                                 <div class="technical-activity-item">
-                                    <div class="technical-activity-icon {{ $tx->type === 'in' ? 'receipt' : 'issue' }}">
-                                        <i class="bi bi-{{ $tx->type === 'in' ? 'boxes' : 'box-arrow-up' }}"></i>
+                                    <div class="technical-activity-wrapper">
+                                        <div class="technical-activity-wrapper">
+                                            <div class="technical-activity-icon {{ $tx->type === 'in' ? 'receipt' : 'issue' }}">
+                                                <i class="fa fa-{{ $tx->type === 'in' ? 'boxes-stacked' : 'box-open' }}"></i>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="technical-activity-copy">
                                         <div class="technical-activity-title">

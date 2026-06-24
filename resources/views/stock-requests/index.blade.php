@@ -35,44 +35,63 @@
                 })->values()->all(),
             ];
         }
+        $months = [
+            1 => 'Januari',
+            2 => 'Februari',
+            3 => 'Maret',
+            4 => 'April',
+            5 => 'Mei',
+            6 => 'Juni',
+            7 => 'Juli',
+            8 => 'Agustus',
+            9 => 'September',
+            10 => 'Oktober',
+            11 => 'November',
+            12 => 'Desember'
+        ];
     @endphp
 
     <div class="animate-fade-in">
-        <div class="filter-bar">
-            <form method="GET" action="{{ route('stock-requests.index') }}">
-                <div class="row align-items-end g-3">
-                    <div class="col-lg-2 col-md-6">
-                        <label class="form-label">Dari Tanggal</label>
-                        <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
-                    </div>
-                    <div class="col-lg-2 col-md-6">
-                        <label class="form-label">Sampai Tanggal</label>
-                        <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
-                    </div>
-                    <div class="col-lg-2 col-md-6">
-                        <label class="form-label">Kategori</label>
-                        <select name="category" class="form-select">
-                            <option value="">Semua</option>
+        <!-- Header Actions Wrapper -->
+        <div class="header-action-wrapper d-none">
+            <div class="section-header-actions">
+                <form method="GET" action="{{ route('stock-requests.index') }}">
+                    <div class="action-row-1">
+                        <select name="year" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
+                            <option value="">Semua Tahun</option>
+                            @foreach($years as $yr)
+                                <option value="{{ $yr }}" {{ request('year') == $yr ? 'selected' : '' }}>{{ $yr }}</option>
+                            @endforeach
+                        </select>
+                        <select name="month" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
+                            <option value="">Semua Bulan</option>
+                            @foreach($months as $num => $name)
+                                <option value="{{ $num }}" {{ request('month') == $num ? 'selected' : '' }}>{{ $name }}</option>
+                            @endforeach
+                        </select>
+                        <select name="category" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
+                            <option value="">Semua Kategori</option>
                             @foreach($categories as $category)
                                 <option value="{{ $category }}" {{ request('category') == $category ? 'selected' : '' }}>{{ $category }}</option>
                             @endforeach
                         </select>
-                    </div>
-                    <div class="col-lg-2 col-md-6">
-                        <label class="form-label">Status</label>
-                        <select name="status" class="form-select">
-                            <option value="">Semua</option>
+                        <select name="status" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
+                            <option value="">Semua Status</option>
                             <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
                             <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
                             <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                         </select>
                     </div>
-                    <div class="col-lg-4 col-md-12 d-flex gap-2">
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Filter</button>
-                        <a href="{{ route('stock-requests.index') }}" class="btn btn-outline-secondary"><i class="bi bi-x-lg"></i> Reset</a>
+                    <div class="action-row-2">
+                        <a href="{{ route('stock-requests.index') }}" class="btn btn-reset btn-sm" title="Reset Filter">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </a>
+                        <a href="{{ route('stock-requests.export', $exportParams) }}" class="btn btn-success btn-sm">
+                            <i class="bi bi-file-earmark-excel-fill me-1"></i> Export Excel
+                        </a>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
 
         <div class="card">
@@ -83,9 +102,6 @@
                         <span class="badge bg-warning text-dark ms-2">{{ $pendingCount }} pending</span>
                     @endif
                 </span>
-                <a href="{{ route('stock-requests.export', $exportParams) }}" class="btn btn-sm btn-success ms-auto">
-                    <i class="bi bi-file-earmark-excel-fill me-1"></i> Export Excel
-                </a>
             </div>
             <div class="card-body p-0">
                 <div class="table-container">

@@ -30,50 +30,44 @@ $itemDetailData[$itemRow->id] = [
 }
 @endphp
 <div class="animate-fade-in">
-    <!-- Filter Bar -->
-    <div class="filter-bar">
-        <form method="GET" action="{{ route('items.index') }}">
-            <div class="row align-items-end g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Cari {{ $itemLabel }}</label>
+    <!-- Header Actions Wrapper (for header redirection) -->
+    <div class="header-action-wrapper d-none">
+        <div class="section-header-actions">
+            <form method="GET" action="{{ route('items.index') }}">
+                <div class="action-row-1">
                     <div class="position-relative" id="itemSearchWrapper">
-                    <input type="text"
-                        id="itemsSearchInput"
-                        class="form-control"
-                        name="search"
-                        autocomplete="off"
-                        placeholder="{{ $isTeknik ? 'Cari nama, no normalisasi, atau komponen...' : 'Cari nama atau kategori...' }}">
-
-                    <div id="itemSearchSuggestions"
-                        class="autocomplete-suggestions"
-                        style="display:none;">
+                        <input type="text"
+                            id="itemsSearchInput"
+                            class="form-control form-control-sm"
+                            name="search"
+                            value="{{ request('search') }}"
+                            autocomplete="off"
+                            placeholder="Cari {{ $itemLowerLabel }}..."
+                            style="width: 240px;">
+                        <div id="itemSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
                     </div>
+                    @unless($isTeknik)
+                        <select name="category" class="form-select form-select-sm" style="width: 140px;" onchange="this.form.submit()">
+                            <option value="">Semua Kategori</option>
+                            @foreach($categories as $cat)
+                                <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                            @endforeach
+                        </select>
+                    @endunless
+                    <button type="button" class="btn btn-primary" onclick="openItemModal()">
+                        <i class="bi bi-plus-lg"></i> Tambah
+                    </button>
                 </div>
+                <div class="action-row-2">
+                    <a href="{{ route('items.index') }}" class="btn btn-reset" title="Reset Filter">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </a>
+                    <a href="{{ route('items.lookups.index') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-sliders2"></i> Kelola
+                    </a>
                 </div>
-                @unless($isTeknik)
-                <div class="col-md-3">
-                    <label class="form-label">Kategori</label>
-                    <select name="category" class="form-select">
-                        <option value="">Semua Kategori</option>
-                        @foreach($categories as $cat)
-                        <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                @endunless
-                <div class="{{ $isTeknik ? 'col-md-6' : 'col-md-3' }} d-flex gap-2">
-                    <a href="{{ route('items.index') }}" class="btn btn-reset"><i class="bi bi-arrow-repeat"></i></a>
-                </div>
-                <div class="col-md-2 text-end">
-                    <div class="d-grid gap-2">
-                        <button type="button" class="btn btn-primary w-100" onclick="openItemModal()"><i
-                                class="bi bi-plus-lg"></i> Tambah</button>
-                        <a href="{{ route('items.lookups.index') }}" class="btn btn-outline-primary w-100"><i
-                                class="bi bi-sliders2"></i> Kelola</a>
-                    </div>
-                </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 
     @if($isTeknik)

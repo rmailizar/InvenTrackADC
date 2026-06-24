@@ -23,12 +23,12 @@ class StockRequestController extends Controller
             $query->where('user_id', auth()->id());
         }
 
-        if ($request->filled('date_from')) {
-            $query->whereDate('created_at', '>=', $request->date_from);
+        if ($request->filled('year')) {
+            $query->whereYear('created_at', $request->year);
         }
 
-        if ($request->filled('date_to')) {
-            $query->whereDate('created_at', '<=', $request->date_to);
+        if ($request->filled('month')) {
+            $query->whereMonth('created_at', $request->month);
         }
 
         if ($request->filled('status')) {
@@ -46,7 +46,15 @@ class StockRequestController extends Controller
         $categories = Item::visibleFor(auth()->user())->select('category')->distinct()->orderBy('category')->pluck('category');
         $pendingCount = StockRequest::visibleFor(auth()->user())->pending()->count();
 
-        return view('stock-requests.index', compact('stockRequests', 'categories', 'pendingCount'));
+        $years = StockRequest::visibleFor(auth()->user())
+            ->selectRaw('YEAR(created_at) as year')
+            ->distinct()
+            ->orderBy('year', 'desc')
+            ->pluck('year')
+            ->filter()
+            ->values();
+
+        return view('stock-requests.index', compact('stockRequests', 'categories', 'pendingCount', 'years'));
     }
 
     public function store(Request $request)

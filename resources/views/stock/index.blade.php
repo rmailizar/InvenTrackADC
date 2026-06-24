@@ -8,58 +8,46 @@
         $isTeknik = auth()->user()->bidang === 'teknik';
     @endphp
     <div class="animate-fade-in">
-        <!-- Filter Bar -->
-        <div class="filter-bar">
-            <form method="GET" action="{{ route('stock.index') }}">
-                <div class="row align-items-end g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">Cari Barang</label>
-                        <input type="text" name="search" class="form-control" placeholder="{{ $isTeknik ? 'Nama, no normalisasi, atau komponen...' : 'Nama atau kategori...' }}"
-                            value="{{ request('search') }}">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">{{ $isTeknik ? 'Tipe Barang' : 'Kategori' }}</label>
-                        <select name="category" class="form-select">
-                            <option value="">Semua {{ $isTeknik ? 'Tipe Barang' : 'Kategori' }}</option>
+        <!-- Header Actions Wrapper -->
+        <div class="header-action-wrapper d-none">
+            <div class="section-header-actions">
+                <form method="GET" action="{{ route('stock.index') }}">
+                    <div class="action-row-1">
+                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari barang..." value="{{ request('search') }}" style="width: 180px;">
+                        <select name="category" class="form-select form-select-sm" style="width: 130px;" onchange="this.form.submit()">
+                            <option value="">Semua {{ $isTeknik ? 'Tipe' : 'Kategori' }}</option>
                             @foreach($categories as $cat)
                                 <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
                             @endforeach
                         </select>
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Status Stok</label>
-                        <select name="stock_status" class="form-select">
-                            <option value="">Semua</option>
+                        <select name="stock_status" class="form-select form-select-sm" style="width: 110px;" onchange="this.form.submit()">
+                            <option value="">Semua Status</option>
                             <option value="low" {{ request('stock_status') == 'low' ? 'selected' : '' }}>Stok Rendah</option>
                         </select>
                     </div>
-                    <div class="col-md-3 d-flex gap-2">
-                        <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Filter</button>
-                        <a href="{{ route('stock.index') }}" class="btn btn-outline-secondary"><i class="bi bi-x-lg"></i>
-                            Reset</a>
+                    <div class="action-row-2">
+                        <a href="{{ route('stock.index') }}" class="btn btn-reset btn-sm" title="Reset Filter">
+                            <i class="bi bi-arrow-repeat"></i>
+                        </a>
+                        <button type="button" class="btn btn-warning btn-sm stock-trigger-btn"
+                            data-bs-toggle="modal" data-bs-target="#stockRequestModal"
+                            {{ $requestOrderCount + $outOfStockCount === 0 ? 'disabled' : '' }}>
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i> Request Order: {{ $requestOrderCount }}
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm stock-trigger-btn"
+                            data-bs-toggle="modal" data-bs-target="#stockRequestModal"
+                            {{ $requestOrderCount + $outOfStockCount === 0 ? 'disabled' : '' }}>
+                            <i class="bi bi-x-circle-fill me-1"></i> Out of Stock: {{ $outOfStockCount }}
+                        </button>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
 
         <!-- Table -->
         <div class="card">
             <div class="card-header flex-wrap gap-2">
                 <span><i class="bi bi-clipboard-data-fill text-primary-custom me-2"></i>Rekap Stok Barang</span>
-                <div class="d-flex flex-wrap gap-2 ms-auto">
-                    <button type="button" class="btn btn-sm btn-warning stock-trigger-btn"
-                        data-bs-toggle="modal" data-bs-target="#stockRequestModal"
-                        {{ $requestOrderCount + $outOfStockCount === 0 ? 'disabled' : '' }}>
-                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                        Request Order: {{ $requestOrderCount }}
-                    </button>
-                    <button type="button" class="btn btn-sm btn-danger stock-trigger-btn"
-                        data-bs-toggle="modal" data-bs-target="#stockRequestModal"
-                        {{ $requestOrderCount + $outOfStockCount === 0 ? 'disabled' : '' }}>
-                        <i class="bi bi-x-circle-fill me-1"></i>
-                        Out of Stock: {{ $outOfStockCount }}
-                    </button>
-                </div>
             </div>
             <div class="card-body p-0">
                 <div class="table-container">
