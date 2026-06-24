@@ -5906,3 +5906,40 @@ body::before,
     background: rgba(var(--bs-primary-rgb), .08);
     transform: translateY(-1px);
 }
+
+/* Custom filters and table styles for public technical SOH */
+.technical-dashboard-card.filter-card-btn {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.technical-dashboard-card.filter-card-btn::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: transparent;
+    transition: background-color 0.3s ease;
+}
+
+.technical-dashboard-card.filter-card-btn.active {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+
+.technical-dashboard-card.filter-card-btn.active.technical-total-card::after {
+    background-color: #3b82f6;
+}
+
+.technical-dashboard-card.filter-card-btn.active.technical-critical-card::after {
+    background-color: #ef4444;
+}
+
+.technical-dashboard-card.filter-card-btn.active .technical-dashboard-card-title {
+    font-weight: 900;
+}
+
+

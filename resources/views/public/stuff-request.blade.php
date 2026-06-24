@@ -74,8 +74,9 @@
         <div class="public-body">
             <div class="container">
                 @if($activeBidang === 'teknik' && $publicDashboard)
-                    <div class="technical-dashboard-cards public-technical-dashboard-cards mb-4">
-                        <div class="technical-dashboard-card technical-total-card">
+                    <div class="technical-dashboard-cards mb-4">
+                        {{-- Total Spare Parts (SOH) --}}
+                        <div class="technical-dashboard-card technical-total-card filter-card-btn active" data-filter="all" style="cursor: pointer;">
                             <div class="technical-dashboard-card-copy">
                                 <div class="technical-dashboard-card-title">Total Spare Parts (SOH)</div>
                                 <div class="technical-dashboard-card-value">
@@ -94,17 +95,21 @@
                             </div>
                         </div>
 
-                        <div class="technical-dashboard-card technical-critical-card">
+                        {{-- Critical Stock --}}
+                        <div class="technical-dashboard-card technical-critical-card filter-card-btn" data-filter="critical" style="cursor: pointer;">
                             <div class="technical-dashboard-card-copy">
                                 <div class="technical-dashboard-card-title">Critical Stock</div>
-                                <div class="technical-dashboard-card-value">{{ number_format($publicDashboard['lowStockCount']) }} <span>Items</span></div>
+                                <div class="technical-dashboard-card-value" style="color: #ef4444;">
+                                    {{ number_format($publicDashboard['criticalStockCount']) }} <span>Items</span>
+                                </div>
                                 <div class="technical-dashboard-card-link">Items requiring restock</div>
                             </div>
-                            <div class="technical-dashboard-card-icon technical-critical-icon">
+                            <div class="technical-dashboard-card-icon technical-critical-icon" style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444;">
                                 <i class="bi bi-exclamation-triangle-fill"></i>
                             </div>
                         </div>
 
+                        {{-- Total Item Types --}}
                         <div class="technical-dashboard-card technical-type-card">
                             <div class="technical-dashboard-card-copy">
                                 <div class="technical-type-card-head">
@@ -280,7 +285,107 @@
                 </div>
 
                 @if($activeBidang === 'teknik')
-                    @include('public.partials.technical-transaction-forms')
+                    <div class="section-title">
+                        <i class="bi bi-clipboard-data-fill"></i> Daftar Barang Bidang Teknik
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <span><i class="bi bi-table text-primary-custom me-2"></i>Daftar Barang Teknik</span>
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="text" id="publicTeknikSearch" class="form-control form-control-sm" placeholder="Cari barang teknik..." style="width: 250px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px;">
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-container">
+                                <table class="table mb-0 align-middle" id="public-teknik-table">
+                                    <thead>
+                                        <tr>
+                                            <th>No Normalisasi</th>
+                                            <th>Nama Spare Part</th>
+                                            <th>Komponen</th>
+                                            <th>Tipe Barang</th>
+                                            <th>Store Room</th>
+                                            <th>Ship Unloader</th>
+                                            <th class="text-center">Low Limit (Aktual)</th>
+                                            <th class="text-center">Min Stock</th>
+                                            <th class="text-center">Volume</th>
+                                            <th>Satuan</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($items as $item)
+                                            @php
+                                                $activeShips = collect(explode(',', (string) $item->stock_ship_unloader))->filter()->all();
+                                                
+                                                if ($item->current_stock < $item->min_stock) {
+                                                    $statusClass = 'critical';
+                                                    $statusLabel = 'Critical';
+                                                } elseif ($item->current_stock == $item->min_stock) {
+                                                    $statusClass = 'low';
+                                                    $statusLabel = 'Low Stock';
+                                                } else {
+                                                    $statusClass = 'in-stock';
+                                                    $statusLabel = 'In Stock';
+                                                }
+                                            @endphp
+                                            <tr data-status="{{ $statusClass }}">
+                                                <td>
+                                                    <span class="technical-soh-norm norm-in">{{ $item->no_normalisasi ?? '-' }}</span>
+                                                </td>
+                                                <td class="fw-600 name-cell">{{ $item->name }}</td>
+                                                <td class="component-cell">{{ $item->component ?? '-' }}</td>
+                                                <td class="category-cell">{{ $item->category ?? '-' }}</td>
+                                                <td class="location-cell">{{ $item->lokasi ?? '-' }}</td>
+                                                <td>
+                                                    <div class="d-flex flex-nowrap align-items-center gap-1">
+                                                        @foreach([1, 2, 3, 4] as $ship)
+                                                            <span class="badge {{ in_array((string) $ship, $activeShips, true) ? 'badge-ship-active' : 'badge-ship-inactive' }}">
+                                                                {{ $ship }}
+                                                            </span>
+                                                        @endforeach
+                                                    </div>
+                                                </td>
+                                                <td class="fw-700 text-center {{ $item->current_stock < $item->min_stock ? 'stock-value-critical' : ($item->current_stock == $item->min_stock ? 'stock-value-low' : 'stock-value-ready') }}">
+                                                    {{ number_format($item->current_stock) }}
+                                                </td>
+                                                <td class="text-center">{{ number_format($item->min_stock) }}</td>
+                                                <td class="text-center">{{ $item->volume ?? '-' }}</td>
+                                                <td>{{ $item->unit }}</td>
+                                                <td>
+                                                    @if($statusClass === 'critical')
+                                                        <span class="badge-status badge-rejected position-relative badge-critical-teknik">
+                                                            Critical
+                                                            <span class="ping-container">
+                                                                <span class="ping-dot-pulse"></span>
+                                                                <span class="ping-dot-core"></span>
+                                                            </span>
+                                                        </span>
+                                                    @elseif($statusClass === 'low')
+                                                        <span class="badge-status technical-soh-norm norm-out">
+                                                            Low Stock
+                                                        </span>
+                                                    @else
+                                                        <span class="badge-status badge-approved">
+                                                            In Stock
+                                                        </span>
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr class="no-data-row">
+                                                <td colspan="11" class="text-center py-4">
+                                                    <i class="bi bi-inbox fs-2 d-block mb-2 text-muted"></i>
+                                                    Belum ada data barang teknik
+                                                </td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
                 @else
                 <div class="row g-4">
                     {{-- Left: Stock Recap --}}
@@ -856,50 +961,44 @@
             }
         }
 
-        document.querySelectorAll('[data-public-technical-form]').forEach((form) => {
-            const itemSelect = form.querySelector('[data-public-item-select]');
-            const quantity = form.querySelector('[data-public-quantity]');
-            const warning = form.querySelector('[data-public-stock-warning]');
-            const unit = form.querySelector('[data-public-item-unit]');
+        // Interactive SOH Card Filters and Search for Teknik
+        (function() {
+            const filterCards = document.querySelectorAll('.technical-dashboard-cards .filter-card-btn');
+            const searchInput = document.getElementById('publicTeknikSearch');
+            const tableRows = document.querySelectorAll('#public-teknik-table tbody tr:not(.no-data-row)');
+            let currentFilter = 'all';
 
-            function selectedItem() {
-                return itemSelect?.selectedOptions[0] || null;
-            }
+            function filterTable() {
+                const searchVal = searchInput ? searchInput.value.toLowerCase().trim() : '';
 
-            function updateItemDetails() {
-                const option = selectedItem();
-                form.querySelectorAll('[data-public-item-detail]').forEach((field) => {
-                    const key = field.dataset.publicItemDetail;
-                    const value = option?.value ? option.dataset[key] : '';
-                    field.value = key === 'stock' && option?.value
-                        ? `${value || 0} ${option.dataset.unit || ''}`.trim()
-                        : (value || '');
+                tableRows.forEach(row => {
+                    const rowStatus = row.getAttribute('data-status');
+                    const textContent = row.textContent.toLowerCase();
+
+                    const matchesFilter = (currentFilter === 'all' || rowStatus === currentFilter);
+                    const matchesSearch = (!searchVal || textContent.includes(searchVal));
+
+                    if (matchesFilter && matchesSearch) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
                 });
-                unit.textContent = option?.value ? (option.dataset.unit || '-') : '-';
-                validateStock();
             }
 
-            function validateStock() {
-                if (form.dataset.type !== 'out') return true;
-
-                const stock = Number(selectedItem()?.dataset.stock || 0);
-                const requested = Number(quantity?.value || 0);
-                const invalid = requested > stock;
-                warning?.classList.toggle('d-none', !invalid);
-                quantity?.setCustomValidity(invalid ? 'Jumlah melebihi stok tersedia.' : '');
-                return !invalid;
-            }
-
-            itemSelect?.addEventListener('change', updateItemDetails);
-            quantity?.addEventListener('input', validateStock);
-            form.addEventListener('submit', (event) => {
-                if (!validateStock()) {
-                    event.preventDefault();
-                    quantity?.reportValidity();
-                }
+            filterCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    filterCards.forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    currentFilter = this.getAttribute('data-filter');
+                    filterTable();
+                });
             });
-            updateItemDetails();
-        });
+
+            if (searchInput) {
+                searchInput.addEventListener('input', filterTable);
+            }
+        })();
 
         // Multi-line barang: tambah / hapus baris
         (function() {

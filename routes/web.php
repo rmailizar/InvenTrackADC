@@ -22,9 +22,7 @@ Route::get('/stock-request', [StuffRequestController::class, 'publicIndex'])->na
 Route::post('/request-stock', [StuffRequestController::class, 'store'])->name('public.stock-request.store');
 Route::get('/public/api/teknik/monthly-data', [StuffRequestController::class, 'publicMonthlyData'])->name('public.teknik.monthlyData');
 Route::get('/public/api/teknik/ship-unloader-data', [StuffRequestController::class, 'publicShipUnloaderData'])->name('public.teknik.shipUnloaderData');
-Route::post('/public/teknik/transactions', [StuffRequestController::class, 'storePublicTechnicalTransaction'])
-    ->middleware('throttle:30,1')
-    ->name('public.teknik.transactions.store');
+
 
 // Auth Routes
 Route::get('/login', [LoginController::class, 'showLogin'])->name('login');
