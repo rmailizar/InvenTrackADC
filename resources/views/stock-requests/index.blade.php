@@ -84,7 +84,7 @@
                     </div>
                     <div class="action-row-2">
                         <a href="{{ route('stock-requests.index') }}" class="btn btn-reset btn-sm" title="Reset Filter">
-                            <i class="bi bi-arrow-repeat"></i>
+                            <i class="bi bi-arrow-counterclockwise"></i>
                         </a>
                         <a href="{{ route('stock-requests.export', $exportParams) }}" class="btn btn-success btn-sm">
                             <i class="bi bi-file-earmark-excel-fill me-1"></i> Export Excel

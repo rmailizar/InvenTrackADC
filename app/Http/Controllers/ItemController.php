@@ -38,14 +38,14 @@ class ItemController extends Controller
             ]);
             $stockSummary = [
                 'total' => $stockRows->sum(fn($row) => max(0, $row['stock'])),
-                'low' => $stockRows->filter(fn($row) => $row['stock'] > 0 && $row['stock'] <= $row['min_stock'])->count(),
-                'critical' => $stockRows->filter(fn($row) => $row['stock'] <= 0)->count(),
+                'low' => $stockRows->filter(fn($row) => $row['stock'] == $row['min_stock'])->count(),
+                'critical' => $stockRows->filter(fn($row) => $row['stock'] < $row['min_stock'])->count(),
             ];
 
             if ($request->filled('stock_status')) {
                 $filteredItems = (match ($request->stock_status) {
-                    'low' => $stockRows->filter(fn($row) => $row['stock'] > 0 && $row['stock'] <= $row['min_stock'])->pluck('item'),
-                    'critical' => $stockRows->filter(fn($row) => $row['stock'] <= 0)->pluck('item'),
+                    'low' => $stockRows->filter(fn($row) => $row['stock'] == $row['min_stock'])->pluck('item'),
+                    'critical' => $stockRows->filter(fn($row) => $row['stock'] < $row['min_stock'])->pluck('item'),
                     default => $statusItems,
                 })->values();
 

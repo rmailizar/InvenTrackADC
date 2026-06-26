@@ -77,7 +77,12 @@
     <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
     <!-- Sidebar -->
-    <aside class="sidebar collapsed" id="sidebar">
+    @php
+        $isTeknik = auth()->user()->bidang === 'teknik';
+        $isTeknikManager = auth()->user()->isManager() && $isTeknik;
+        $canUseAdminMenus = auth()->user()->isSuperAdmin() || auth()->user()->isAdmin() || $isTeknikManager;
+    @endphp
+    <aside class="sidebar collapsed{{ $isTeknik ? ' sidebar-teknik' : '' }}" id="sidebar">
         <div class="sidebar-brand">
             <div class="brand-wrapper">
                 <div class="brand-icon">
@@ -97,11 +102,6 @@
         </div>
 
         <nav class="sidebar-nav">
-            @php
-                $isTeknik = auth()->user()->isTeknik();
-                $isTeknikManager = auth()->user()->isManager() && $isTeknik;
-                $canUseAdminMenus = auth()->user()->isSuperAdmin() || auth()->user()->isAdmin() || $isTeknikManager;
-            @endphp
             <div class="sidebar-label">Menu Utama</div>
 
             {{-- Dashboard: Admin & Manager only --}}
@@ -307,10 +307,6 @@
                     <i class="bi bi-list"></i>
                 </button>
                 <div class="topbar-main">
-                    <div class="topbar-titles">
-                        <div class="page-title" id="pageTitle">@yield('title', 'Dashboard')</div>
-                        <div class="page-subtitle" id="pageSubtitle">@yield('subtitle', '')</div>
-                    </div>
                     <div class="topbar-right">
                         <div class="topbar-right-actions" id="topbarRightActions"></div>
                     </div>
@@ -320,6 +316,11 @@
 
         <!-- Page Content -->
         <div class="page-content" id="sectionShell">
+            <div class="topbar-titles">
+                <div class="page-title" id="pageTitle">@yield('title', 'Dashboard')</div>
+                <div class="page-subtitle" id="pageSubtitle">@yield('subtitle', '')</div>
+            </div>
+
             <section id="{{ $currentSectionId }}" class="content-section active" data-loaded="true"
                 data-title="@yield('title', 'Dashboard')"
                 data-subtitle="@yield('subtitle', '')">

@@ -51,7 +51,17 @@
                     <input type="hidden" name="table" value="{{ $activeTable }}">
                     <div class="action-row-1">
                         @if($isStock)
-                            <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari barang..." value="{{ request('search') }}" style="width: 160px;">
+                            <div class="position-relative" id="reportsSearchWrapper">
+                                <input type="text"
+                                    id="reportsSearchInput"
+                                    class="form-control form-control-sm"
+                                    name="search"
+                                    value="{{ request('search') }}"
+                                    autocomplete="off"
+                                    placeholder="Cari barang..."
+                                    style="width: 160px;">
+                                <div id="reportsSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+                            </div>
                             <select name="category" class="form-select form-select-sm" style="width: 130px;" onchange="this.form.submit()">
                                 <option value="">Semua {{ $isTeknik ? 'Tipe' : 'Kategori' }}</option>
                                 @foreach($categories as $cat)
@@ -97,7 +107,7 @@
                     </div>
                     <div class="action-row-2">
                         <a href="{{ route('reports.index', ['table' => $activeTable]) }}" class="btn btn-reset btn-sm" title="Reset Filter">
-                            <i class="bi bi-arrow-repeat"></i>
+                            <i class="bi bi-arrow-counterclockwise"></i>
                         </a>
                         <a href="{{ route('reports.export', $exportParams) }}" class="btn btn-success btn-sm">
                             <i class="bi bi-file-earmark-excel-fill me-1"></i> Export Excel
@@ -176,7 +186,7 @@
             <div class="card-body p-0">
                 <div class="table-container">
                     @if($isStock)
-                        <table class="table">
+                        <table class="table" id="reports-stock-table">
                             <thead>
                                 @if($isTeknik)
                                     <tr>
@@ -211,7 +221,11 @@
                             </thead>
                             <tbody>
                                 @forelse($stockItems as $index => $row)
-                                    <tr>
+                                    <tr data-item-id="{{ $row->item_id }}"
+                                        data-name="{{ $row->item->name }}"
+                                        data-normalisasi="{{ $row->item->no_normalisasi ?? '' }}"
+                                        data-component="{{ $row->item->component ?? '' }}"
+                                        data-category="{{ $row->item->category }}">
                                         <td>{{ $stockItems->firstItem() + $index }}</td>
                                         @if($isTeknik)
                                             <td class="fw-600">{{ $row->item->no_normalisasi ?? '-' }}</td>
@@ -420,5 +434,112 @@
         }
 
         bindReportDateSort();
+        
+        // Autocomplete search suggestions for Reports Stock
+        (function() {
+            const searchInput = document.getElementById('reportsSearchInput');
+            const suggestionsBox = document.getElementById('reportsSearchSuggestions');
+            const searchWrapper = document.getElementById('reportsSearchWrapper');
+            const isTeknik = @json($isTeknik);
+
+            if (!searchInput || !suggestionsBox || !searchWrapper) return;
+
+            searchInput.addEventListener('input', function() {
+                const keyword = this.value.trim().toLowerCase();
+                if (!keyword) {
+                    resetTable();
+                    suggestionsBox.style.display = 'none';
+                    return;
+                }
+
+                const rows = document.querySelectorAll('#reports-stock-table tbody tr:not(.no-data-row)');
+                let results = [];
+
+                rows.forEach(row => {
+                    const name = row.getAttribute('data-name') || '';
+                    const normalisasi = row.getAttribute('data-normalisasi') || '';
+                    const component = row.getAttribute('data-component') || '';
+                    const category = row.getAttribute('data-category') || '';
+
+                    let matched = false;
+                    if (isTeknik) {
+                        matched = name.toLowerCase().includes(keyword) || 
+                                  normalisasi.toLowerCase().includes(keyword) || 
+                                  component.toLowerCase().includes(keyword);
+                    } else {
+                        matched = name.toLowerCase().includes(keyword) || 
+                                  category.toLowerCase().includes(keyword);
+                    }
+
+                    if (matched) {
+                        results.push({
+                            id: row.getAttribute('data-item-id'),
+                            name: row.getAttribute('data-name'),
+                            normalisasi: row.getAttribute('data-normalisasi'),
+                            component: row.getAttribute('data-component'),
+                            category: row.getAttribute('data-category')
+                        });
+                    }
+                });
+
+                renderSuggestions(results);
+            });
+
+            function renderSuggestions(items) {
+                if (!items.length) {
+                    suggestionsBox.innerHTML = '<div class="autocomplete-no-result">Tidak ada barang ditemukan</div>';
+                    suggestionsBox.style.display = 'block';
+                    return;
+                }
+
+                suggestionsBox.innerHTML = items.map(item => `
+                    <div class="autocomplete-item" data-id="${item.id}">
+                        <div class="autocomplete-icon">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                        <div class="autocomplete-content">
+                            <div class="autocomplete-title">${item.name}</div>
+                            <div class="autocomplete-subtitle">
+                                ${isTeknik ? `${item.normalisasi || '-'} • ${item.component || '-'}` : `${item.category || '-'}`}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                suggestionsBox.style.display = 'block';
+
+                suggestionsBox.querySelectorAll('.autocomplete-item').forEach(el => {
+                    el.addEventListener('click', function() {
+                        searchInput.value = this.querySelector('.autocomplete-title').textContent.trim();
+                        filterTable(this.getAttribute('data-id'));
+                    });
+                });
+            }
+
+            function filterTable(id) {
+                document.querySelectorAll('#reports-stock-table tbody tr:not(.no-data-row)').forEach(row => {
+                    row.style.display = row.getAttribute('data-item-id') === id ? '' : 'none';
+                });
+                suggestionsBox.style.display = 'none';
+            }
+
+            function resetTable() {
+                document.querySelectorAll('#reports-stock-table tbody tr:not(.no-data-row)').forEach(row => {
+                    row.style.display = '';
+                });
+            }
+
+            document.addEventListener('click', function(e) {
+                if (searchWrapper && !searchWrapper.contains(e.target)) {
+                    suggestionsBox.style.display = 'none';
+                }
+            });
+
+            searchInput.addEventListener('focus', function() {
+                if (this.value.trim() !== '' && suggestionsBox.innerHTML.trim() !== '') {
+                    suggestionsBox.style.display = 'block';
+                }
+            });
+        })();
     </script>
 @endpush

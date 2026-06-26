@@ -38,7 +38,7 @@
                                 <th>Nama Barang</th>
                                 <th>Komponen</th>
                                 <th>Tipe Barang</th>
-                                <th>Ship Unloader</th>
+                                <th style="width: 100px;">Ship Unloader</th>
                                 <th>Lokasi</th>
                                 <th class="text-center">Volume</th>
                                 <th class="text-center">Jumlah</th>
@@ -74,27 +74,40 @@
                     </thead>
                     <tbody>
                         @forelse($transactions as $index => $tx)
-                            <tr>
+                            <tr data-id="{{ $tx->id }}"
+                                data-name="{{ $tx->item->name ?? '' }}"
+                                data-normalisasi="{{ $tx->no_normalisasi ?? $tx->item->no_normalisasi ?? '' }}"
+                                data-component="{{ $tx->item->component ?? '' }}"
+                                data-category="{{ $tx->item->category ?? '' }}">
                                 <td>{{ $transactions->firstItem() + $index }}</td>
                                 <td>{{ $tx->date->format('d/m/Y') }}</td>
                                 @if($isTeknik)
-                                    <td><span class="technical-soh-norm {{ $tx->type === 'in' ? 'norm-in' : 'norm-out' }}">{{ $tx->no_normalisasi ?? $tx->item->no_normalisasi ?? '-' }}</span></td>
+                                    <td><span class="{{ $tx->type === 'in' ? 'norm-text-in' : 'norm-text-out' }}">{{ $tx->no_normalisasi ?? $tx->item->no_normalisasi ?? '-' }}</span></td>
                                     <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
                                     <td>{{ $tx->item->component ?? '-' }}</td>
                                     <td>{{ $tx->item->category ?? '-' }}</td>
-                                    <td class="text-nowrap align-middle">
+                                    <td class="text-nowrap align-middle" style="width: 100px;">
                                         @php
                                             $activeShips = collect(explode(',', (string) $tx->ship_unloader))
                                                 ->filter()
                                                 ->all();
+                                            $isAllActive = count($activeShips) === 4;
                                         @endphp
 
                                         <div class="d-flex flex-nowrap align-items-center gap-1">
-                                            @foreach([1, 2, 3, 4] as $ship)
-                                                <span class="badge {{ in_array((string) $ship, $activeShips, true) ? ($tx->type === 'out' ? 'badge-ship-active badge-ship-active-issue' : 'badge-ship-active') : 'badge-ship-inactive' }}">
-                                                    {{ $ship }}
+                                            @if($isAllActive)
+                                                <span class="badge {{ $tx->type === 'out' ? 'badge-ship-active badge-ship-active-issue' : 'badge-ship-active' }}" style="width: auto; min-width: 24px; padding: 0 6px !important;">
+                                                    ALL
                                                 </span>
-                                            @endforeach
+                                            @elseif(count($activeShips) > 0)
+                                                @foreach($activeShips as $ship)
+                                                    <span class="badge {{ $tx->type === 'out' ? 'badge-ship-active badge-ship-active-issue' : 'badge-ship-active' }}">
+                                                        {{ $ship }}
+                                                    </span>
+                                                @endforeach
+                                            @else
+                                                -
+                                            @endif
                                         </div>
                                     </td>
                                     <td>{{ $tx->lokasi ?? $tx->item->lokasi ?? '-' }}</td>
@@ -155,7 +168,7 @@
                                     <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-outline-primary btn-transaction-detail-open"
                                             title="Lihat Detail" data-transaction-id="{{ $tx->id }}">
-                                            <i class="bi bi-eye-fill"></i>
+                                            <i class="bi bi-info-circle-fill"></i>
                                         </button>
                                     </td>
                                 @endif

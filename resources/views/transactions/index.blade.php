@@ -35,7 +35,17 @@
                         <input type="hidden" name="type" value="{{ $activeTransactionType }}">
                     @endif
                     <div class="action-row-1">
-                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari barang..." value="{{ request('search') }}" style="width: 180px;">
+                        <div class="position-relative" id="txSearchWrapper">
+                            <input type="text"
+                                id="txSearchInput"
+                                class="form-control form-control-sm"
+                                name="search"
+                                value="{{ request('search') }}"
+                                autocomplete="off"
+                                placeholder="Cari barang..."
+                                style="width: 180px;">
+                            <div id="txSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+                        </div>
                         @unless($isTeknik)
                             <select name="type" class="form-select form-select-sm" style="width: 100px;" onchange="this.form.submit()">
                                 <option value="">Semua Jenis</option>
@@ -58,7 +68,7 @@
                     </div>
                     <div class="action-row-2">
                         <a href="{{ $isTeknik ? route('transactions.index', ['type' => $activeTransactionType]) : route('transactions.index') }}" class="btn btn-reset btn-sm" title="Reset Filter">
-                            <i class="bi bi-arrow-repeat"></i>
+                            <i class="bi bi-arrow-counterclockwise"></i>
                         </a>
                     </div>
                 </form>
@@ -140,7 +150,7 @@
                                         @foreach([1, 2, 3, 4] as $ship)
                                             <label class="ship-checkbox-label">
                                                 <input class="ship-checkbox-input tx-ship-checkbox" type="checkbox" name="ship_unloader[]" value="{{ $ship }}" data-ship="{{ $ship }}">
-                                                <span class="ship-checkbox-box {{ $activeTransactionType === 'out' ? 'ship-checkbox-box-issue' : '' }}">{{ $ship }}</span>
+                                                <span class="ship-checkbox-box {{ $activeTransactionType === 'out' ? 'ship-checkbox-box-issue' : '' }}">SU-{{ $ship }}</span>
                                             </label>
                                         @endforeach
 
@@ -176,7 +186,7 @@
                                         btn-primary
                                     @endif">
                                     <i class="bi bi-send-fill"></i>
-                                    Simpan {{ $pageTitle }}
+                                    Process {{ $pageTitle }}
                                 </button>
                             </form>
                         </div>
@@ -195,7 +205,7 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title"><i class="bi bi-eye-fill me-2"></i>Detail Transaksi</h5>
+                    <h5 class="modal-title"><i class="bi bi-info-circle-fill me-2"></i>Detail Transaksi</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
                 </div>
                 <div class="modal-body">
@@ -228,7 +238,7 @@
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Tanggal <span class="text-danger">*</span></label>
-                                <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required id="txDate" min="{{ date('Y-m-d') }}>
+                                <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required id="txDate" min="{{ date('Y-m-d') }}">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Jenis Transaksi <span class="text-danger">*</span></label>
@@ -395,93 +405,28 @@
             }
         }
         
-        document.addEventListener('DOMContentLoaded', function () {
-            const container = document.getElementById('itemShipBadges');
-            if (!container) return;
+        (function bindInlineShipCheckboxes() {
+            var root = transactionSectionRoot;
+            var allCheckbox = root.querySelector('#txShipAll');
+            var shipCheckboxes = root.querySelectorAll('#itemShipBadges .tx-ship-checkbox');
 
-            const allBadge = container.querySelector('[data-ship="all"]');
-            const numberBadges = container.querySelectorAll('.badge:not([data-ship="all"])');
+            if (!allCheckbox) return;
 
-            // Fungsi untuk memeriksa apakah semua badge angka sedang aktif
-            function checkAllNumbersActive() {
-                if (numberBadges.length === 0) return false;
-                return Array.from(numberBadges).every(badge => badge.classList.contains('badge-ship-active'));
-            }
-
-            // Event Delegation saat area badge diklik oleh user
-            container.addEventListener('click', function (e) {
-                const clickedBadge = e.target.closest('.badge');
-                if (!clickedBadge) return;
-
-                const shipValue = clickedBadge.dataset.ship;
-
-                if (shipValue === 'all') {
-                    // Kasus A: Jika badge "ALL" yang diklik
-                    const isCurrentlyActive = clickedBadge.classList.contains('badge-ship-active');
-                    const newState = !isCurrentlyActive; // Toggle state
-
-                    // Set status untuk ALL itu sendiri dan SEMUA badge angka
-                    setBadgeState(allBadge, newState);
-                    numberBadges.forEach(badge => setBadgeState(badge, newState));
-
-                } else {
-                    // Kasus B: Jika badge ANGKA (1, 2, 3, 4) yang diklik
-                    const isCurrentlyActive = clickedBadge.classList.contains('badge-ship-active');
-                    setBadgeState(clickedBadge, !isCurrentlyActive); // Toggle status angka yang diklik
-
-                    // Sinkronisasi tombol ALL: Jika semua angka aktif, nyalakan ALL. Jika ada 1 saja yang mati, matikan ALL.
-                    setBadgeState(allBadge, checkAllNumbersActive());
-                }
-
-                /* ==================================================================
-                SINKRONISASI KE INPUT FORM (CHIPS FORM/MODAL JIKA ADA)
-                Jika Anda menggunakan checkbox input di belakang layar, picu sinkronisasinya di sini
-                ================================================================== */
-                numberBadges.forEach(badge => {
-                    const num = badge.dataset.ship;
-                    // Cari input checkbox asli yang nilainya sama dengan data-ship badge
-                    const correspondingInput = document.querySelector(`.tx-ship-checkbox[value="${num}"]`);
-                    if (correspondingInput) {
-                        correspondingInput.checked = badge.classList.contains('badge-ship-active');
-                    }
+            // Klik ALL
+            allCheckbox.addEventListener('change', function () {
+                shipCheckboxes.forEach(cb => {
+                    cb.checked = this.checked;
                 });
             });
-        });
 
-        document.addEventListener('DOMContentLoaded', function () {
-
-        const allCheckbox = document.getElementById('txShipAll');
-
-        const shipCheckboxes = document.querySelectorAll(
-            '.tx-ship-checkbox'
-        );
-
-        if (!allCheckbox) return;
-
-        // Klik ALL
-        allCheckbox.addEventListener('change', function () {
-
+            // Klik salah satu SU
             shipCheckboxes.forEach(cb => {
-                cb.checked = this.checked;
+                cb.addEventListener('change', function () {
+                    const allChecked = Array.from(shipCheckboxes).every(x => x.checked);
+                    allCheckbox.checked = allChecked;
+                });
             });
-
-        });
-
-        // Klik salah satu SU
-        shipCheckboxes.forEach(cb => {
-
-            cb.addEventListener('change', function () {
-
-                const allChecked = [...shipCheckboxes]
-                    .every(x => x.checked);
-
-                allCheckbox.checked = allChecked;
-
-            });
-
-        });
-
-        });
+        })();
 
         (function bindInlineTransactionForm() {
             var root = transactionSectionRoot;
@@ -677,12 +622,12 @@
                     txVolume.value = '';
                     
                     // Reset semua badge visual ke kondisi kosong jika dropdown dikosongkan
-                    const container = document.getElementById('itemShipBadges');
+                    const container = txModalEl.querySelector('#itemShipBadges');
                     if (container) {
                         container.querySelectorAll('.badge').forEach(badge => setBadgeState(badge, false));
                     }
                     
-                    document.querySelectorAll('.tx-ship-checkbox').forEach(el => el.checked = false);
+                    txModalEl.querySelectorAll('.tx-ship-checkbox').forEach(el => el.checked = false);
                 }
             }
             checkTxStock();
@@ -722,7 +667,7 @@
                 txNoNormalisasi.value = '';
                 txLokasi.value = '';
                 txVolume.value = '';
-                document.querySelectorAll('.tx-ship-checkbox').forEach(el => el.checked = false);
+                txModalEl.querySelectorAll('.tx-ship-checkbox').forEach(el => el.checked = false);
             }
 
             if (id) {
@@ -829,5 +774,112 @@
                     errorDiv.style.display = 'block';
                 });
         }
+
+        // Autocomplete search suggestions for Transactions
+        (function() {
+            const searchInput = document.getElementById('txSearchInput');
+            const suggestionsBox = document.getElementById('txSearchSuggestions');
+            const searchWrapper = document.getElementById('txSearchWrapper');
+            const isTeknik = @json($isTeknik);
+
+            if (!searchInput || !suggestionsBox || !searchWrapper) return;
+
+            searchInput.addEventListener('input', function() {
+                const keyword = this.value.trim().toLowerCase();
+                if (!keyword) {
+                    resetTable();
+                    suggestionsBox.style.display = 'none';
+                    return;
+                }
+
+                const rows = document.querySelectorAll('#transactions-table tbody tr:not(.no-data-row)');
+                let results = [];
+
+                rows.forEach(row => {
+                    const name = row.getAttribute('data-name') || '';
+                    const normalisasi = row.getAttribute('data-normalisasi') || '';
+                    const component = row.getAttribute('data-component') || '';
+                    const category = row.getAttribute('data-category') || '';
+
+                    let matched = false;
+                    if (isTeknik) {
+                        matched = name.toLowerCase().includes(keyword) || 
+                                  normalisasi.toLowerCase().includes(keyword) || 
+                                  component.toLowerCase().includes(keyword);
+                    } else {
+                        matched = name.toLowerCase().includes(keyword) || 
+                                  category.toLowerCase().includes(keyword);
+                    }
+
+                    if (matched) {
+                        results.push({
+                            id: row.getAttribute('data-id'),
+                            name: row.getAttribute('data-name'),
+                            normalisasi: row.getAttribute('data-normalisasi'),
+                            component: row.getAttribute('data-component'),
+                            category: row.getAttribute('data-category')
+                        });
+                    }
+                });
+
+                renderSuggestions(results);
+            });
+
+            function renderSuggestions(items) {
+                if (!items.length) {
+                    suggestionsBox.innerHTML = '<div class="autocomplete-no-result">Tidak ada barang ditemukan</div>';
+                    suggestionsBox.style.display = 'block';
+                    return;
+                }
+
+                suggestionsBox.innerHTML = items.map(item => `
+                    <div class="autocomplete-item" data-id="${item.id}">
+                        <div class="autocomplete-icon">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                        <div class="autocomplete-content">
+                            <div class="autocomplete-title">${item.name}</div>
+                            <div class="autocomplete-subtitle">
+                                ${isTeknik ? `${item.normalisasi || '-'} • ${item.component || '-'}` : `${item.category || '-'}`}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                suggestionsBox.style.display = 'block';
+
+                suggestionsBox.querySelectorAll('.autocomplete-item').forEach(el => {
+                    el.addEventListener('click', function() {
+                        searchInput.value = this.querySelector('.autocomplete-title').textContent.trim();
+                        filterTable(this.getAttribute('data-id'));
+                    });
+                });
+            }
+
+            function filterTable(id) {
+                document.querySelectorAll('#transactions-table tbody tr:not(.no-data-row)').forEach(row => {
+                    row.style.display = row.getAttribute('data-id') === id ? '' : 'none';
+                });
+                suggestionsBox.style.display = 'none';
+            }
+
+            function resetTable() {
+                document.querySelectorAll('#transactions-table tbody tr:not(.no-data-row)').forEach(row => {
+                    row.style.display = '';
+                });
+            }
+
+            document.addEventListener('click', function(e) {
+                if (searchWrapper && !searchWrapper.contains(e.target)) {
+                    suggestionsBox.style.display = 'none';
+                }
+            });
+
+            searchInput.addEventListener('focus', function() {
+                if (this.value.trim() !== '' && suggestionsBox.innerHTML.trim() !== '') {
+                    suggestionsBox.style.display = 'block';
+                }
+            });
+        })();
     </script>
 @endpush

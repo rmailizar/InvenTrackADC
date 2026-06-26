@@ -534,6 +534,101 @@ a:hover {
     text-transform: capitalize;
 }
 
+/* ---------- Sidebar Teknik (Blue/Sky theme matching Ship Unloader commented out to revert to green) ----------
+.sidebar-teknik .sidebar-link:hover {
+    background: rgba(3, 105, 161, 0.24);
+    border-color: rgba(125, 211, 252, 0.55);
+    color: #f0f9ff;
+    box-shadow:
+        0 0 8px rgba(125, 211, 252, 0.42),
+        0 0 20px rgba(56, 189, 248, 0.32),
+        0 0 44px rgba(14, 165, 233, 0.22),
+        inset 0 0 16px rgba(14, 165, 233, 0.16);
+}
+
+.sidebar-teknik .sidebar-link:hover::before {
+    border-color: rgba(186, 230, 253, 0.80);
+    box-shadow:
+        0 0 8px rgba(186, 230, 253, 0.72),
+        0 0 24px rgba(56, 189, 248, 0.52),
+        inset 0 0 14px rgba(14, 165, 233, 0.22);
+}
+
+.sidebar-teknik .sidebar-link::after {
+    background: radial-gradient(circle at 50% 50%, rgba(14, 165, 233, 0.26), transparent 64%);
+}
+
+.sidebar-teknik .sidebar-link.active {
+    background:
+        radial-gradient(circle at 18% 50%, rgba(56, 189, 248, 0.30), transparent 58%),
+        linear-gradient(135deg, rgba(3, 105, 161, 0.30), rgba(14, 165, 233, 0.14));
+    color: white;
+    border-color: rgba(125, 211, 252, 0.62);
+    box-shadow:
+        0 0 8px rgba(125, 211, 252, 0.44),
+        0 0 22px rgba(56, 189, 248, 0.34),
+        0 0 48px rgba(14, 165, 233, 0.24),
+        inset 0 0 18px rgba(14, 165, 233, 0.18);
+}
+
+.sidebar-teknik .sidebar-link.active::before {
+    border-color: rgba(186, 230, 253, 0.84);
+    box-shadow:
+        0 0 8px rgba(186, 230, 253, 0.74),
+        0 0 26px rgba(56, 189, 248, 0.54),
+        inset 0 0 16px rgba(14, 165, 233, 0.24);
+}
+
+.sidebar-teknik .sidebar-link.active:hover {
+    background:
+        radial-gradient(circle at 18% 50%, rgba(125, 211, 252, 0.36), transparent 60%),
+        linear-gradient(135deg, rgba(3, 105, 161, 0.34), rgba(14, 165, 233, 0.18));
+    box-shadow:
+        0 0 10px rgba(186, 230, 253, 0.52),
+        0 0 28px rgba(56, 189, 248, 0.42),
+        0 0 58px rgba(14, 165, 233, 0.28),
+        inset 0 0 20px rgba(14, 165, 233, 0.22);
+}
+
+.sidebar-teknik .sidebar-user .user-avatar {
+    background: #60a5fa !important;
+}
+
+.sidebar-teknik.sidebar.collapsed .sidebar-link:hover,
+.sidebar-teknik.sidebar.collapsed .sidebar-link.active,
+.sidebar-teknik.sidebar.collapsed .sidebar-link.active:hover {
+    background:
+        radial-gradient(circle at 50% 50%, rgba(240, 249, 255, 0.28) 0 18%, rgba(56, 189, 248, 0.24) 28%, rgba(3, 105, 161, 0.20) 56%, rgba(15, 23, 42, 0.06) 100%);
+    border-color: rgba(125, 211, 252, 0.74);
+    color: #f0f9ff;
+    box-shadow:
+        0 0 0 1px rgba(186, 230, 253, 0.48),
+        0 0 12px rgba(186, 230, 253, 0.82),
+        0 0 26px rgba(56, 189, 248, 0.64),
+        0 0 48px rgba(14, 165, 233, 0.46),
+        inset 0 0 18px rgba(125, 211, 252, 0.30);
+}
+
+.sidebar-teknik.sidebar.collapsed .sidebar-link:hover::before,
+.sidebar-teknik.sidebar.collapsed .sidebar-link.active::before,
+.sidebar-teknik.sidebar.collapsed .sidebar-link.active:hover::before {
+    border-color: rgba(224, 242, 254, 0.88);
+    box-shadow:
+        0 0 12px rgba(224, 242, 254, 0.82),
+        0 0 26px rgba(56, 189, 248, 0.60),
+        inset 0 0 14px rgba(125, 211, 252, 0.26);
+}
+
+.sidebar-teknik.sidebar.collapsed .sidebar-link::after {
+    background:
+        radial-gradient(circle, rgba(240, 249, 255, 0.92) 0 9%, rgba(125, 211, 252, 0.58) 10% 24%, rgba(14, 165, 233, 0.34) 36%, transparent 68%);
+}
+
+.sidebar-teknik.sidebar.collapsed:hover .sidebar-link::after {
+    background: radial-gradient(circle at 50% 50%, rgba(14, 165, 233, 0.26), transparent 64%);
+}
+---------- */
+
 /* ---------- Sidebar Collapsed State (Desktop) ---------- */
 .sidebar.collapsed {
     width: 72px;
@@ -1656,7 +1751,6 @@ body.public-layout .public-body {
     justify-content: space-between;
     gap: 10px;
     padding: 12px 14px;
-    border: 1px solid rgba(255, 255, 255, 0.34);
     border-radius: var(--radius);
     background:
         linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.15)),
@@ -1668,10 +1762,7 @@ body.public-layout .public-body {
 
 .technical-dashboard-card:hover {
     color: var(--text-primary);
-    transform: translateY(-2px);
-    box-shadow:
-        0 22px 60px rgba(15, 23, 42, 0.18),
-        inset 0 1px 0 rgba(255, 255, 255, 0.55);
+    border: 1.5px solid var(--primary) !important;
 }
 
 .technical-dashboard-card-copy {
@@ -1764,6 +1855,7 @@ body.public-layout .public-body {
     justify-content: center;
     border-radius: 11px;
     font-size: 16px;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .technical-total-icon {
@@ -1780,7 +1872,7 @@ body.public-layout .public-body {
 
 .technical-critical-card .technical-dashboard-card-title,
 .technical-critical-card .technical-dashboard-card-value {
-    color: #ef4444;
+    color: #ef4444 !important;
 }
 
 .technical-critical-icon {
@@ -1975,7 +2067,7 @@ body.public-layout .public-body {
 
 [data-theme="dark"] .technical-type-card {
     background:
-        linear-gradient(135deg, rgba(15, 23, 42, 0.66), rgba(30, 41, 59, 0.38)),
+        linear-gradient(135deg, rgba(15, 23, 42, 0.90), rgba(30, 41, 59, 0.90)),
         rgba(15, 23, 42, 0.46);
     border-color: rgba(59, 130, 246, 0.18);
 }
@@ -2075,6 +2167,16 @@ body.public-layout .public-body {
     background: rgba(217, 119, 6, 0.12) !important;
     /* Background transparan oranye */
 
+}
+
+.norm-text-in {
+    color: #60a5fa !important;
+    font-weight: 700;
+}
+
+.norm-text-out {
+    color: #fbbf24 !important;
+    font-weight: 700;
 }
 
 .technical-soh-table th:nth-child(1),
@@ -2360,6 +2462,7 @@ body.public-layout .public-body {
     justify-content: center;
     border-radius: 14px;
     font-size: 24px;
+    transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .soh-filter-card.soh-total {
@@ -2665,7 +2768,17 @@ td .badge {
 
 }
 
-   .badge-ship-inactive {
+span .badge-ship-inactive {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;  /* Sesuaikan dengan ukuran .badge-ship-active Anda */
+    height: 24px; /* Sesuaikan dengan ukuran .badge-ship-active Anda */
+    padding: 0 !important;
+
+}
+
+.badge-ship-inactive {
     background-color: #f1f5f9 !important; /* Abu-abu terang bersih (Sleek Light) */
     color: #64748b !important;            /* Teks abu-abu gelap */
     border: 1px solid #e2e8f0 !important;  /* Border tipis */
@@ -2674,37 +2787,27 @@ td .badge {
 [data-theme="dark"] .badge-ship-inactive {
     background-color: rgba(255, 255, 255, 0.06) !important; /* Gelap transparan */
     color: rgba(255, 255, 255, 0.4) !important;             /* Teks redup agar tidak mencolok */
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;   /* Border samar */
-}
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
 
 .badge-ship-active {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 24px;   /* Sesuaikan ukuran lingkaran jika diperlukan */
-    height: 24px;  /* Sesuaikan ukuran lingkaran jika diperlukan */
+    width: 24px;  
+    height: 24px;  
     padding: 0 !important;
- /* Membuat bulat sempurna */
     color: #ffffff !important;
     font-weight: 600;
     position: relative;
     z-index: 1;
-    overflow: visible; /* Diubah agar efek glow box-shadow keluar tidak terpotong */
-    
-    /* Mengadopsi background transparan & gradasi BIRU terang */
+    overflow: visible;
+
 background: 
-    radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.40), transparent 70%),
-    linear-gradient(135deg, rgba(3, 105, 161, 0.40), rgba(56, 189, 248, 0.25)) !important;
-
-/* Bingkai biru semi transparan (TETAP TERANG) */
-border: 1px solid rgba(125, 211, 252, 0.7) !important;
-
-/* Efek Glow (Box Shadow) berlapis warna biru langit */
-box-shadow:
-    0 0 8px rgba(125, 211, 252, 0.5),
-    0 0 16px rgba(56, 189, 248, 0.40),
-    inset 0 0 8px rgba(14, 165, 233, 0.3) !important;
-        
+    radial-gradient(circle at 50% 50%, rgba(52, 211, 153, 0.40), transparent 70%),
+    linear-gradient(135deg, rgba(6, 95, 70, 0.40), rgba(52, 211, 153, 0.25)) !important;
+border: 1px solid rgba(110, 231, 183, 0.7) !important;
+      
     /* Efek blur background di belakang badge */
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
@@ -2713,11 +2816,11 @@ box-shadow:
 /* Opsional: Efek subtle ketika cursor diarahkan ke angka aktif */
 .badge-ship-active:hover {
     box-shadow:
-        0 0 12px rgba(125, 211, 252, 0.7),          /* Biru langit muda terang */
-        0 0 20px rgba(56, 189, 248, 0.50),          /* Biru langit utama */
-        inset 0 0 10px rgba(14, 165, 233, 0.4) !important; /* Pendaran dalam (inset) biru tajam */
+        0 0 12px rgba(167, 243, 208, 0.7),          /* Hijau muda terang */
+        0 0 20px rgba(52, 211, 153, 0.50),          /* Hijau utama */
+        inset 0 0 10px rgba(16, 185, 129, 0.4) !important; /* Pendaran dalam (inset) hijau tajam */
     
-    border-color: rgba(186, 230, 253, 0.9) !important; /* Bingkai menjadi hampir putih-biru menyala */
+    border-color: rgba(209, 250, 229, 0.9) !important; /* Bingkai menjadi hampir putih-hijau menyala */
 }
 
 .badge-pending {
@@ -2927,6 +3030,39 @@ box-shadow:
 .btn-outline-primary:hover {
     background: var(--primary);
     color: white;
+    border: 1.5px solid var(--primary);
+}
+
+/* Menghilangkan border hanya pada tombol ubah di konten ini */
+.btn-outline-primary.lookup-replace-btn {
+    border: none !important;
+}
+
+/* Memastikan border tetap hilang saat tombol di-hover */
+.btn-outline-primary.lookup-replace-btn:hover {
+    border: none !important;
+}
+
+/* Menghilangkan border hanya pada tombol ubah di konten ini */
+.btn-outline-primary.lookup-btn {
+    border: none !important;
+}
+
+/* Memastikan border tetap hilang saat tombol di-hover */
+.btn-outline-primary.lookup-btn:hover {
+    border: none !important;
+}
+
+.btn-outline-teknik {
+    border: 1.5px solid var(--primary) !important;
+    color: var(--primary) !important;
+    background: transparent !important;
+}
+
+.btn-outline-teknik:hover {
+    background: var(--primary) !important;
+    color: white !important;
+    border: 1.5px solid var(--primary) !important;
 }
 
 .btn-outline-secondary {
@@ -2954,6 +3090,7 @@ box-shadow:
     width: 32px;
     height: 32px;
     padding: 0;
+    font-size: 18px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -3387,6 +3524,28 @@ box-shadow:
     color: white;
     box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
+
+/* Commented out to fallback to green theme pagination
+.page-item.active.page-teknik .page-link {
+    background: linear-gradient(180deg, #60a5fa 0%, #3b82f6 100%) !important;
+    border-color: #3b82f6 !important;
+    color: white !important;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4) !important; 
+}
+
+.theme-teknik .page-item:not(.active) .page-link:hover {
+    background: rgba(96, 165, 250, 0.1) !important;
+    border-color: #60a5fa !important;
+    color: #3b82f6 !important;
+}
+
+.theme-teknik .page-item.active .page-link:hover {
+    background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%) !important;
+    border-color: #1d4ed8 !important;
+    color: white !important;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.5) !important;
+}
+*/
 
 .page-item.disabled .page-link {
     color: var(--text-muted);
@@ -5032,11 +5191,44 @@ body.login-page.reset-password-page .reset-password-shell {
 .swal2-popup.swal2-toast .swal2-icon {
     margin: 0 !important;
     min-width: 28px !important;
+    width: 28px !important;
     /* Ukuran ikon tetap */
     height: 28px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    overflow: visible !important;
+}
+
+/* 1. Reset container utama X-Mark agar presisi di tengah */
+.swal2-popup.swal2-toast .swal2-icon.swal2-error .swal2-x-mark {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex: 1;
+    height: 100%;
+    width: 100%;
+}
+
+/* 2. Mengatur ulang posisi dua garis pembentuk huruf X */
+.swal2-popup.swal2-toast .swal2-icon.swal2-error [class^='swal2-x-mark-line'] {
+    position: absolute !important;
+    top: 13px !important;    /* Menarik garis ke tengah vertikal lingkaran 28px */
+    width: 14px !important;  /* Menyesuaikan panjang garis agar proporsional */
+    height: 3px !important;  /* Ketebalan garis X */
+}
+
+/* Garis kiri (kemiringan \ ) */
+.swal2-popup.swal2-toast .swal2-icon.swal2-error .swal2-x-mark-line-left {
+    left: 7px !important;    /* Geser ke tengah horizontal */
+    transform: rotate(45deg) !important;
+}
+
+/* Garis kanan (kemiringan / ) */
+.swal2-popup.swal2-toast .swal2-icon.swal2-error .swal2-x-mark-line-right {
+    right: 7px !important;   /* Geser ke tengah horizontal */
+    transform: rotate(-45deg) !important;
 }
 
 .swal2-popup.swal2-toast .swal2-title {
@@ -5363,6 +5555,7 @@ body::before,
    ------------------------------------------ */
 
 /* Efek Kaca untuk Container Utama, Kartu, dan Tabel */
+.card,
 .card:has(.table),
 .card:has(.table-container),
 .card:has(.table-responsive),
@@ -5383,8 +5576,8 @@ body::before,
 .stats-card,
 .request-form-card,
 .public-technical-transaction-card {
-    /* backdrop-filter: blur(5px) !important;
-    -webkit-backdrop-filter: blur(16px) !important; */
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(16px) !important; 
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.15)) !important;
     border: 1px solid rgba(255, 255, 255, 0.4) !important;
     border-radius: 1rem !important;
@@ -5724,9 +5917,9 @@ body::before,
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 30px;  
+    width: 40px;  
     height: 30px; 
-    font-size: 15px;
+    font-size: 10px;
     font-weight: 500;
     border-radius: 4px;
     transition: all 0.2s ease;
@@ -5748,41 +5941,29 @@ body::before,
 /* ==================================================================
    3. KONDISI AKTIF (KETIKA INPUT DICENTANG / CHECKED)
    ================================================================== */
-.ship-checkbox-input:checked + .ship-checkbox-box {
+.ship-checkbox-input:checked + .ship-checkbox-box:not(.ship-checkbox-box-issue) {
     color: #ffffff;
     font-weight: 600;
     position: relative;
     z-index: 1;
-    
-    /* Mengadopsi gradasi hijau .badge-ship-active Anda */
     background: 
-        radial-gradient(circle at 50% 50%, rgba(52, 211, 153, 0.35), transparent 70%),
-        linear-gradient(135deg, rgba(6, 78, 59, 0.40), rgba(5, 150, 105, 0.25));
-    
-    border: 1px solid rgba(110, 231, 183, 0.7);
-    
-    /* Efek Glow pendaran hijau */
+        radial-gradient(circle at 50% 50%, rgba(52, 211, 153, 0.40), transparent 70%),
+        linear-gradient(135deg, rgba(6, 95, 70, 0.40), rgba(52, 211, 153, 0.25)) !important;
+    border: 1px solid rgba(110, 231, 183, 0.7) !important;
     box-shadow:
         0 0 8px rgba(110, 231, 183, 0.5),
-        0 0 16px rgba(52, 211, 153, 0.35),
-        inset 0 0 8px rgba(16, 185, 129, 0.3);
-        
+        0 0 16px rgba(52, 211, 153, 0.40),
+        inset 0 0 8px rgba(16, 185, 129, 0.3) !important;
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
 }
 
-/* Efek Hover saat cursor berada di atas kotak tombol */
-.ship-checkbox-label:hover .ship-checkbox-box {
-    border-color: rgba(167, 243, 208, 0.9);
-    box-shadow: 0 0 8px rgba(110, 231, 183, 0.3);
-}
-
-/* Efek Hover ekstra jika kotak tersebut sudah berstatus checked */
-.ship-checkbox-input:checked:hover + .ship-checkbox-box {
+.ship-checkbox-label:hover .ship-checkbox-box:not(.ship-checkbox-box-issue) {
+    border-color: rgba(52, 211, 153, 0.50) !important;
     box-shadow:
-        0 0 12px rgba(110, 231, 183, 0.7),
-        0 0 20px rgba(52, 211, 153, 0.5),
-        inset 0 0 10px rgba(16, 185, 129, 0.4);
+        0 0 12px rgba(110, 231, 183, 0.5),
+        0 0 20px rgba(52, 211, 153, 0.40),
+        inset 0 0 10px rgba(16, 185, 129, 0.3) !important;
 }
 
 #txInlineNoNormalisasi,
@@ -5923,22 +6104,6 @@ body::before,
     overflow: hidden;
 }
 
-.technical-dashboard-card.filter-card-btn::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: transparent;
-    transition: background-color 0.3s ease;
-}
-
-.technical-dashboard-card.filter-card-btn.active {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
-}
-
 .technical-dashboard-card.filter-card-btn.active.technical-total-card::after {
     background-color: #3b82f6;
 }
@@ -6062,7 +6227,7 @@ body::before,
 
 .topbar-main {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     width: 100%;
     gap: 24px;
@@ -6071,19 +6236,20 @@ body::before,
 .topbar-titles {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
+    margin-bottom: 24px;
 }
 
-.topbar .page-title {
-    font-size: 26px !important;
+.page-title {
+    font-size: 32px !important;
     font-weight: 800 !important;
     color: var(--text-primary) !important;
     line-height: 1.2 !important;
     letter-spacing: -0.5px !important;
 }
 
-.topbar .page-subtitle {
-    font-size: 13px !important;
+.page-subtitle {
+    font-size: 15px !important;
     color: var(--text-secondary) !important;
     opacity: 0.8 !important;
 }
@@ -6304,7 +6470,8 @@ body::before,
     border-color: rgba(254, 215, 170, 0.9) !important;
 }
 
-.ship-checkbox-input:checked + .ship-checkbox-box-issue {
+/* Saat dicentang (Checked) */
+.ship-checkbox-input:checked + .ship-checkbox-box.ship-checkbox-box-issue {
     color: #ffffff;
     font-weight: 600;
     position: relative;
@@ -6314,21 +6481,89 @@ body::before,
         linear-gradient(135deg, rgba(124, 45, 18, 0.40), rgba(234, 88, 12, 0.25)) !important;
     border: 1px solid rgba(253, 186, 116, 0.7) !important;
     box-shadow:
-        0 0 8px rgba(253, 186, 116, 0.5),
-        0 0 16px rgba(251, 146, 60, 0.35),
-        inset 0 0 8px rgba(234, 88, 12, 0.3) !important;
+        0 0 8px rgba(253, 186, 116, 0.6),
+        0 0 16px rgba(251, 146, 60, 0.45),
+        inset 0 0 8px rgba(234, 88, 12, 0.4) !important; /* Menaikkan intensitas opacity sedikit */
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
 }
 
-.ship-checkbox-input:checked:hover + .ship-checkbox-box-issue {
+/* Efek Hover ketika kotak SUDAH DICENTANG */
+.ship-checkbox-input:checked:hover + .ship-checkbox-box.ship-checkbox-box-issue {
     box-shadow:
-        0 0 12px rgba(253, 186, 116, 0.7),
-        0 0 20px rgba(251, 146, 60, 0.5),
-        inset 0 0 10px rgba(234, 88, 12, 0.4) !important;
+        0 0 14px rgba(253, 186, 116, 0.8),
+        0 0 22px rgba(251, 146, 60, 0.6),
+        inset 0 0 10px rgba(234, 88, 12, 0.5) !important;
+    border-color: rgba(254, 215, 170, 0.9) !important;
 }
 
-.ship-checkbox-label:hover .ship-checkbox-box-issue {
-    border-color: rgba(253, 186, 116, 0.9);
-    box-shadow: 0 0 8px rgba(253, 186, 116, 0.3);
+/* Efek Hover ketika kotak MASIH KOSONG / BELUM DICENTANG */
+.ship-checkbox-label:hover .ship-checkbox-box.ship-checkbox-box-issue {
+    border-color: rgba(253, 186, 116, 0.9) !important;
+    box-shadow: 
+        0 0 12px rgba(253, 186, 116, 0.6),
+        0 0 20px rgba(251, 146, 60, 0.4) !important;
+}
+
+/* ---------- Solid Background for SOH & Type Cards on Technical Dashboard ---------- */
+.technical-dashboard-page .technical-total-card,
+.technical-dashboard-page .technical-type-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+}
+
+[data-theme="dark"] .technical-dashboard-page .technical-total-card,
+[data-theme="dark"] .technical-dashboard-page .technical-type-card {
+    background: #1e293b !important;
+    border: 1px solid rgba(148, 163, 184, 0.15) !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.25), 0 2px 4px -1px rgba(0, 0, 0, 0.20) !important;
+}
+
+/* ---------- Hover Effect for Card Icons (Colored Background & White Icon) ---------- */
+/* 1. Dashboard Total SOH (Blue) */
+.technical-total-card:hover .technical-total-icon {
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4) !important;
+}
+
+.technical-dashboard-page .technical-dashboard-card:hover {
+    border: 1.5px solid var(--primary) !important;
+}
+
+/* 2. Dashboard Critical Stock (Red) */
+.technical-critical-card:hover .technical-critical-icon {
+    background: #ef4444 !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4) !important;
+}
+
+/* 3. Items Page Total SOH Filter (Blue) */
+.soh-filter-card.soh-total:hover .soh-filter-icon,
+.soh-filter-card.soh-total.active .soh-filter-icon {
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4) !important;
+}
+
+/* 4. Items Page Low Stock Status Filter (Orange) */
+.soh-filter-card.soh-low:hover .soh-filter-icon,
+.soh-filter-card.soh-low.active .soh-filter-icon {
+    background: #f59e0b !important;
+    color: #ffffff !important;
+    border-color: #f59e0b !important;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4) !important;
+}
+
+/* 5. Items Page Critical Status Filter (Red) */
+.soh-filter-card.soh-critical:hover .soh-filter-icon,
+.soh-filter-card.soh-critical.active .soh-filter-icon {
+    background: #ef4444 !important;
+    color: #ffffff !important;
+    border-color: #ef4444 !important;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4) !important;
 }

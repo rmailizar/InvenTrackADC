@@ -60,9 +60,9 @@ $itemDetailData[$itemRow->id] = [
                 </div>
                 <div class="action-row-2">
                     <a href="{{ route('items.index') }}" class="btn btn-reset" title="Reset Filter">
-                        <i class="bi bi-arrow-repeat"></i>
+                        <i class="bi bi-arrow-counterclockwise"></i>
                     </a>
-                    <a href="{{ route('items.lookups.index') }}" class="btn btn-outline-primary">
+                    <a href="{{ route('items.lookups.index') }}" class="btn {{ $isTeknik ? 'btn-outline-teknik' : 'btn-outline-primary' }}">
                         <i class="bi bi-sliders2"></i> Kelola
                     </a>
                 </div>
@@ -176,7 +176,21 @@ $itemDetailData[$itemRow->id] = [
                         >
                             <td>{{ $items->firstItem() + $index }}</td>
                             @if($isTeknik)
-                            <td> <span class="technical-soh-norm norm-in">{{ $item->no_normalisasi ?? '-' }}</span></td>
+                            <td>
+                                @if($item->current_stock < $item->min_stock)
+                                    <span class="badge-status badge-rejected position-relative badge-critical-teknik">
+                                        {{ $item->no_normalisasi ?? '-' }}
+                                    </span>
+                                @elseif($item->current_stock == $item->min_stock)
+                                    <span class="badge-status technical-soh-norm norm-out">
+                                        {{ $item->no_normalisasi ?? '-' }}
+                                    </span>
+                                @else
+                                    <span class="badge-status badge-approved">
+                                        {{ $item->no_normalisasi ?? '-' }}
+                                    </span>
+                                @endif
+                            </td>
                             <td class="fw-600">{{ $item->name }}</td>
                             <td>{{ $item->category }}</td>
                             <td>{{ $item->component ?? '-' }}</td>
@@ -270,14 +284,16 @@ $itemDetailData[$itemRow->id] = [
                             </td>
                             <td>
                                 <div class="action-buttons">
+                                    <button type="button" class="btn-action view btn-item-detail-open" title="Lihat Detail"
+                                        data-item-id="{{ $item->id }}">
+                                        <i class="bi bi-info-circle-fill"></i>
+                                    </button>
+
                                     <button type="button" class="btn-action edit" title="Edit"
                                         onclick="openItemModal({{ $item->id }})">
                                         <i class="bi bi-pencil-fill"></i>
                                     </button>
-                                    <button type="button" class="btn-action view btn-item-detail-open" title="Lihat Detail"
-                                        data-item-id="{{ $item->id }}">
-                                        <i class="bi bi-eye-fill"></i>
-                                    </button>
+
                                     <form action="{{ route('items.destroy', $item) }}" method="POST"
                                         id="deleteItem-{{ $item->id }}">
                                         @csrf @method('DELETE')
@@ -315,7 +331,7 @@ $itemDetailData[$itemRow->id] = [
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-eye-fill me-2"></i>Detail {{ $itemLabel }}</h5>
+                <h5 class="modal-title"><i class="bi bi-info-circle-fill me-2"></i>Detail {{ $itemLabel }}</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
             </div>
             <div class="modal-body">
@@ -421,7 +437,7 @@ $itemDetailData[$itemRow->id] = [
                                 <label class="form-label">Ship Unloader</label>
                                 <div class="d-flex flex-wrap gap-1" id="itemShipBadges">
                                     @foreach([1, 2, 3, 4] as $ship)
-                                    <span class="badge rounded-pill bg-light text-muted border" data-ship="{{ $ship }}">SU {{ $ship }}</span>
+                                    <span class="badge badge-ship-inactive" data-ship="{{ $ship }}">{{ $ship }}</span>
                                     @endforeach
                                 </div>
                             </div>
@@ -577,7 +593,7 @@ $itemDetailData[$itemRow->id] = [
         const ships = (value || '').split(',').filter(Boolean);
         document.querySelectorAll('#itemShipBadges [data-ship]').forEach(el => {
             const active = ships.includes(el.dataset.ship);
-            el.className = 'badge rounded-pill ' + (active ? 'bg-primary' : 'bg-light text-muted border');
+            el.className = 'badge badge-ship-inactive' + (active ? 'bg-primary' : 'bg-light text-muted border');
         });
     }
 

@@ -248,6 +248,7 @@
             </div>
         @endif
 
+        @unless(auth()->user()->bidang === 'teknik')
         <!-- Search Bar (Autocomplete) -->
         <div class="card mb-4" id="searchCard">
             <div class="card-body py-3">
@@ -273,6 +274,7 @@
                 </div>
             </div>
         </div>
+        @endunless
 
         <!-- Charts Row: Monthly + Category -->
         <div class="row g-3 mb-4 public-technical-chart-row">

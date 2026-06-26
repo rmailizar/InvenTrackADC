@@ -13,7 +13,17 @@
             <div class="section-header-actions">
                 <form method="GET" action="{{ route('stock.index') }}">
                     <div class="action-row-1">
-                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari barang..." value="{{ request('search') }}" style="width: 180px;">
+                        <div class="position-relative" id="stockSearchWrapper">
+                            <input type="text"
+                                id="stockSearchInput"
+                                class="form-control form-control-sm"
+                                name="search"
+                                value="{{ request('search') }}"
+                                autocomplete="off"
+                                placeholder="Cari barang..."
+                                style="width: 180px;">
+                            <div id="stockSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+                        </div>
                         <select name="category" class="form-select form-select-sm" style="width: 130px;" onchange="this.form.submit()">
                             <option value="">Semua {{ $isTeknik ? 'Tipe' : 'Kategori' }}</option>
                             @foreach($categories as $cat)
@@ -27,7 +37,7 @@
                     </div>
                     <div class="action-row-2">
                         <a href="{{ route('stock.index') }}" class="btn btn-reset btn-sm" title="Reset Filter">
-                            <i class="bi bi-arrow-repeat"></i>
+                            <i class="bi bi-arrow-counterclockwise"></i>
                         </a>
                         <button type="button" class="btn btn-warning btn-sm stock-trigger-btn"
                             data-bs-toggle="modal" data-bs-target="#stockRequestModal"
@@ -92,7 +102,11 @@
                                     $totalKeluar = $item->transactions()->keluar()->approved()->sum('quantity');
                                     $currentStock = $totalMasuk - $totalKeluar;
                                 @endphp
-                                <tr>
+                                <tr data-item-id="{{ $item->id }}"
+                                    data-name="{{ $item->name }}"
+                                    data-normalisasi="{{ $item->no_normalisasi ?? '' }}"
+                                    data-component="{{ $item->component ?? '' }}"
+                                    data-category="{{ $item->category ?? '' }}">
                                     <td>{{ $no + $index }}</td>
                                     @if($isTeknik)
                                         <td class="fw-600">{{ $item->no_normalisasi ?? '-' }}</td>
@@ -369,6 +383,113 @@
                     groupsContainer.appendChild(buildCategoryGroup(category, grouped[category]));
                 });
                 reindexRows();
+            });
+        })();
+
+        // Autocomplete search suggestions for Stock Recap
+        (function() {
+            const searchInput = document.getElementById('stockSearchInput');
+            const suggestionsBox = document.getElementById('stockSearchSuggestions');
+            const searchWrapper = document.getElementById('stockSearchWrapper');
+            const isTeknik = @json($isTeknik);
+
+            if (!searchInput || !suggestionsBox || !searchWrapper) return;
+
+            searchInput.addEventListener('input', function() {
+                const keyword = this.value.trim().toLowerCase();
+                if (!keyword) {
+                    resetTable();
+                    suggestionsBox.style.display = 'none';
+                    return;
+                }
+
+                const rows = document.querySelectorAll('#stock-table tbody tr:not(.no-data-row)');
+                let results = [];
+
+                rows.forEach(row => {
+                    const name = row.getAttribute('data-name') || '';
+                    const normalisasi = row.getAttribute('data-normalisasi') || '';
+                    const component = row.getAttribute('data-component') || '';
+                    const category = row.getAttribute('data-category') || '';
+
+                    let matched = false;
+                    if (isTeknik) {
+                        matched = name.toLowerCase().includes(keyword) || 
+                                  normalisasi.toLowerCase().includes(keyword) || 
+                                  component.toLowerCase().includes(keyword);
+                    } else {
+                        matched = name.toLowerCase().includes(keyword) || 
+                                  category.toLowerCase().includes(keyword);
+                    }
+
+                    if (matched) {
+                        results.push({
+                            id: row.getAttribute('data-item-id'),
+                            name: row.getAttribute('data-name'),
+                            normalisasi: row.getAttribute('data-normalisasi'),
+                            component: row.getAttribute('data-component'),
+                            category: row.getAttribute('data-category')
+                        });
+                    }
+                });
+
+                renderSuggestions(results);
+            });
+
+            function renderSuggestions(items) {
+                if (!items.length) {
+                    suggestionsBox.innerHTML = '<div class="autocomplete-no-result">Tidak ada barang ditemukan</div>';
+                    suggestionsBox.style.display = 'block';
+                    return;
+                }
+
+                suggestionsBox.innerHTML = items.map(item => `
+                    <div class="autocomplete-item" data-id="${item.id}">
+                        <div class="autocomplete-icon">
+                            <i class="bi bi-box-seam"></i>
+                        </div>
+                        <div class="autocomplete-content">
+                            <div class="autocomplete-title">${item.name}</div>
+                            <div class="autocomplete-subtitle">
+                                ${isTeknik ? `${item.normalisasi || '-'} • ${item.component || '-'}` : `${item.category || '-'}`}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                suggestionsBox.style.display = 'block';
+
+                suggestionsBox.querySelectorAll('.autocomplete-item').forEach(el => {
+                    el.addEventListener('click', function() {
+                        searchInput.value = this.querySelector('.autocomplete-title').textContent.trim();
+                        filterTable(this.getAttribute('data-id'));
+                    });
+                });
+            }
+
+            function filterTable(id) {
+                document.querySelectorAll('#stock-table tbody tr:not(.no-data-row)').forEach(row => {
+                    row.style.display = row.getAttribute('data-item-id') === id ? '' : 'none';
+                });
+                suggestionsBox.style.display = 'none';
+            }
+
+            function resetTable() {
+                document.querySelectorAll('#stock-table tbody tr:not(.no-data-row)').forEach(row => {
+                    row.style.display = '';
+                });
+            }
+
+            document.addEventListener('click', function(e) {
+                if (searchWrapper && !searchWrapper.contains(e.target)) {
+                    suggestionsBox.style.display = 'none';
+                }
+            });
+
+            searchInput.addEventListener('focus', function() {
+                if (this.value.trim() !== '' && suggestionsBox.innerHTML.trim() !== '') {
+                    suggestionsBox.style.display = 'block';
+                }
             });
         })();
     </script>

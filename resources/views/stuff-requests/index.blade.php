@@ -47,7 +47,17 @@
             <div class="section-header-actions">
                 <form method="GET" action="{{ route('stuff-requests.index') }}">
                     <div class="action-row-1">
-                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari pemohon/barang..." value="{{ request('search') }}" style="width: 180px;">
+                        <div class="position-relative" id="stuffRequestsSearchWrapper">
+                            <input type="text"
+                                id="stuffRequestsSearchInput"
+                                class="form-control form-control-sm"
+                                name="search"
+                                value="{{ request('search') }}"
+                                autocomplete="off"
+                                placeholder="Cari pemohon/barang..."
+                                style="width: 180px;">
+                            <div id="stuffRequestsSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+                        </div>
                         <select name="status" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
                             <option value="">Semua Status</option>
                             <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
@@ -73,7 +83,7 @@
                     </div>
                     <div class="action-row-2">
                         <a href="{{ route('stuff-requests.index') }}" class="btn btn-reset btn-sm" title="Reset Filter">
-                            <i class="bi bi-arrow-repeat"></i>
+                            <i class="bi bi-arrow-counterclockwise"></i>
                         </a>
                     </div>
                 </form>
@@ -109,7 +119,12 @@
                         </thead>
                         <tbody>
                             @forelse($requests as $index => $req)
-                                <tr>
+                                <tr data-id="{{ $req->id }}"
+                                    data-requester-name="{{ $req->requester_name }}"
+                                    data-nip="{{ $req->nip }}"
+                                    data-jabatan="{{ $req->jabatan }}"
+                                    data-bidang="{{ $req->bidang }}"
+                                    data-items="{{ $req->lines->map(fn($l) => $l->item->name ?? '')->filter()->implode(', ') }}">
                                     <td>{{ $requests->firstItem() + $index }}</td>
                                     <td style="white-space:nowrap;">{{ $req->created_at->format('d/m/Y H:i') }}</td>
                                     <td class="fw-600">{{ $req->nip }}</td>
@@ -447,6 +462,110 @@
             modalEl.addEventListener('hidden.bs.modal', function () {
                 hideAllActionButtons();
                 formApproveSel = formRejectSel = formCompleteSel = formCancelSel = null;
+            });
+        })();
+
+        // Autocomplete search suggestions for Stuff Requests
+        (function() {
+            const searchInput = document.getElementById('stuffRequestsSearchInput');
+            const suggestionsBox = document.getElementById('stuffRequestsSearchSuggestions');
+            const searchWrapper = document.getElementById('stuffRequestsSearchWrapper');
+
+            if (!searchInput || !suggestionsBox || !searchWrapper) return;
+
+            searchInput.addEventListener('input', function() {
+                const keyword = this.value.trim().toLowerCase();
+                if (!keyword) {
+                    resetTable();
+                    suggestionsBox.style.display = 'none';
+                    return;
+                }
+
+                const rows = document.querySelectorAll('#stuff-requests-table tbody tr:not(.no-data-row)');
+                let results = [];
+
+                rows.forEach(row => {
+                    const name = row.getAttribute('data-requester-name') || '';
+                    const nip = row.getAttribute('data-nip') || '';
+                    const jabatan = row.getAttribute('data-jabatan') || '';
+                    const bidang = row.getAttribute('data-bidang') || '';
+                    const items = row.getAttribute('data-items') || '';
+
+                    const matched = name.toLowerCase().includes(keyword) || 
+                                    nip.toLowerCase().includes(keyword) || 
+                                    jabatan.toLowerCase().includes(keyword) || 
+                                    bidang.toLowerCase().includes(keyword) || 
+                                    items.toLowerCase().includes(keyword);
+
+                    if (matched) {
+                        results.push({
+                            id: row.getAttribute('data-id'),
+                            name: row.getAttribute('data-requester-name'),
+                            nip: row.getAttribute('data-nip'),
+                            jabatan: row.getAttribute('data-jabatan'),
+                            bidang: row.getAttribute('data-bidang'),
+                            items: row.getAttribute('data-items')
+                        });
+                    }
+                });
+
+                renderSuggestions(results);
+            });
+
+            function renderSuggestions(items) {
+                if (!items.length) {
+                    suggestionsBox.innerHTML = '<div class="autocomplete-no-result">Tidak ada permintaan ditemukan</div>';
+                    suggestionsBox.style.display = 'block';
+                    return;
+                }
+
+                suggestionsBox.innerHTML = items.map(item => `
+                    <div class="autocomplete-item" data-id="${item.id}">
+                        <div class="autocomplete-icon">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </div>
+                        <div class="autocomplete-content">
+                            <div class="autocomplete-title">${item.name} (${item.nip})</div>
+                            <div class="autocomplete-subtitle">
+                                ${item.jabatan} • ${item.bidang} • ${item.items || '-'}
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                suggestionsBox.style.display = 'block';
+
+                suggestionsBox.querySelectorAll('.autocomplete-item').forEach(el => {
+                    el.addEventListener('click', function() {
+                        searchInput.value = this.querySelector('.autocomplete-title').textContent.split(' (')[0].trim();
+                        filterTable(this.getAttribute('data-id'));
+                    });
+                });
+            }
+
+            function filterTable(id) {
+                document.querySelectorAll('#stuff-requests-table tbody tr:not(.no-data-row)').forEach(row => {
+                    row.style.display = row.getAttribute('data-id') === id ? '' : 'none';
+                });
+                suggestionsBox.style.display = 'none';
+            }
+
+            function resetTable() {
+                document.querySelectorAll('#stuff-requests-table tbody tr:not(.no-data-row)').forEach(row => {
+                    row.style.display = '';
+                });
+            }
+
+            document.addEventListener('click', function(e) {
+                if (searchWrapper && !searchWrapper.contains(e.target)) {
+                    suggestionsBox.style.display = 'none';
+                }
+            });
+
+            searchInput.addEventListener('focus', function() {
+                if (this.value.trim() !== '' && suggestionsBox.innerHTML.trim() !== '') {
+                    suggestionsBox.style.display = 'block';
+                }
             });
         })();
     </script>

@@ -271,6 +271,7 @@
                     </div>
                 @endif
 
+                @if($activeBidang === 'umum')
                 <div class="report-tabs mb-3">
                     <a href="{{ route('public.stuff-request', array_merge(request()->except(['bidang', 'page']), ['bidang' => 'umum'])) }}"
                         class="report-tab {{ $activeBidang === 'umum' ? 'active' : '' }}">
@@ -283,17 +284,24 @@
                         Barang Bidang Teknik
                     </a>
                 </div>
+                @endif
 
                 @if($activeBidang === 'teknik')
                     <div class="section-title">
                         <i class="bi bi-clipboard-data-fill"></i> Daftar Barang Bidang Teknik
                     </div>
 
-                    <div class="card mb-4">
+                    <div class="card mb-4" id="public-teknik-table-card">
                         <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                             <span><i class="bi bi-table text-primary-custom me-2"></i>Daftar Barang Teknik</span>
                             <div class="d-flex align-items-center gap-2">
-                                <input type="text" id="publicTeknikSearch" class="form-control form-control-sm" placeholder="Cari barang teknik..." style="width: 250px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px;">
+                                <form method="GET" action="{{ route('public.stuff-request') }}" id="publicTeknikSearchForm" class="m-0">
+                                    <input type="hidden" name="bidang" value="teknik">
+                                    <div class="position-relative" id="publicTeknikSearchWrapper">
+                                        <input type="text" id="publicTeknikSearch" name="search" class="form-control form-control-sm" placeholder="Cari barang teknik..." style="width: 250px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px;" value="{{ request('search') }}" autocomplete="off">
+                                        <div id="publicTeknikSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                         <div class="card-body p-0">
@@ -330,7 +338,12 @@
                                                     $statusLabel = 'In Stock';
                                                 }
                                             @endphp
-                                            <tr data-status="{{ $statusClass }}">
+                                            <tr data-item-id="{{ $item->id }}"
+                                                data-name="{{ $item->name }}"
+                                                data-normalisasi="{{ $item->no_normalisasi ?? '' }}"
+                                                data-component="{{ $item->component ?? '' }}"
+                                                data-category="{{ $item->category ?? '' }}"
+                                                data-status="{{ $statusClass }}">
                                                 <td>
                                                     <span class="technical-soh-norm norm-in">{{ $item->no_normalisasi ?? '-' }}</span>
                                                 </td>
@@ -386,6 +399,226 @@
                             </div>
                         </div>
                     </div>
+
+                    {{-- Goods Receipt & Goods Issue Forms --}}
+                    <div class="row g-4 mb-4">
+                        {{-- Goods Receipt Form --}}
+                        <div class="col-lg-6">
+                            <div class="request-form-card" style="height: 100%;">
+                                <div class="request-form-header">
+                                    <h5><i class="bi bi-box-arrow-in-down me-2 text-success"></i>Goods Receipt</h5>
+                                    <p>Input penerimaan barang bidang teknik</p>
+                                </div>
+                                <div class="request-form-body">
+                                    <form method="POST" action="{{ route('transactions.store') }}" id="publicGRForm">
+                                        @csrf
+                                        <input type="hidden" name="type" value="in">
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Tanggal <span class="text-danger">*</span></label>
+                                            <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required min="{{ date('Y-m-d') }}">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">No Normalisasi</label>
+                                            <input type="text" class="form-control" id="publicGRNoNormalisasi" readonly placeholder="000-000-000">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Spare Part <span class="text-danger">*</span></label>
+                                            <select name="item_id" class="form-select" required id="publicGRItemSelect">
+                                                <option value="">-- Pilih Spare Part --</option>
+                                                @foreach($allItems as $item)
+                                                    <option value="{{ $item->id }}"
+                                                        data-category="{{ $item->category }}"
+                                                        data-unit="{{ $item->unit }}"
+                                                        data-stock="{{ $item->current_stock }}"
+                                                        data-no-normalisasi="{{ $item->no_normalisasi }}"
+                                                        data-lokasi="{{ $item->lokasi }}"
+                                                        data-component="{{ $item->component }}"
+                                                        data-volume="{{ $item->volume }}"
+                                                        data-ship-unloader="{{ $item->stock_ship_unloader }}">
+                                                        {{ $item->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-6">
+                                                <label class="form-label">Komponen</label>
+                                                <input type="text" class="form-control" id="publicGRCategory" readonly placeholder="Auto Fill">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label">Tipe Barang</label>
+                                                <input type="text" class="form-control" id="publicGRItemCategory" readonly placeholder="Auto Fill">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label">Stok</label>
+                                                <input type="text" class="form-control" id="publicGRStock" readonly placeholder="Auto Fill">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label">Volume</label>
+                                                <input type="text" class="form-control" id="publicGRVolume" readonly placeholder="Auto Fill">
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label">Lokasi</label>
+                                                <input type="text" class="form-control" id="publicGRLokasi" readonly placeholder="Auto Fill">
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Ship Unloader <span class="text-danger">*</span></label>
+                                            <div class="d-flex flex-nowrap align-items-center gap-1 ship-input-group" id="publicGRShipBadges">
+                                                @foreach([1, 2, 3, 4] as $ship)
+                                                    <label class="ship-checkbox-label">
+                                                        <input class="ship-checkbox-input public-gr-ship-checkbox" type="checkbox" name="ship_unloader[]" value="{{ $ship }}" data-ship="{{ $ship }}">
+                                                        <span class="ship-checkbox-box">{{ $ship }}</span>
+                                                    </label>
+                                                @endforeach
+                                                <label class="ship-checkbox-label">
+                                                    <input class="ship-checkbox-input" type="checkbox" id="publicGRShipAll" data-ship="all">
+                                                    <span class="ship-checkbox-box px-2" style="width: auto; min-width: 24px;">ALL</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-6">
+                                                <label class="form-label">Jumlah <span class="text-danger">*</span></label>
+                                                <input type="number" name="quantity" class="form-control" min="1" required id="publicGRQuantity">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label">Satuan</label>
+                                                <input type="text" class="form-control" id="publicGRUnit" readonly placeholder="Auto Fill">
+                                            </div>
+                                        </div>
+
+                                        <button type="submit" class="btn w-100 btn-receipt-submit">
+                                            <i class="bi bi-send-fill me-1"></i> Process Goods Receipt
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Goods Issue Form --}}
+                        <div class="col-lg-6">
+                            <div class="request-form-card" style="height: 100%;">
+                                <div class="request-form-header">
+                                    <h5><i class="bi bi-box-arrow-up me-2 text-warning"></i>Goods Issue</h5>
+                                    <p>Input pengeluaran barang bidang teknik</p>
+                                </div>
+                                <div class="request-form-body">
+                                    <form method="POST" action="{{ route('transactions.store') }}" id="publicGIForm">
+                                        @csrf
+                                        <input type="hidden" name="type" value="out">
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Tanggal <span class="text-danger">*</span></label>
+                                            <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required min="{{ date('Y-m-d') }}">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">No Normalisasi</label>
+                                            <input type="text" class="form-control" id="publicGINoNormalisasi" readonly placeholder="000-000-000">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Spare Part <span class="text-danger">*</span></label>
+                                            <select name="item_id" class="form-select" required id="publicGIItemSelect">
+                                                <option value="">-- Pilih Spare Part --</option>
+                                                @foreach($allItems as $item)
+                                                    <option value="{{ $item->id }}"
+                                                        data-category="{{ $item->category }}"
+                                                        data-unit="{{ $item->unit }}"
+                                                        data-stock="{{ $item->current_stock }}"
+                                                        data-no-normalisasi="{{ $item->no_normalisasi }}"
+                                                        data-lokasi="{{ $item->lokasi }}"
+                                                        data-component="{{ $item->component }}"
+                                                        data-volume="{{ $item->volume }}"
+                                                        data-ship-unloader="{{ $item->stock_ship_unloader }}">
+                                                        {{ $item->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-6">
+                                                <label class="form-label">Komponen</label>
+                                                <input type="text" class="form-control" id="publicGICategory" readonly placeholder="Auto Fill">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label">Tipe Barang</label>
+                                                <input type="text" class="form-control" id="publicGIItemCategory" readonly placeholder="Auto Fill">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label">Stok</label>
+                                                <input type="text" class="form-control" id="publicGIStock" readonly placeholder="Auto Fill">
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label">Volume</label>
+                                                <input type="text" class="form-control" id="publicGIVolume" readonly placeholder="Auto Fill">
+                                            </div>
+                                            <div class="col-12">
+                                                <label class="form-label">Lokasi</label>
+                                                <input type="text" class="form-control" id="publicGILokasi" readonly placeholder="Auto Fill">
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Ship Unloader <span class="text-danger">*</span></label>
+                                            <div class="d-flex flex-nowrap align-items-center gap-1 ship-input-group" id="publicGIShipBadges">
+                                                @foreach([1, 2, 3, 4] as $ship)
+                                                    <label class="ship-checkbox-label">
+                                                        <input class="ship-checkbox-input public-gi-ship-checkbox" type="checkbox" name="ship_unloader[]" value="{{ $ship }}" data-ship="{{ $ship }}">
+                                                        <span class="ship-checkbox-box ship-checkbox-box-issue">{{ $ship }}</span>
+                                                    </label>
+                                                @endforeach
+                                                <label class="ship-checkbox-label">
+                                                    <input class="ship-checkbox-input" type="checkbox" id="publicGIShipAll" data-ship="all">
+                                                    <span class="ship-checkbox-box ship-checkbox-box-issue px-2" style="width: auto; min-width: 24px;">ALL</span>
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-6">
+                                                <label class="form-label">Jumlah <span class="text-danger">*</span></label>
+                                                <input type="number" name="quantity" class="form-control" min="1" required id="publicGIQuantity">
+                                                <div id="publicGIStockWarning" class="text-danger mt-1" style="font-size:12px;display:none;">
+                                                    <i class="bi bi-exclamation-triangle-fill"></i> Melebihi stok tersedia.
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label">Satuan</label>
+                                                <input type="text" class="form-control" id="publicGIUnit" readonly placeholder="Auto Fill">
+                                            </div>
+                                        </div>
+
+                                        <button type="submit" class="btn w-100 btn-issue-submit">
+                                            <i class="bi bi-send-fill me-1"></i> Process Goods Issue
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Switcher --}}
+                    <div class="report-tabs mt-4 mb-3">
+                        <a href="{{ route('public.stuff-request', array_merge(request()->except(['bidang', 'page']), ['bidang' => 'umum'])) }}"
+                            class="report-tab {{ $activeBidang === 'umum' ? 'active' : '' }}">
+                            <i class="bi bi-building"></i>
+                            Barang Bidang Umum
+                        </a>
+                        <a href="{{ route('public.stuff-request', array_merge(request()->except(['bidang', 'page']), ['bidang' => 'teknik'])) }}"
+                            class="report-tab {{ $activeBidang === 'teknik' ? 'active' : '' }}">
+                            <i class="bi bi-tools"></i>
+                            Barang Bidang Teknik
+                        </a>
+                    </div>
                 @else
                 <div class="row g-4">
                     {{-- Left: Stock Recap --}}
@@ -400,9 +633,12 @@
                                 <input type="hidden" name="bidang" value="{{ $activeBidang }}">
                                 <div class="row align-items-end g-2">
                                     <div class="col-md-5">
-                                        <input type="text" name="search" class="form-control"
-                                            placeholder="{{ $activeBidang === 'teknik' ? 'Cari no normalisasi, nama, komponen, lokasi, satuan...' : 'Cari nama barang...' }}"
-                                            value="{{ request('search') }}">
+                                        <div class="position-relative" id="publicUmumSearchWrapper">
+                                            <input type="text" id="publicUmumSearch" name="search" class="form-control"
+                                                placeholder="Cari nama barang..."
+                                                value="{{ request('search') }}" autocomplete="off">
+                                            <div id="publicUmumSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+                                        </div>
                                     </div>
                                     <div class="col-md-4">
                                         <select name="category" class="form-select">
@@ -444,7 +680,9 @@
                                         <tbody>
                                             @forelse($items as $index => $item)
                                             @php $stock = $item->current_stock; @endphp
-                                            <tr>
+                                            <tr data-item-id="{{ $item->id }}"
+                                                data-name="{{ strtolower($item->name) }}"
+                                                data-category="{{ strtolower($item->category ?? '') }}">
                                                 <td>{{ $index + 1 }}</td>
                                                 @if($activeBidang === 'teknik')
                                                     <td class="fw-600">{{ $item->no_normalisasi ?? '-' }}</td>
@@ -992,12 +1230,201 @@
                     this.classList.add('active');
                     currentFilter = this.getAttribute('data-filter');
                     filterTable();
+                    
+                    // Smooth scroll to table card
+                    const tableCard = document.getElementById('public-teknik-table-card');
+                    if (tableCard) {
+                        tableCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
                 });
             });
 
             if (searchInput) {
                 searchInput.addEventListener('input', filterTable);
             }
+        })();
+
+        // Autocomplete search suggestions for Public page (Teknik & Umum)
+        (function() {
+            function setupPublicAutocomplete(inputId, suggestionsId, wrapperId, tableId, isTeknikSection) {
+                const searchInput = document.getElementById(inputId);
+                const suggestionsBox = document.getElementById(suggestionsId);
+                const searchWrapper = document.getElementById(wrapperId);
+                
+                if (!searchInput || !suggestionsBox || !searchWrapper) return;
+
+                function filterTableById(itemId) {
+                    const rows = document.querySelectorAll('#' + tableId + ' tbody tr:not(.no-data-row)');
+                    rows.forEach(row => {
+                        row.style.display = row.dataset.itemId === itemId ? '' : 'none';
+                    });
+                    suggestionsBox.style.display = 'none';
+                }
+
+                function resetTable() {
+                    const rows = document.querySelectorAll('#' + tableId + ' tbody tr:not(.no-data-row)');
+                    rows.forEach(row => {
+                        row.style.display = '';
+                    });
+                }
+
+                searchInput.addEventListener('input', function() {
+                    const keyword = this.value.trim().toLowerCase();
+                    if (!keyword) {
+                        resetTable();
+                        suggestionsBox.style.display = 'none';
+                        return;
+                    }
+
+                    const rows = document.querySelectorAll('#' + tableId + ' tbody tr:not(.no-data-row)');
+                    let results = [];
+
+                    rows.forEach(row => {
+                        const name = (row.dataset.name || '').toLowerCase();
+                        const category = (row.dataset.category || '').toLowerCase();
+                        const component = (row.dataset.component || '').toLowerCase();
+                        const normalisasi = (row.dataset.normalisasi || '').toLowerCase();
+
+                        let matched = false;
+                        if (isTeknikSection) {
+                            matched = name.includes(keyword) || component.includes(keyword) || normalisasi.includes(keyword);
+                        } else {
+                            matched = name.includes(keyword) || category.includes(keyword);
+                        }
+
+                        if (matched) {
+                            results.push({
+                                id: row.dataset.itemId,
+                                name: row.dataset.name || row.querySelector('.name-cell')?.textContent.trim() || '',
+                                category: row.dataset.category || '',
+                                component: row.dataset.component || '',
+                                normalisasi: row.dataset.normalisasi || ''
+                            });
+                        }
+                    });
+
+                    renderSuggestions(results);
+                });
+
+                function renderSuggestions(items) {
+                    if (!items.length) {
+                        suggestionsBox.innerHTML = '<div class="autocomplete-no-result">Tidak ada barang ditemukan</div>';
+                        suggestionsBox.style.display = 'block';
+                        return;
+                    }
+
+                    suggestionsBox.innerHTML = items.map(item => `
+                        <div class="autocomplete-item" data-id="${item.id}">
+                            <div class="autocomplete-icon">
+                                <i class="bi bi-box-seam"></i>
+                            </div>
+                            <div class="autocomplete-content">
+                                <div class="autocomplete-title">${item.name}</div>
+                                <div class="autocomplete-subtitle">
+                                    ${isTeknikSection ? `${item.normalisasi || '-'} • ${item.component || '-'}` : `${item.category || '-'}`}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    suggestionsBox.style.display = 'block';
+
+                    suggestionsBox.querySelectorAll('.autocomplete-item').forEach(el => {
+                        el.addEventListener('click', function() {
+                            const name = this.querySelector('.autocomplete-title').textContent.trim();
+                            searchInput.value = name;
+                            filterTableById(this.dataset.id);
+                        });
+                    });
+                }
+
+                // Handle click outside to close
+                document.addEventListener('click', function (e) {
+                    if (searchWrapper && !searchWrapper.contains(e.target)) {
+                        suggestionsBox.style.display = 'none';
+                    }
+                });
+
+                // Show suggestion again when focused
+                searchInput.addEventListener('focus', function () {
+                    if (this.value.trim() !== '' && suggestionsBox.innerHTML.trim() !== '') {
+                        suggestionsBox.style.display = 'block';
+                    }
+                });
+            }
+
+            setupPublicAutocomplete('publicTeknikSearch', 'publicTeknikSearchSuggestions', 'publicTeknikSearchWrapper', 'public-teknik-table', true);
+            setupPublicAutocomplete('publicUmumSearch', 'publicUmumSearchSuggestions', 'publicUmumSearchWrapper', 'stock-recap-table', false);
+        })();
+
+        // Auto-fill and validation logic for public Goods Receipt and Goods Issue forms
+        (function() {
+            function setupFormAutoFill(selectId, normalisasiId, categoryId, itemCategoryId, stockId, volumeId, lokasiId, unitId, qtyId, warningId, isOutType) {
+                const select = document.getElementById(selectId);
+                const normalisasi = document.getElementById(normalisasiId);
+                const category = document.getElementById(categoryId);
+                const itemCategory = document.getElementById(itemCategoryId);
+                const stock = document.getElementById(stockId);
+                const volume = document.getElementById(volumeId);
+                const lokasi = document.getElementById(lokasiId);
+                const unit = document.getElementById(unitId);
+                const qtyInput = document.getElementById(qtyId);
+                const warning = document.getElementById(warningId);
+
+                if (!select) return;
+
+                function checkStock() {
+                    if (!qtyInput || !stock || !warning) return;
+                    const stockVal = parseInt(stock.value || '0') || 0;
+                    const qtyVal = parseInt(qtyInput.value || '0') || 0;
+                    warning.style.display = isOutType && select.value && qtyVal > stockVal ? 'block' : 'none';
+                }
+
+                select.addEventListener('change', function() {
+                    const hasItem = Boolean(select.value);
+                    const selected = select.options[select.selectedIndex];
+
+                    normalisasi.value = hasItem ? (selected.dataset.noNormalisasi || '') : '';
+                    category.value = hasItem ? (selected.dataset.component || '') : '';
+                    itemCategory.value = hasItem ? (selected.dataset.category || '') : '';
+                    stock.value = hasItem ? (selected.dataset.stock || '0') : '';
+                    volume.value = hasItem ? (selected.dataset.volume || '') : '';
+                    lokasi.value = hasItem ? (selected.dataset.lokasi || '') : '';
+                    unit.value = hasItem ? (selected.dataset.unit || '') : '';
+
+                    checkStock();
+                });
+
+                if (qtyInput) {
+                    qtyInput.addEventListener('input', checkStock);
+                }
+            }
+
+            setupFormAutoFill('publicGRItemSelect', 'publicGRNoNormalisasi', 'publicGRCategory', 'publicGRItemCategory', 'publicGRStock', 'publicGRVolume', 'publicGRLokasi', 'publicGRUnit', 'publicGRQuantity', null, false);
+            setupFormAutoFill('publicGIItemSelect', 'publicGINoNormalisasi', 'publicGICategory', 'publicGIItemCategory', 'publicGIStock', 'publicGIVolume', 'publicGILokasi', 'publicGIUnit', 'publicGIQuantity', 'publicGIStockWarning', true);
+
+            function setupShipCheckboxes(allCheckboxId, checkboxClass) {
+                const allCheckbox = document.getElementById(allCheckboxId);
+                const checkboxes = document.querySelectorAll('.' + checkboxClass);
+
+                if (!allCheckbox) return;
+
+                allCheckbox.addEventListener('change', function() {
+                    checkboxes.forEach(cb => {
+                        cb.checked = this.checked;
+                    });
+                });
+
+                checkboxes.forEach(cb => {
+                    cb.addEventListener('change', function() {
+                        const allChecked = Array.from(checkboxes).every(x => x.checked);
+                        allCheckbox.checked = allChecked;
+                    });
+                });
+            }
+
+            setupShipCheckboxes('publicGRShipAll', 'public-gr-ship-checkbox');
+            setupShipCheckboxes('publicGIShipAll', 'public-gi-ship-checkbox');
         })();
 
         // Multi-line barang: tambah / hapus baris

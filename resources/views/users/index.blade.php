@@ -19,7 +19,17 @@
             <div class="section-header-actions">
                 <form method="GET" action="{{ $isApprovalManager ? route('pendingUsers.index') : route('users.index') }}">
                     <div class="action-row-1">
-                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Cari user..." value="{{ request('search') }}" style="width: 180px;">
+                        <div class="position-relative" id="userSearchWrapper">
+                            <input type="text"
+                                id="userSearchInput"
+                                class="form-control form-control-sm"
+                                name="search"
+                                value="{{ request('search') }}"
+                                autocomplete="off"
+                                placeholder="Cari user..."
+                                style="width: 180px;">
+                            <div id="userSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+                        </div>
                         <select name="role" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
                             <option value="">Semua Role</option>
                             @if(auth()->user()->isSuperAdmin())
@@ -54,7 +64,7 @@
                     </div>
                     <div class="action-row-2">
                         <a href="{{ $isApprovalManager ? route('pendingUsers.index') : route('users.index') }}" class="btn btn-reset btn-sm" title="Reset Filter">
-                            <i class="bi bi-arrow-repeat"></i> 
+                            <i class="bi bi-arrow-counterclockwise"></i> 
                         </a>
                     </div>
                 </form>
@@ -88,7 +98,12 @@
                         </thead>
                         <tbody>
                             @forelse($users as $index => $user)
-                                <tr>
+                                <tr data-user-id="{{ $user->id }}"
+                                     data-name="{{ $user->name }}"
+                                     data-username="{{ $user->username }}"
+                                     data-email="{{ $user->email }}"
+                                     data-role="{{ $user->role }}"
+                                     data-bidang="{{ $user->bidang }}">
                                     <td>{{ $users->firstItem() + $index }}</td>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
@@ -519,6 +534,110 @@
                 document.getElementById('userError').style.display = 'none';
                 document.querySelectorAll('#userForm .is-invalid').forEach(el => el.classList.remove('is-invalid'));
             });
+
+            // Autocomplete search suggestions for Users
+            (function() {
+                const searchInput = document.getElementById('userSearchInput');
+                const suggestionsBox = document.getElementById('userSearchSuggestions');
+                const searchWrapper = document.getElementById('userSearchWrapper');
+
+                if (!searchInput || !suggestionsBox || !searchWrapper) return;
+
+                searchInput.addEventListener('input', function() {
+                    const keyword = this.value.trim().toLowerCase();
+                    if (!keyword) {
+                        resetTable();
+                        suggestionsBox.style.display = 'none';
+                        return;
+                    }
+
+                    const rows = document.querySelectorAll('#users-table tbody tr:not(.no-data-row)');
+                    let results = [];
+
+                    rows.forEach(row => {
+                        const name = row.getAttribute('data-name') || '';
+                        const username = row.getAttribute('data-username') || '';
+                        const email = row.getAttribute('data-email') || '';
+                        const role = row.getAttribute('data-role') || '';
+                        const bidang = row.getAttribute('data-bidang') || '';
+
+                        const matched = name.toLowerCase().includes(keyword) || 
+                                        username.toLowerCase().includes(keyword) || 
+                                        email.toLowerCase().includes(keyword) || 
+                                        role.toLowerCase().includes(keyword) || 
+                                        bidang.toLowerCase().includes(keyword);
+
+                        if (matched) {
+                            results.push({
+                                id: row.getAttribute('data-user-id'),
+                                name: row.getAttribute('data-name'),
+                                username: row.getAttribute('data-username'),
+                                email: row.getAttribute('data-email'),
+                                role: row.getAttribute('data-role'),
+                                bidang: row.getAttribute('data-bidang')
+                            });
+                        }
+                    });
+
+                    renderSuggestions(results);
+                });
+
+                function renderSuggestions(items) {
+                    if (!items.length) {
+                        suggestionsBox.innerHTML = '<div class="autocomplete-no-result">Tidak ada user ditemukan</div>';
+                        suggestionsBox.style.display = 'block';
+                        return;
+                    }
+
+                    suggestionsBox.innerHTML = items.map(item => `
+                        <div class="autocomplete-item" data-id="${item.id}">
+                            <div class="autocomplete-icon">
+                                <i class="bi bi-person-fill"></i>
+                            </div>
+                            <div class="autocomplete-content">
+                                <div class="autocomplete-title">${item.name}</div>
+                                <div class="autocomplete-subtitle">
+                                    @${item.username} • ${item.role} • ${item.bidang || 'umum'}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    suggestionsBox.style.display = 'block';
+
+                    suggestionsBox.querySelectorAll('.autocomplete-item').forEach(el => {
+                        el.addEventListener('click', function() {
+                            searchInput.value = this.querySelector('.autocomplete-title').textContent.trim();
+                            filterTable(this.getAttribute('data-id'));
+                        });
+                    });
+                }
+
+                function filterTable(id) {
+                    document.querySelectorAll('#users-table tbody tr:not(.no-data-row)').forEach(row => {
+                        row.style.display = row.getAttribute('data-user-id') === id ? '' : 'none';
+                    });
+                    suggestionsBox.style.display = 'none';
+                }
+
+                function resetTable() {
+                    document.querySelectorAll('#users-table tbody tr:not(.no-data-row)').forEach(row => {
+                        row.style.display = '';
+                    });
+                }
+
+                document.addEventListener('click', function(e) {
+                    if (searchWrapper && !searchWrapper.contains(e.target)) {
+                        suggestionsBox.style.display = 'none';
+                    }
+                });
+
+                searchInput.addEventListener('focus', function() {
+                    if (this.value.trim() !== '' && suggestionsBox.innerHTML.trim() !== '') {
+                        suggestionsBox.style.display = 'block';
+                    }
+                });
+            })();
         </script>
     @endpush
 @endif

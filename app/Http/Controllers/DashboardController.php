@@ -61,7 +61,7 @@ class DashboardController extends Controller
         $allItems = Item::visibleFor($user)->get();
         $lowStockItems = $allItems->filter(fn($item) => $item->is_low_stock && $item->current_stock >= 0);
         $criticalStockCount = $user->isTeknik()
-            ? $allItems->filter(fn($item) => $item->current_stock <= 0)->count()
+            ? $allItems->filter(fn($item) => $item->current_stock < $item->min_stock)->count()
             : 0;
 
 
