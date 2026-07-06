@@ -98,7 +98,7 @@
                         {{-- Critical Stock --}}
                         <div class="technical-dashboard-card technical-critical-card filter-card-btn" data-filter="critical" style="cursor: pointer;">
                             <div class="technical-dashboard-card-copy">
-                                <div class="technical-dashboard-card-title">Critical Stock</div>
+                                <div class="technical-dashboard-card-title">CRITICAL STOCK</div>
                                 <div class="technical-dashboard-card-value" style="color: #ef4444;">
                                     {{ number_format($publicDashboard['criticalStockCount']) }} <span>Items</span>
                                 </div>
@@ -187,7 +187,7 @@
 
                     <div class="row g-3 mb-4 technical-soh-activity-row">
                         <div class="col-lg-8">
-                            <div class="card technical-soh-detail-card">
+                            <div class="card technical-soh-detail-card" style="height: 235px; min-height: 235px;">
                                 <div class="card-header">
                                     <span><i class="bi bi-table text-primary-custom me-2"></i>Detailed Stock On Hand Table</span>
                                 </div>
@@ -204,7 +204,7 @@
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                @forelse($publicDashboard['recentTransactions'] as $tx)
+                                                 @forelse($publicDashboard['detailedSohTransactions'] as $tx)
                                                     <tr>
                                                         <td>
                                                             <span class="technical-soh-norm {{ $tx->type === 'in' ? 'norm-in' : 'norm-out' }}">
@@ -234,7 +234,7 @@
                         </div>
 
                         <div class="col-lg-4">
-                            <div class="card technical-activity-card">
+                            <div class="card technical-activity-card" style="height: 235px; min-height: 235px;">
                                 <div class="card-header">
                                     <span><i class="bi bi-clock-fill text-primary-custom me-2"></i>Recent Activity Feed</span>
                                 </div>
@@ -289,6 +289,55 @@
                 @if($activeBidang === 'teknik')
                     <div class="section-title">
                         <i class="bi bi-clipboard-data-fill"></i> Daftar Barang Bidang Teknik
+                    </div>
+
+                    {{-- Card Filter SOH --}}
+                    <div class="soh-filter-cards mb-4">
+                        <div class="soh-filter-card-slot">
+                            <div class="soh-filter-card soh-total active filter-card-btn" data-filter="all" style="cursor: pointer;">
+                                <div>
+                                    <div class="soh-filter-title">Total SOH Items</div>
+                                    <div class="soh-filter-value">
+                                        {{ number_format($publicDashboard['totalSoh'] ?? 0) }}
+                                        <span>Items</span>
+                                    </div>
+                                    <div class="soh-filter-caption">Lihat semua barang</div>
+                                </div>
+                                <div class="soh-filter-icon">
+                                    <i class="bi bi-stack"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="soh-filter-card-slot">
+                            <div class="soh-filter-card soh-low filter-card-btn" data-filter="low" style="cursor: pointer;">
+                                <div>
+                                    <div class="soh-filter-title">Low Stock Status</div>
+                                    <div class="soh-filter-value">
+                                        {{ number_format($publicDashboard['lowStockCount'] ?? 0) }}
+                                        <span>Items</span>
+                                    </div>
+                                    <div class="soh-filter-caption">Filter barang segera habis</div>
+                                </div>
+                                <div class="soh-filter-icon">
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="soh-filter-card-slot">
+                            <div class="soh-filter-card soh-critical filter-card-btn" data-filter="critical" style="cursor: pointer;">
+                                <div>
+                                    <div class="soh-filter-title">Critical Status</div>
+                                    <div class="soh-filter-value">
+                                        {{ number_format($publicDashboard['criticalStockCount'] ?? 0) }}
+                                        <span>Items</span>
+                                    </div>
+                                    <div class="soh-filter-caption">Filter barang mendesak</div>
+                                </div>
+                                <div class="soh-filter-icon">
+                                    <i class="bi bi-radioactive"></i>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="card mb-4" id="public-teknik-table-card">
@@ -400,7 +449,7 @@
                         </div>
                     </div>
 
-                    {{-- Goods Receipt & Goods Issue Forms --}}
+                    {{-- Goods Receipt Section --}}
                     <div class="row g-4 mb-4">
                         {{-- Goods Receipt Form --}}
                         <div class="col-lg-6">
@@ -472,8 +521,8 @@
                                             <div class="d-flex flex-nowrap align-items-center gap-1 ship-input-group" id="publicGRShipBadges">
                                                 @foreach([1, 2, 3, 4] as $ship)
                                                     <label class="ship-checkbox-label">
-                                                        <input class="ship-checkbox-input public-gr-ship-checkbox" type="checkbox" name="ship_unloader[]" value="{{ $ship }}" data-ship="{{ $ship }}">
-                                                        <span class="ship-checkbox-box">{{ $ship }}</span>
+                                                        <input class="ship-checkbox-input public-gr-ship-checkbox" type="checkbox" name="ship_unloader[]" value="{{ $ship }}" data-ship="{{ $ship }}" @checked(in_array((string)$ship, old('type') === 'in' ? old('ship_unloader', []) : [], true))>
+                                                        <span class="ship-checkbox-box">SU-{{ $ship }}</span>
                                                     </label>
                                                 @endforeach
                                                 <label class="ship-checkbox-label">
@@ -501,7 +550,87 @@
                                 </div>
                             </div>
                         </div>
+                        {{-- Goods Receipt History Table --}}
+                        <div class="col-lg-6">
+                            <div class="card" style="height: 100%;">
+                                <div class="card-header">
+                                    <span><i class="bi bi-table text-success me-2"></i>History Goods Receipt</span>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                                        <table class="table mb-0 align-middle" style="min-width: 1000px;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width:50px;">No</th>
+                                                    <th>Tanggal</th>
+                                                    <th>No Normalisasi</th>
+                                                    <th>Nama Barang</th>
+                                                    <th>Komponen</th>
+                                                    <th>Tipe Barang</th>
+                                                    <th style="width: 100px;">Ship Unloader</th>
+                                                    <th>Lokasi</th>
+                                                    <th class="text-center">Volume</th>
+                                                    <th class="text-center">Jumlah</th>
+                                                    <th>Satuan</th>
+                                                    <th>User</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @forelse($publicDashboard['recentReceipts'] as $index => $tx)
+                                                    @php
+                                                        $activeShips = collect(explode(',', (string) $tx->ship_unloader))->filter()->all();
+                                                        $isAllActive = count($activeShips) === 4;
+                                                    @endphp
+                                                    <tr>
+                                                        <td>{{ $index + 1 }}</td>
+                                                        <td>{{ $tx->date->format('d/m/Y') }}</td>
+                                                        <td><span class="norm-text-in">{{ $tx->no_normalisasi ?? $tx->item->no_normalisasi ?? '-' }}</span></td>
+                                                        <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
+                                                        <td>{{ $tx->item->component ?? '-' }}</td>
+                                                        <td>{{ $tx->item->category ?? '-' }}</td>
+                                                        <td class="text-nowrap align-middle" style="width: 100px;">
+                                                            <div class="d-flex flex-nowrap align-items-center gap-1">
+                                                                @if($isAllActive)
+                                                                    <span class="badge badge-all" style="width: auto; min-width: 24px; padding: 0 6px !important;">
+                                                                        ALL
+                                                                    </span>
+                                                                @elseif(count($activeShips) > 0)
+                                                                    @foreach($activeShips as $ship)
+                                                                        <span class="badge badge-ship-active">
+                                                                            {{ $ship }}
+                                                                        </span>
+                                                                    @endforeach
+                                                                @else
+                                                                    -
+                                                                @endif
+                                                            </div>
+                                                        </td>
+                                                        <td>{{ $tx->lokasi ?? $tx->item->lokasi ?? '-' }}</td>
+                                                        <td class="text-center fw-700">{{ $tx->volume === null ? '-' : number_format($tx->volume) }}</td>
+                                                        <td class="text-center fw-700 text-success">+{{ number_format($tx->quantity) }}</td>
+                                                        <td>{{ $tx->item->unit ?? '-' }}</td>
+                                                        <td>{{ $tx->user->name ?? 'Guest' }}</td>
+                                                    </tr>
+                                                @empty
+                                                    <tr>
+                                                        <td colspan="12">
+                                                            <div class="empty-state" style="padding:40px 10px;">
+                                                                <i class="bi bi-inbox" style="font-size:34px;"></i>
+                                                                <h6 class="mt-2" style="font-size:13px;">Belum ada history penerimaan</h6>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                @endforelse
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
+                    {{-- Goods Issue Section --}}
+                    <div class="row g-4 mb-4">
                         {{-- Goods Issue Form --}}
                         <div class="col-lg-6">
                             <div class="request-form-card" style="height: 100%;">
@@ -572,8 +701,8 @@
                                             <div class="d-flex flex-nowrap align-items-center gap-1 ship-input-group" id="publicGIShipBadges">
                                                 @foreach([1, 2, 3, 4] as $ship)
                                                     <label class="ship-checkbox-label">
-                                                        <input class="ship-checkbox-input public-gi-ship-checkbox" type="checkbox" name="ship_unloader[]" value="{{ $ship }}" data-ship="{{ $ship }}">
-                                                        <span class="ship-checkbox-box ship-checkbox-box-issue">{{ $ship }}</span>
+                                                        <input class="ship-checkbox-input public-gi-ship-checkbox" type="checkbox" name="ship_unloader[]" value="{{ $ship }}" data-ship="{{ $ship }}" @checked(in_array((string)$ship, old('type') === 'out' ? old('ship_unloader', []) : [], true))>
+                                                        <span class="ship-checkbox-box ship-checkbox-box-issue">SU-{{ $ship }}</span>
                                                     </label>
                                                 @endforeach
                                                 <label class="ship-checkbox-label">
@@ -601,6 +730,83 @@
                                             <i class="bi bi-send-fill me-1"></i> Process Goods Issue
                                         </button>
                                     </form>
+                                </div>
+                            </div>
+                        </div>
+                        {{-- Goods Issue History Table --}}
+                        <div class="col-lg-6">
+                            <div class="card" style="height: 100%;">
+                                <div class="card-header">
+                                    <span><i class="bi bi-table text-warning me-2"></i>History Goods Issue</span>
+                                </div>
+                                <div class="card-body p-0">
+                                    <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                                        <table class="table mb-0 align-middle" style="min-width: 1000px;">
+                                            <thead>
+                                                <tr>
+                                                    <th style="width:50px;">No</th>
+                                                    <th>Tanggal</th>
+                                                    <th>No Normalisasi</th>
+                                                    <th>Nama Barang</th>
+                                                    <th>Komponen</th>
+                                                    <th>Tipe Barang</th>
+                                                    <th style="width: 100px;">Ship Unloader</th>
+                                                    <th>Lokasi</th>
+                                                    <th class="text-center">Volume</th>
+                                                    <th class="text-center">Jumlah</th>
+                                                    <th>Satuan</th>
+                                                    <th>User</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @forelse($publicDashboard['recentIssues'] as $index => $tx)
+                                                    @php
+                                                        $activeShips = collect(explode(',', (string) $tx->ship_unloader))->filter()->all();
+                                                        $isAllActive = count($activeShips) === 4;
+                                                    @endphp
+                                                    <tr>
+                                                        <td>{{ $index + 1 }}</td>
+                                                        <td>{{ $tx->date->format('d/m/Y') }}</td>
+                                                        <td><span class="norm-text-out">{{ $tx->no_normalisasi ?? $tx->item->no_normalisasi ?? '-' }}</span></td>
+                                                        <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
+                                                        <td>{{ $tx->item->component ?? '-' }}</td>
+                                                        <td>{{ $tx->item->category ?? '-' }}</td>
+                                                        <td class="text-nowrap align-middle" style="width: 100px;">
+                                                            <div class="d-flex flex-nowrap align-items-center gap-1">
+                                                                @if($isAllActive)
+                                                                    <span class="badge badge-all" style="width: auto; min-width: 24px; padding: 0 6px !important;">
+                                                                        ALL
+                                                                    </span>
+                                                                @elseif(count($activeShips) > 0)
+                                                                    @foreach($activeShips as $ship)
+                                                                        <span class="badge badge-ship-active badge-ship-active-issue">
+                                                                            {{ $ship }}
+                                                                        </span>
+                                                                    @endforeach
+                                                                @else
+                                                                    -
+                                                                @endif
+                                                            </div>
+                                                        </td>
+                                                        <td>{{ $tx->lokasi ?? $tx->item->lokasi ?? '-' }}</td>
+                                                        <td class="text-center fw-700">{{ $tx->volume === null ? '-' : number_format($tx->volume) }}</td>
+                                                        <td class="text-center fw-700 text-warning">-{{ number_format($tx->quantity) }}</td>
+                                                        <td>{{ $tx->item->unit ?? '-' }}</td>
+                                                        <td>{{ $tx->user->name ?? 'Guest' }}</td>
+                                                    </tr>
+                                                @empty
+                                                    <tr>
+                                                        <td colspan="12">
+                                                            <div class="empty-state" style="padding:40px 10px;">
+                                                                <i class="bi bi-inbox" style="font-size:34px;"></i>
+                                                                <h6 class="mt-2" style="font-size:13px;">Belum ada history pengeluaran</h6>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                @endforelse
+                                            </tbody>
+                                        </table>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1145,7 +1351,7 @@
 
                     const year = document.getElementById('publicMonthlyYearFilter')?.value || @json($publicDashboard['selectedYear']);
                     const period = document.getElementById('publicMonthlyPeriodFilter')?.value || 'thisMonth';
-                    const url = `{{ route('public.teknik.monthlyData') }}?year=${encodeURIComponent(year)}&period=${encodeURIComponent(period)}`;
+                    const url = `{{ request()->getBaseUrl() }}/public/api/teknik/monthly-data?year=${encodeURIComponent(year)}&period=${encodeURIComponent(period)}`;
 
                     fetch(url)
                         .then(res => res.json())
@@ -1163,8 +1369,8 @@
 
                     const year = document.getElementById('publicShipYearFilter')?.value || '';
                     const url = year
-                        ? `{{ route('public.teknik.shipUnloaderData') }}?year=${encodeURIComponent(year)}`
-                        : `{{ route('public.teknik.shipUnloaderData') }}`;
+                        ? `{{ request()->getBaseUrl() }}/public/api/teknik/ship-unloader-data?year=${encodeURIComponent(year)}`
+                        : `{{ request()->getBaseUrl() }}/public/api/teknik/ship-unloader-data`;
 
                     fetch(url)
                         .then(res => res.json())
@@ -1201,7 +1407,7 @@
 
         // Interactive SOH Card Filters and Search for Teknik
         (function() {
-            const filterCards = document.querySelectorAll('.technical-dashboard-cards .filter-card-btn');
+            const filterCards = document.querySelectorAll('.filter-card-btn');
             const searchInput = document.getElementById('publicTeknikSearch');
             const tableRows = document.querySelectorAll('#public-teknik-table tbody tr:not(.no-data-row)');
             let currentFilter = 'all';
@@ -1226,9 +1432,15 @@
 
             filterCards.forEach(card => {
                 card.addEventListener('click', function() {
-                    filterCards.forEach(c => c.classList.remove('active'));
-                    this.classList.add('active');
-                    currentFilter = this.getAttribute('data-filter');
+                    const filterValue = this.getAttribute('data-filter');
+                    filterCards.forEach(c => {
+                        if (c.getAttribute('data-filter') === filterValue) {
+                            c.classList.add('active');
+                        } else {
+                            c.classList.remove('active');
+                        }
+                    });
+                    currentFilter = filterValue;
                     filterTable();
                     
                     // Smooth scroll to table card
@@ -1403,28 +1615,50 @@
             setupFormAutoFill('publicGRItemSelect', 'publicGRNoNormalisasi', 'publicGRCategory', 'publicGRItemCategory', 'publicGRStock', 'publicGRVolume', 'publicGRLokasi', 'publicGRUnit', 'publicGRQuantity', null, false);
             setupFormAutoFill('publicGIItemSelect', 'publicGINoNormalisasi', 'publicGICategory', 'publicGIItemCategory', 'publicGIStock', 'publicGIVolume', 'publicGILokasi', 'publicGIUnit', 'publicGIQuantity', 'publicGIStockWarning', true);
 
-            function setupShipCheckboxes(allCheckboxId, checkboxClass) {
+            function setupShipCheckboxes(allCheckboxId, checkboxClass, formId) {
                 const allCheckbox = document.getElementById(allCheckboxId);
                 const checkboxes = document.querySelectorAll('.' + checkboxClass);
+                const form = document.getElementById(formId);
 
                 if (!allCheckbox) return;
 
-                allCheckbox.addEventListener('change', function() {
+                // On load, if all 4 individual checkboxes are checked, check ALL and uncheck them.
+                if (checkboxes.length > 0 && Array.from(checkboxes).every(cb => cb.checked)) {
+                    allCheckbox.checked = true;
                     checkboxes.forEach(cb => {
-                        cb.checked = this.checked;
+                        cb.checked = false;
                     });
+                }
+
+                allCheckbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        checkboxes.forEach(cb => {
+                            cb.checked = false;
+                        });
+                    }
                 });
 
                 checkboxes.forEach(cb => {
                     cb.addEventListener('change', function() {
-                        const allChecked = Array.from(checkboxes).every(x => x.checked);
-                        allCheckbox.checked = allChecked;
+                        if (this.checked) {
+                            allCheckbox.checked = false;
+                        }
                     });
                 });
+
+                if (form) {
+                    form.addEventListener('submit', function() {
+                        if (allCheckbox.checked) {
+                            checkboxes.forEach(cb => {
+                                cb.checked = true;
+                            });
+                        }
+                    });
+                }
             }
 
-            setupShipCheckboxes('publicGRShipAll', 'public-gr-ship-checkbox');
-            setupShipCheckboxes('publicGIShipAll', 'public-gi-ship-checkbox');
+            setupShipCheckboxes('publicGRShipAll', 'public-gr-ship-checkbox', 'publicGRForm');
+            setupShipCheckboxes('publicGIShipAll', 'public-gi-ship-checkbox', 'publicGIForm');
         })();
 
         // Multi-line barang: tambah / hapus baris
@@ -1646,7 +1880,7 @@
         try {
             const formData = new FormData(loginForm);
             const csrfToken = formData.get('_token') || document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            const response = await fetch('{{ url("/login") }}', {
+            const response = await fetch(`{{ request()->getBaseUrl() }}/login`, {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': csrfToken,
@@ -1710,7 +1944,7 @@
         try {
             const formData = new FormData(forgotPasswordForm);
             const csrfToken = formData.get('_token') || document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-            const response = await fetch('{{ route("password.email") }}', {
+            const response = await fetch(`{{ request()->getBaseUrl() }}/forgot-password`, {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': csrfToken,

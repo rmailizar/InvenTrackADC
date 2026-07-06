@@ -10,7 +10,12 @@ class ItemController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Item::query()->visibleFor(auth()->user());
+        // Super Admin bidang tab switching
+        $saBidang = $this->superAdminBidangContext($request);
+        $isSuperAdmin = auth()->user()->isSuperAdmin();
+        $viewUser = $saBidang ? $this->createBidangProxy($saBidang) : auth()->user();
+
+        $query = Item::query()->visibleFor($viewUser);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -23,13 +28,13 @@ class ItemController extends Controller
             });
         }
 
-        if (!auth()->user()->isTeknik() && $request->filled('category')) {
+        if (!$viewUser->isTeknik() && $request->filled('category')) {
             $query->where('category', $request->category);
         }
 
         $stockSummary = null;
 
-        if (auth()->user()->isTeknik()) {
+        if ($viewUser->isTeknik()) {
             $statusItems = (clone $query)->latest()->get();
             $stockRows = $statusItems->map(fn($item) => [
                 'item' => $item,
@@ -68,11 +73,11 @@ class ItemController extends Controller
             $items = $query->latest()->paginate(15)->withQueryString();
         }
 
-        $categories = Item::visibleFor(auth()->user())->select('category')->distinct()->pluck('category');
-        $components = Item::visibleFor(auth()->user())->select('component')->whereNotNull('component')->distinct()->pluck('component');
-        $units = Item::visibleFor(auth()->user())->select('unit')->distinct()->pluck('unit');
+        $categories = Item::visibleFor($viewUser)->select('category')->distinct()->pluck('category');
+        $components = Item::visibleFor($viewUser)->select('component')->whereNotNull('component')->distinct()->pluck('component');
+        $units = Item::visibleFor($viewUser)->select('unit')->distinct()->pluck('unit');
 
-        return view('items.index', compact('items', 'categories', 'components', 'units', 'stockSummary'));
+        return view('items.index', compact('items', 'categories', 'components', 'units', 'stockSummary', 'saBidang', 'isSuperAdmin'));
     }
 
     public function create()

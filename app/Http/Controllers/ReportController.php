@@ -36,12 +36,14 @@ class ReportController extends Controller
             $totalMasuk = $stockRows->sum('masuk');
             $totalKeluar = $stockRows->sum('keluar');
             $totalAkhir = $stockRows->sum('stok_akhir');
+            $transactions = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
 
             return view('reports.index', compact(
                 'activeTable',
                 'categories',
                 'years',
                 'stockItems',
+                'transactions',
                 'totalMasuk',
                 'totalKeluar',
                 'totalAkhir'
@@ -59,6 +61,7 @@ class ReportController extends Controller
             ->orderBy('id', $sort)
             ->paginate(20)
             ->withQueryString();
+        $stockItems = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 20);
 
         if (!$request->has('inventrack_section') && ($request->ajax() || $request->wantsJson())) {
             return response()->json([
@@ -70,6 +73,7 @@ class ReportController extends Controller
         return view('reports.index', compact(
             'activeTable',
             'transactions',
+            'stockItems',
             'categories',
             'years',
             'totalMasuk',

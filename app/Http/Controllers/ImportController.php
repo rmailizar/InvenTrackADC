@@ -39,7 +39,7 @@ class ImportController extends Controller
                 $skipCount = $import->getSkipCount();
                 $failures = $import->failures();
 
-                $message = "✅ Import Barang selesai: {$successCount} baris berhasil diimport.";
+                $message = "Import Barang selesai: {$successCount} baris berhasil diimport.";
                 if ($skipCount > 0) {
                     $message .= " {$skipCount} baris dilewati (duplikat nama/no normalisasi).";
                 }

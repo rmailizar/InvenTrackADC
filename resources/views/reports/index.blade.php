@@ -109,9 +109,6 @@
                         <a href="{{ route('reports.index', ['table' => $activeTable]) }}" class="btn btn-reset btn-sm" title="Reset Filter">
                             <i class="bi bi-arrow-counterclockwise"></i>
                         </a>
-                        <a href="{{ route('reports.export', $exportParams) }}" class="btn btn-success btn-sm">
-                            <i class="bi bi-file-earmark-excel-fill me-1"></i> Export Excel
-                        </a>
                     </div>
                 </form>
             </div>
@@ -221,7 +218,7 @@
                             </thead>
                             <tbody>
                                 @forelse($stockItems as $index => $row)
-                                    <tr data-item-id="{{ $row->item_id }}"
+                                    <tr data-item-id="{{ $row->item->id }}"
                                         data-name="{{ $row->item->name }}"
                                         data-normalisasi="{{ $row->item->no_normalisasi ?? '' }}"
                                         data-component="{{ $row->item->component ?? '' }}"

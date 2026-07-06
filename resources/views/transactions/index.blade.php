@@ -1,8 +1,10 @@
 @extends('layouts.app')
 
 @php
-    $isTeknik = auth()->user()->bidang === 'teknik';
+    $isTeknik = isset($saBidang) ? $saBidang === 'teknik' : auth()->user()->bidang === 'teknik';
     $activeTransactionType = request('type') === 'out' ? 'out' : 'in';
+    $suffix = $isTeknik ? 'teknik-' . $activeTransactionType : 'umum';
+    $jsSuffix = str_replace('-', '_', $suffix);
     $pageTitle = $isTeknik
         ? ($activeTransactionType === 'out' ? 'Goods Issue' : 'Goods Receipt')
         : 'Transaksi';
@@ -27,10 +29,39 @@
 
 @section('content')
     <div class="animate-fade-in {{ $isTeknik ? 'technical-transaction-page' : '' }}">
+        {{-- Super Admin Bidang Tab Switcher --}}
+        @if(!empty($isSuperAdmin))
+        <div class="report-tabs mb-3 sa-bidang-tabs">
+            <a href="{{ route('transactions.index', ['sa_bidang' => 'umum']) }}"
+                class="report-tab sa-bidang-tab {{ ($saBidang ?? '') !== 'teknik' ? 'active' : '' }}"
+                data-sa-bidang="umum"
+                data-sa-section="transactionsSection"
+                onclick="switchSection('transactionsSection', this); return false;">
+                <i class="bi bi-building"></i> Transaksi Umum
+            </a>
+            <a href="{{ route('transactions.index', ['sa_bidang' => 'teknik', 'type' => 'in']) }}"
+                class="report-tab sa-bidang-tab {{ (($saBidang ?? '') === 'teknik' && $activeTransactionType === 'in') ? 'active' : '' }}"
+                data-sa-bidang="teknik"
+                data-sa-section="transactionsReceiptSection"
+                onclick="switchSection('transactionsReceiptSection', this); return false;">
+                <i class="fa-solid fa-box-open"></i> Goods Receipt
+            </a>
+            <a href="{{ route('transactions.index', ['sa_bidang' => 'teknik', 'type' => 'out']) }}"
+                class="report-tab sa-bidang-tab {{ (($saBidang ?? '') === 'teknik' && $activeTransactionType === 'out') ? 'active' : '' }}"
+                data-sa-bidang="teknik"
+                data-sa-section="transactionsIssueSection"
+                onclick="switchSection('transactionsIssueSection', this); return false;">
+                <i class="fa-solid fa-dolly"></i> Goods Issue
+            </a>
+        </div>
+        @endif
         <!-- Header Actions Wrapper -->
         <div class="header-action-wrapper d-none">
             <div class="section-header-actions">
                 <form method="GET" action="{{ route('transactions.index') }}">
+                    @if(!empty($saBidang))
+                        <input type="hidden" name="sa_bidang" value="{{ $saBidang }}">
+                    @endif
                     @if($isTeknik)
                         <input type="hidden" name="type" value="{{ $activeTransactionType }}">
                     @endif
@@ -67,7 +98,7 @@
                         </select>
                     </div>
                     <div class="action-row-2">
-                        <a href="{{ $isTeknik ? route('transactions.index', ['type' => $activeTransactionType]) : route('transactions.index') }}" class="btn btn-reset btn-sm" title="Reset Filter">
+                        <a href="{{ $isTeknik ? route('transactions.index', array_merge(['type' => $activeTransactionType], !empty($saBidang) ? ['sa_bidang' => $saBidang] : [])) : route('transactions.index', !empty($saBidang) ? ['sa_bidang' => $saBidang] : []) }}" class="btn btn-reset btn-sm" title="Reset Filter">
                             <i class="bi bi-arrow-counterclockwise"></i>
                         </a>
                     </div>
@@ -147,12 +178,12 @@
                                     <label class="form-label">Ship Unloader <span class="text-danger">*</span></label>
                                     <div class="d-flex flex-nowrap align-items-center gap-1 ship-input-group" id="itemShipBadges">
 
-                                        @foreach([1, 2, 3, 4] as $ship)
-                                            <label class="ship-checkbox-label">
-                                                <input class="ship-checkbox-input tx-ship-checkbox" type="checkbox" name="ship_unloader[]" value="{{ $ship }}" data-ship="{{ $ship }}">
-                                                <span class="ship-checkbox-box {{ $activeTransactionType === 'out' ? 'ship-checkbox-box-issue' : '' }}">SU-{{ $ship }}</span>
-                                            </label>
-                                        @endforeach
+                                         @foreach([1, 2, 3, 4] as $ship)
+                                             <label class="ship-checkbox-label">
+                                                 <input class="ship-checkbox-input tx-ship-checkbox" type="checkbox" name="ship_unloader[]" value="{{ $ship }}" data-ship="{{ $ship }}" @checked(in_array((string)$ship, old('ship_unloader', []), true))>
+                                                 <span class="ship-checkbox-box {{ $activeTransactionType === 'out' ? 'ship-checkbox-box-issue' : '' }}">SU-{{ $ship }}</span>
+                                             </label>
+                                         @endforeach
 
                                         <label class="ship-checkbox-label">
                                             <input class="ship-checkbox-input" type="checkbox" id="txShipAll" data-ship="all">
@@ -201,7 +232,7 @@
         @endif
     </div>
 
-    <div class="modal fade inventrack-modal {{ $isTeknik ? 'technical-transaction-modal' : '' }}" id="transactionDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade inventrack-modal {{ $isTeknik ? 'technical-transaction-modal' : '' }}" id="transactionDetailModal-{{ $suffix }}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -218,7 +249,7 @@
         </div>
     </div>
 
-    <div class="modal fade inventrack-modal {{ $isTeknik ? 'technical-transaction-modal' : '' }}" id="transactionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade inventrack-modal {{ $isTeknik ? 'technical-transaction-modal' : '' }}" id="transactionModal-{{ $suffix }}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content" style="position:relative;">
                 <div class="modal-loading-overlay" id="txLoading"><div class="modal-spinner"></div></div>
@@ -238,7 +269,7 @@
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">Tanggal <span class="text-danger">*</span></label>
-                                <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required id="txDate" min="{{ date('Y-m-d') }}">
+                                <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required id="txDate">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Jenis Transaksi <span class="text-danger">*</span></label>
@@ -301,13 +332,17 @@
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label">Ship Unloader <span class="text-danger">*</span></label>
-                                    <div class="d-flex flex-wrap gap-2">
+                                    <div class="d-flex flex-nowrap align-items-center gap-1 ship-input-group" id="modalItemShipBadges">
                                         @foreach([1, 2, 3, 4] as $ship)
-                                            <label class="form-check form-check-inline mb-0">
-                                                <input class="form-check-input tx-ship-checkbox" type="checkbox" name="ship_unloader[]" value="{{ $ship }}">
-                                                <span class="form-check-label">Ship {{ $ship }}</span>
+                                            <label class="ship-checkbox-label">
+                                                <input class="ship-checkbox-input tx-ship-checkbox" type="checkbox" name="ship_unloader[]" value="{{ $ship }}" data-ship="{{ $ship }}">
+                                                <span class="ship-checkbox-box {{ $activeTransactionType === 'out' ? 'ship-checkbox-box-issue' : '' }}">SU-{{ $ship }}</span>
                                             </label>
                                         @endforeach
+                                        <label class="ship-checkbox-label">
+                                            <input class="ship-checkbox-input" type="checkbox" id="txModalShipAll" data-ship="all">
+                                            <span class="ship-checkbox-box {{ $activeTransactionType === 'out' ? 'ship-checkbox-box-issue' : '' }} px-2" style="width: auto; min-width: 24px;">ALL</span>
+                                        </label>
                                     </div>
                                 </div>
                             </div>
@@ -360,7 +395,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-primary" id="txSubmitBtn" onclick="submitTransactionForm()">
+                    <button type="button" class="btn btn-primary" id="txSubmitBtn" onclick="submitTransactionForm_{{ $jsSuffix }}()">
                         <i class="bi bi-send-fill"></i> Kirim Transaksi
                     </button>
                 </div>
@@ -371,26 +406,27 @@
 
 @push('scripts')
     <script>
+    (function () {
         window.__transactionDetailData = @json($transactionDetailData);
         var transactionDetailData = @json($transactionDetailData);
         var currentScript = document.currentScript;
         var transactionSectionRoot = currentScript ? (currentScript.closest('.content-section') || document) : document;
-        var txModalEl = document.getElementById('transactionModal');
-        var txModal = new bootstrap.Modal(txModalEl);
-        var txDetailModalEl = document.getElementById('transactionDetailModal');
-        var txDetailModal = new bootstrap.Modal(txDetailModalEl);
-        var txTypeSelect = document.getElementById('txType');
-        var txItemSelect = document.getElementById('txItemSelect');
-        var txCategoryInput = document.getElementById('txItemCategory');
-        var txUnitInput = document.getElementById('txItemUnit');
-        var txStockInput = document.getElementById('txItemStock');
-        var txQuantityInput = document.getElementById('txQuantity');
-        var txCategoryReadonly = document.getElementById('txCategoryReadonly');
-        var txPriceInput = document.getElementById('txPrice');
-        var txStockWarning = document.getElementById('txStockWarning');
-        var txNoNormalisasi = document.getElementById('txNoNormalisasi');
-        var txLokasi = document.getElementById('txLokasi');
-        var txVolume = document.getElementById('txVolume');
+        var txModalEl = document.getElementById('transactionModal-{{ $suffix }}');
+        var txModal = bootstrap.Modal.getOrCreateInstance(txModalEl);
+        var txDetailModalEl = document.getElementById('transactionDetailModal-{{ $suffix }}');
+        var txDetailModal = bootstrap.Modal.getOrCreateInstance(txDetailModalEl);
+        var txTypeSelect = txModalEl.querySelector('#txType');
+        var txItemSelect = txModalEl.querySelector('#txItemSelect');
+        var txCategoryInput = txModalEl.querySelector('#txItemCategory');
+        var txUnitInput = txModalEl.querySelector('#txItemUnit');
+        var txStockInput = txModalEl.querySelector('#txItemStock');
+        var txQuantityInput = txModalEl.querySelector('#txQuantity');
+        var txCategoryReadonly = txModalEl.querySelector('#txCategoryReadonly');
+        var txPriceInput = txModalEl.querySelector('#txPrice');
+        var txStockWarning = txModalEl.querySelector('#txStockWarning');
+        var txNoNormalisasi = txModalEl.querySelector('#txNoNormalisasi');
+        var txLokasi = txModalEl.querySelector('#txLokasi');
+        var txVolume = txModalEl.querySelector('#txVolume');
         var isTeknikTransaction = @json($isTeknik);
         var activeTransactionType = @json($activeTransactionType);
 
@@ -409,23 +445,45 @@
             var root = transactionSectionRoot;
             var allCheckbox = root.querySelector('#txShipAll');
             var shipCheckboxes = root.querySelectorAll('#itemShipBadges .tx-ship-checkbox');
+            var form = root.querySelector('#txInlineForm');
 
             if (!allCheckbox) return;
 
+            // On load, if all 4 individual checkboxes are checked, check ALL and uncheck them.
+            if (shipCheckboxes.length > 0 && Array.from(shipCheckboxes).every(cb => cb.checked)) {
+                allCheckbox.checked = true;
+                shipCheckboxes.forEach(cb => {
+                    cb.checked = false;
+                });
+            }
+
             // Klik ALL
             allCheckbox.addEventListener('change', function () {
-                shipCheckboxes.forEach(cb => {
-                    cb.checked = this.checked;
-                });
+                if (this.checked) {
+                    shipCheckboxes.forEach(cb => {
+                        cb.checked = false;
+                    });
+                }
             });
 
             // Klik salah satu SU
             shipCheckboxes.forEach(cb => {
                 cb.addEventListener('change', function () {
-                    const allChecked = Array.from(shipCheckboxes).every(x => x.checked);
-                    allCheckbox.checked = allChecked;
+                    if (this.checked) {
+                        allCheckbox.checked = false;
+                    }
                 });
             });
+
+            if (form) {
+                form.addEventListener('submit', function() {
+                    if (allCheckbox.checked) {
+                        shipCheckboxes.forEach(cb => {
+                            cb.checked = true;
+                        });
+                    }
+                });
+            }
         })();
 
         (function bindInlineTransactionForm() {
@@ -464,7 +522,7 @@
                 getInlineField('txInlineNoNormalisasi').value = hasItem ? (selected.dataset.noNormalisasi || '') : '';
                 getInlineField('txInlineLokasi').value = hasItem ? (selected.dataset.lokasi || '') : '';
 
-                var ships = [];
+                var ships = (hasItem && selected.dataset.shipUnloader) ? selected.dataset.shipUnloader.split(',') : [];
                 root.querySelectorAll('.ship-checkbox-input').forEach(el => {
                     el.checked = ships.includes(el.value.toString());
                 });
@@ -504,7 +562,7 @@
                     button.addEventListener('click', function() {
                         var data = detailData[this.dataset.transactionId];
                         if (!data) return;
-                        var grid = document.getElementById('transactionDetailGrid');
+                        var grid = txDetailModalEl.querySelector('#transactionDetailGrid');
                         grid.replaceChildren();
                         appendTransactionDetail(grid, 'Tanggal', data.date);
                         appendTransactionDetail(grid, 'Jenis', data.type);
@@ -587,7 +645,7 @@
                     txLokasi.value = selected.dataset.lokasi || '';
                     txVolume.value = selected.dataset.volume || '';
                     
-                    var ships = [];
+                    var ships = selected.dataset.shipUnloader ? selected.dataset.shipUnloader.split(',') : [];
                     
                     // Ambil elemen container & seluruh elemen badge untuk kustomisasi visual (jika ada di modal)
                     const container = txModalEl.querySelector('#itemShipBadges');
@@ -655,9 +713,34 @@
         txQuantityInput.addEventListener('input', checkTxStock);
         txTypeSelect.addEventListener('change', togglePriceInput);
 
-        window.openTransactionModal = function (id = null) {
-            document.getElementById('txForm').reset();
-            document.getElementById('txError').style.display = 'none';
+        (function bindModalShipCheckboxes() {
+            var allCheckbox = txModalEl.querySelector('#txModalShipAll');
+            var shipCheckboxes = txModalEl.querySelectorAll('#modalItemShipBadges .tx-ship-checkbox');
+
+            if (!allCheckbox) return;
+
+            // Klik ALL
+            allCheckbox.addEventListener('change', function () {
+                if (this.checked) {
+                    shipCheckboxes.forEach(cb => {
+                        cb.checked = false;
+                    });
+                }
+            });
+
+            // Klik salah satu SU
+            shipCheckboxes.forEach(cb => {
+                cb.addEventListener('change', function () {
+                    if (this.checked) {
+                        allCheckbox.checked = false;
+                    }
+                });
+            });
+        })();
+        // Modal functions are now inside the closure so they can access closure variables
+        window.openTransactionModal_{{ $jsSuffix }} = function (id = null) {
+            txModalEl.querySelector('#txForm').reset();
+            txModalEl.querySelector('#txError').style.display = 'none';
             txCategoryInput.value = '';
             txUnitInput.value = '';
             txStockInput.value = '';
@@ -668,77 +751,129 @@
                 txLokasi.value = '';
                 txVolume.value = '';
                 txModalEl.querySelectorAll('.tx-ship-checkbox').forEach(el => el.checked = false);
+                var allCheckbox = txModalEl.querySelector('#txModalShipAll');
+                if (allCheckbox) allCheckbox.checked = false;
             }
 
             if (id) {
-                document.getElementById('txModalTitle').innerHTML = '<i class="bi bi-pencil-fill"></i> <span>Edit Transaksi</span>';
-                document.getElementById('txId').value = id;
-                document.getElementById('txMethod').value = 'PUT';
-                document.getElementById('txSubmitBtn').innerHTML = '<i class="bi bi-check-lg"></i> Update';
-                document.getElementById('txPendingInfo').style.display = 'none';
-                document.getElementById('txUserRow').style.display = 'none';
+                txModalEl.querySelector('#txModalTitle').innerHTML = '<i class="bi bi-pencil-fill"></i> <span>Edit Transaksi</span>';
+                txModalEl.querySelector('#txId').value = id;
+                txModalEl.querySelector('#txMethod').value = 'PUT';
+                txModalEl.querySelector('#txSubmitBtn').innerHTML = '<i class="bi bi-check-lg"></i> Update';
+                txModalEl.querySelector('#txPendingInfo').style.display = 'none';
+                txModalEl.querySelector('#txUserRow').style.display = 'none';
 
-                var loading = document.getElementById('txLoading');
+                var loading = txModalEl.querySelector('#txLoading');
                 loading.classList.add('show');
                 txModal.show();
 
-                fetch(`{{ url('transactions') }}/${id}/edit-data`, {
+                fetch(`{{ request()->getBaseUrl() }}/transactions/${id}/edit-data`, {
                     headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                 })
                     .then(res => res.json())
                     .then(data => {
                         loading.classList.remove('show');
-                        document.getElementById('txDate').value = data.date;
-                        document.getElementById('txType').value = data.type;
+                        txModalEl.querySelector('#txDate').value = data.date;
+                        txModalEl.querySelector('#txType').value = data.type;
                         txItemSelect.value = data.item_id;
                         txQuantityInput.value = data.quantity;
                         if (txPriceInput) txPriceInput.value = data.price || '';
-                        document.getElementById('txDescription').value = data.description || '';
+                        txModalEl.querySelector('#txDescription').value = data.description || '';
                         refreshItemInfo();
                         if (isTeknikTransaction) {
                             txNoNormalisasi.value = data.no_normalisasi || data.item.no_normalisasi || '';
                             txLokasi.value = data.lokasi || data.item.lokasi || '';
                             txVolume.value = data.volume || data.item.volume || '';
                             var dbShips = (data.ship_unloader || []);
-                            txModalEl.querySelectorAll('.tx-ship-checkbox').forEach(el => {
-                                el.checked = dbShips.map(String).includes(el.value.toString());
-                            });
+                            
+                            var allCheckbox = txModalEl.querySelector('#txModalShipAll');
+                            var shipCheckboxes = txModalEl.querySelectorAll('#modalItemShipBadges .tx-ship-checkbox');
+                            
+                            if (dbShips.length === 4) {
+                                if (allCheckbox) allCheckbox.checked = true;
+                                shipCheckboxes.forEach(el => el.checked = false);
+                            } else {
+                                if (allCheckbox) allCheckbox.checked = false;
+                                shipCheckboxes.forEach(el => {
+                                    el.checked = dbShips.map(String).includes(el.value.toString());
+                                });
+                            }
                         }
                         togglePriceInput();
                     })
                     .catch(() => {
                         loading.classList.remove('show');
-                        document.getElementById('txErrorMsg').textContent = 'Gagal memuat data transaksi.';
-                        document.getElementById('txError').style.display = 'block';
+                        txModalEl.querySelector('#txErrorMsg').textContent = 'Gagal memuat data transaksi.';
+                        txModalEl.querySelector('#txError').style.display = 'block';
                     });
             } else {
-                document.getElementById('txModalTitle').innerHTML = '<i class="bi bi-plus-circle-fill"></i> <span>Input Transaksi</span>';
-                document.getElementById('txId').value = '';
-                document.getElementById('txMethod').value = 'POST';
-                document.getElementById('txSubmitBtn').innerHTML = '<i class="bi bi-send-fill"></i> Kirim Transaksi';
-                document.getElementById('txPendingInfo').style.display = 'block';
-                document.getElementById('txUserRow').style.display = 'block';
-                document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
+                txModalEl.querySelector('#txModalTitle').innerHTML = '<i class="bi bi-plus-circle-fill"></i> <span>Input Transaksi</span>';
+                txModalEl.querySelector('#txId').value = '';
+                txModalEl.querySelector('#txMethod').value = 'POST';
+                txModalEl.querySelector('#txSubmitBtn').innerHTML = '<i class="bi bi-send-fill"></i> Kirim Transaksi';
+                txModalEl.querySelector('#txPendingInfo').style.display = 'block';
+                txModalEl.querySelector('#txUserRow').style.display = 'block';
+                txModalEl.querySelector('#txDate').value = new Date().toISOString().split('T')[0];
                 togglePriceInput();
                 txModal.show();
             }
-        }
+        };
 
-        function submitTransactionForm() {
-            var form = document.getElementById('txForm');
-            var errorDiv = document.getElementById('txError');
-            var errorMsg = document.getElementById('txErrorMsg');
-            var loading = document.getElementById('txLoading');
-            var submitBtn = document.getElementById('txSubmitBtn');
-            var txId = document.getElementById('txId').value;
-            var method = document.getElementById('txMethod').value;
+        window.submitTransactionForm_{{ $jsSuffix }} = function () {
+            var form = txModalEl.querySelector('#txForm');
+            var errorDiv = txModalEl.querySelector('#txError');
+            var errorMsg = txModalEl.querySelector('#txErrorMsg');
+            var loading = txModalEl.querySelector('#txLoading');
+            var submitBtn = txModalEl.querySelector('#txSubmitBtn');
+            var txId = txModalEl.querySelector('#txId').value;
+            var method = txModalEl.querySelector('#txMethod').value;
 
             errorDiv.style.display = 'none';
             loading.classList.add('show');
             submitBtn.disabled = true;
 
+            // Client-side HTML5 validation check
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                loading.classList.remove('show');
+                submitBtn.disabled = false;
+
+                // Collect validation errors and show them in txError
+                var messages = [];
+                form.querySelectorAll('input:invalid, select:invalid, textarea:invalid').forEach(function (el) {
+                    var label = txModalEl.querySelector(`label[for="${el.id}"]`) || el.closest('.mb-3')?.querySelector('.form-label') || el.closest('.col-md-6')?.querySelector('.form-label');
+                    var labelText = label ? label.textContent.replace('*', '').trim() : el.name;
+                    messages.push(`Bidang ${labelText} wajib diisi/tidak valid.`);
+                });
+                errorMsg.innerHTML = messages.join('<br>');
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            if (isTeknikTransaction) {
+                var checkedShips = form.querySelectorAll('.tx-ship-checkbox:checked');
+                var allCheckbox = txModalEl.querySelector('#txModalShipAll');
+                
+                if (checkedShips.length === 0 && (!allCheckbox || !allCheckbox.checked)) {
+                    loading.classList.remove('show');
+                    submitBtn.disabled = false;
+                    errorMsg.innerHTML = 'Ship Unloader wajib dipilih untuk transaksi Teknik.';
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+            }
+
+            // If ALL is checked, check all 4 individual checkboxes so their values are sent to the server.
+            var allCheckbox = txModalEl.querySelector('#txModalShipAll');
+            var shipCheckboxes = txModalEl.querySelectorAll('#modalItemShipBadges .tx-ship-checkbox');
+            if (allCheckbox && allCheckbox.checked && shipCheckboxes.length > 0) {
+                shipCheckboxes.forEach(cb => {
+                    cb.checked = true;
+                });
+            }
+
             var formData = new FormData(form);
-            var url = txId ? `{{ url('transactions') }}/${txId}` : '{{ route("transactions.store") }}';
+            var url = txId ? `{{ request()->getBaseUrl() }}/transactions/${txId}` : `{{ request()->getBaseUrl() }}/transactions`;
             if (method === 'PUT') formData.append('_method', 'PUT');
 
             fetch(url, {
@@ -773,7 +908,7 @@
                     errorMsg.textContent = 'Terjadi kesalahan. Silakan coba lagi.';
                     errorDiv.style.display = 'block';
                 });
-        }
+        };
 
         // Autocomplete search suggestions for Transactions
         (function() {
@@ -881,5 +1016,6 @@
                 }
             });
         })();
+    })();
     </script>
 @endpush

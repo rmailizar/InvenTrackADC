@@ -1,5 +1,8 @@
 @php
-    $isTeknik = auth()->user()->bidang === 'teknik';
+    $isTeknik = isset($saBidang) ? $saBidang === 'teknik' : auth()->user()->bidang === 'teknik';
+    $activeTransactionType = request('type') === 'out' ? 'out' : 'in';
+    $suffix = $isTeknik ? 'teknik-' . $activeTransactionType : 'umum';
+    $jsSuffix = str_replace('-', '_', $suffix);
     $currentSort = request('sort', 'latest') === 'oldest' ? 'oldest' : 'latest';
     $nextSort = $currentSort === 'oldest' ? 'latest' : 'oldest';
     $showCreateButton = $showCreateButton ?? true;
@@ -9,7 +12,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="text-muted" style="font-size:13px;">Total: {{ $transactions->total() }} transaksi</div>
         @if($showCreateButton)
-            <button type="button" class="btn btn-primary" onclick="openTransactionModal()">
+            <button type="button" class="btn btn-primary" onclick="openTransactionModal_{{ $jsSuffix }}()">
                 <i class="bi bi-plus-lg"></i> Input Transaksi
             </button>
         @endif
@@ -96,7 +99,7 @@
 
                                         <div class="d-flex flex-nowrap align-items-center gap-1">
                                             @if($isAllActive)
-                                                <span class="badge {{ $tx->type === 'out' ? 'badge-ship-active badge-ship-active-issue' : 'badge-ship-active' }}" style="width: auto; min-width: 24px; padding: 0 6px !important;">
+                                                <span class="badge badge-all" style="width: auto; min-width: 24px; padding: 0 6px !important;">
                                                     ALL
                                                 </span>
                                             @elseif(count($activeShips) > 0)
@@ -114,29 +117,29 @@
                                     <td class="text-center fw-700">{{ $tx->volume === null ? '-' : number_format($tx->volume) }}</td>
                                     <td class="text-center fw-700">{{ number_format($tx->quantity) }}</td>
                                     <td>{{ $tx->item->unit ?? '-' }}</td>
-                                    <td>{{ $tx->user->name ?? '-' }}</td>
+                                    <td>{{ $tx->user->name ?? 'Guest' }}</td>
                                     <td class="text-center">
                                         <div class="d-flex justify-content-center gap-2">
 
                                             <a href="javascript:void(0)"
-                                                class="action-icon text-primary btn-transaction-detail-open"
+                                                class="action-icon btn-transaction-detail-open"
                                                 title="Lihat Detail"
                                                 data-transaction-id="{{ $tx->id }}">
-                                                <i class="bi bi-info-circle-fill fs-5"></i>
+                                                <i class="bi bi-info-circle-fill fs-6"></i>
                                             </a>
 
                                             <a href="javascript:void(0)"
                                                 class="action-icon text-warning"
                                                 title="Edit"
-                                                onclick="openTransactionModal({{ $tx->id }})">
-                                                <i class="bi bi-pencil-fill fs-5"></i>
+                                                onclick="openTransactionModal_{{ $jsSuffix }}({{ $tx->id }})">
+                                                <i class="bi bi-pencil-fill fs-6"></i>
                                             </a>
 
                                             <a href="javascript:void(0)"
                                                 class="action-icon text-danger"
                                                 title="Hapus"
-                                                onclick="swalConfirm(...)">
-                                                <i class="bi bi-trash-fill fs-5"></i>
+                                                onclick="swalConfirm('Hapus Transaksi', 'Yakin hapus transaksi ini? Data yang sudah dihapus tidak bisa dikembalikan.', 'warning', 'Ya, Hapus', '#deleteTx-{{ $tx->id }}')">
+                                                <i class="bi bi-trash-fill fs-6"></i>
                                             </a>
 
                                             <form action="{{ route('transactions.destroy', $tx) }}"
@@ -166,7 +169,7 @@
                                         {{ \Illuminate\Support\Str::limit($tx->description, 60) }}
                                     </td>
                                     <td class="text-center">
-                                        <button type="button" class="btn btn-sm btn-outline-primary btn-transaction-detail-open"
+                                        <button type="button" class="btn btn-md btn-transaction-detail-open"
                                             title="Lihat Detail" data-transaction-id="{{ $tx->id }}">
                                             <i class="bi bi-info-circle-fill"></i>
                                         </button>

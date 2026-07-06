@@ -10,7 +10,12 @@ class TransactionController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Transaction::with(['item', 'user', 'approver'])->visibleFor(auth()->user());
+        // Super Admin bidang tab switching
+        $saBidang = $this->superAdminBidangContext($request);
+        $isSuperAdmin = auth()->user()->isSuperAdmin();
+        $viewUser = $saBidang ? $this->createBidangProxy($saBidang) : auth()->user();
+
+        $query = Transaction::with(['item', 'user', 'approver'])->visibleFor($viewUser);
 
         // Staff can only see their own transactions
         if (auth()->user()->isStaff()) {
@@ -32,7 +37,7 @@ class TransactionController extends Controller
         }
 
         $typeFilter = $request->filled('type') ? $request->type : null;
-        if (auth()->user()->isTeknik()) {
+        if ($viewUser->isTeknik()) {
             $typeFilter = $typeFilter === 'out' ? 'out' : 'in';
         }
 
@@ -61,11 +66,11 @@ class TransactionController extends Controller
             ->withQueryString();
 
         // Pass items for modal dropdown
-        $items = Item::visibleFor(auth()->user())->orderBy('name')->get();
+        $items = Item::visibleFor($viewUser)->orderBy('name')->get();
         $transactionDetailData = $this->transactionDetailData($transactions);
         
         $yearExpr = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y', date) as year" : 'YEAR(date) as year';
-        $years = Transaction::visibleFor(auth()->user())
+        $years = Transaction::visibleFor($viewUser)
             ->selectRaw($yearExpr)
             ->distinct()
             ->orderBy('year', 'desc')
@@ -77,7 +82,7 @@ class TransactionController extends Controller
             return response()->json([
                 'html' => view('transactions.partials.table', [
                     'transactions' => $transactions,
-                    'showCreateButton' => !auth()->user()->isTeknik(),
+                    'showCreateButton' => !$viewUser->isTeknik(),
                 ])->render(),
                 'detailData' => $transactionDetailData,
                 'total' => $transactions->total(),
@@ -85,7 +90,7 @@ class TransactionController extends Controller
             ]);
         }
 
-        return view('transactions.index', compact('transactions', 'items', 'transactionDetailData', 'years'));
+        return view('transactions.index', compact('transactions', 'items', 'transactionDetailData', 'years', 'saBidang', 'isSuperAdmin'));
     }
 
     public function create()
@@ -107,7 +112,13 @@ class TransactionController extends Controller
         ]);
 
         $item = Item::findOrFail($validated['item_id']);
-        abort_unless(auth()->user()->canAccessBidang($item->bidang), 403, 'Anda tidak memiliki akses ke barang bidang ini.');
+        if (auth()->check()) {
+            $user = auth()->user();
+            abort_unless($user->isAdmin() || $user->isStaff() || $user->isSuperAdmin(), 403, 'Anda tidak memiliki akses untuk membuat transaksi.');
+            abort_unless($user->canAccessBidang($item->bidang), 403, 'Anda tidak memiliki akses ke barang bidang ini.');
+        } else {
+            abort_unless($item->bidang === 'teknik', 403, 'Anda tidak memiliki akses ke barang bidang ini.');
+        }
 
         $shipValidationError = $this->validateShipUnloaderForIssue($request, $item);
         if ($shipValidationError) {
@@ -153,6 +164,10 @@ class TransactionController extends Controller
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['success' => true, 'message' => $successMsg]);
+        }
+
+        if (!auth()->check()) {
+            return back()->with('success', $successMsg);
         }
 
         return redirect()

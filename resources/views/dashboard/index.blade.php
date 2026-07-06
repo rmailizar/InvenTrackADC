@@ -5,7 +5,7 @@
 
 @section('content')
     @php
-        $isTeknik = auth()->user()->bidang === 'teknik';
+        $isTeknik = isset($saBidang) ? $saBidang === 'teknik' : auth()->user()->bidang === 'teknik';
         $receiptLabel = $isTeknik ? 'Goods Receipt' : 'Barang Masuk';
         $issueLabel = $isTeknik ? 'Goods Issue' : 'Barang Keluar';
         $componentLabel = $isTeknik ? 'Komponen' : 'Kategori';
@@ -15,6 +15,25 @@
             : 'Menunggu Approval';
     @endphp
     <div class="animate-fade-in {{ $isTeknik ? 'technical-dashboard-page' : '' }}">
+        {{-- Super Admin Bidang Tab Switcher --}}
+        @if(!empty($isSuperAdmin))
+        <div class="report-tabs mb-3 sa-bidang-tabs">
+            <a href="{{ route('dashboard', ['sa_bidang' => 'umum']) }}"
+                class="report-tab sa-bidang-tab {{ ($saBidang ?? '') !== 'teknik' ? 'active' : '' }}"
+                data-sa-bidang="umum"
+                data-sa-section="dashboardSection"
+                onclick="switchSaBidang('dashboardSection', this); return false;">
+                <i class="bi bi-building"></i> Dashboard Bidang Umum
+            </a>
+            <a href="{{ route('dashboard', ['sa_bidang' => 'teknik']) }}"
+                class="report-tab sa-bidang-tab {{ ($saBidang ?? '') === 'teknik' ? 'active' : '' }}"
+                data-sa-bidang="teknik"
+                data-sa-section="dashboardSection"
+                onclick="switchSaBidang('dashboardSection', this); return false;">
+                <i class="bi bi-tools"></i> Dashboard Bidang Teknik
+            </a>
+        </div>
+        @endif
         <!-- Stats Cards -->
         @if($isTeknik)
             <div class="technical-dashboard-cards mb-4">
@@ -40,7 +59,7 @@
                 @if(auth()->user()->isAdmin())
                     <a href="{{ route('items.index', ['stock_status' => 'critical']) }}" class="technical-dashboard-card technical-critical-card">
                         <div class="technical-dashboard-card-copy">
-                            <div class="technical-dashboard-card-title">Critical Stock</div>
+                            <div class="technical-dashboard-card-title">CRITICAL STOCK</div>
                             <div class="technical-dashboard-card-value">{{ number_format($criticalStockCount) }} <span>Items</span></div>
                             <div class="technical-dashboard-card-link">View items requiring restock <i class="bi bi-arrow-right"></i></div>
                         </div>
@@ -379,7 +398,7 @@
         @if($isTeknik)
             <div class="row g-3 mb-4 technical-soh-activity-row">
                 <div class="col-lg-8">
-                    <div class="card technical-soh-detail-card">
+                    <div class="card technical-soh-detail-card" style="height: 235px; min-height: 235px;">
                         <div class="card-header">
                             <span><i class="bi bi-table text-primary-custom me-2"></i>Detailed Stock On Hand Table</span>
                         </div>
@@ -396,7 +415,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @forelse($recentTransactions as $tx)
+                                        @forelse($detailedSohTransactions as $tx)
                                             <tr>
                                                 <td>
                                                     <span class="technical-soh-norm {{ $tx->type === 'in' ? 'norm-in' : 'norm-out' }}">
@@ -425,7 +444,7 @@
                     </div>
                 </div>
                 <div class="col-lg-4">
-                    <div class="card technical-activity-card">
+                    <div class="card technical-activity-card" style="height: 235px; min-height: 235px;">
                         <div class="card-header">
                             <span><i class="bi bi-clock-fill text-primary-custom me-2"></i>Recent Activity Feed</span>
                             @if(auth()->user()->isAdmin() && auth()->user()->bidang !== 'teknik')
@@ -442,12 +461,8 @@
                         <div class="card-body technical-activity-feed">
                             @forelse($recentTransactions as $tx)
                                 <div class="technical-activity-item">
-                                    <div class="technical-activity-wrapper">
-                                        <div class="technical-activity-wrapper">
-                                            <div class="technical-activity-icon {{ $tx->type === 'in' ? 'receipt' : 'issue' }}">
-                                                <i class="fa fa-{{ $tx->type === 'in' ? 'boxes-stacked' : 'box-open' }}"></i>
-                                            </div>
-                                        </div>
+                                    <div class="technical-activity-icon {{ $tx->type === 'in' ? 'receipt' : 'issue' }}">
+                                        <i class="bi bi-{{ $tx->type === 'in' ? 'boxes' : 'box-arrow-up' }}"></i>
                                     </div>
                                     <div class="technical-activity-copy">
                                         <div class="technical-activity-title">
@@ -770,6 +785,9 @@
 @push('scripts')
     <script>
     (function () {
+        // ===== Super Admin bidang context for AJAX =====
+        const saBidangParam = @json($saBidang ?? null) ? `&sa_bidang={{ $saBidang ?? '' }}` : '';
+
         // ===== Theme detection =====
         const isDark = () => document.documentElement.getAttribute('data-theme') === 'dark';
         const chartTextColor = () => isDark() ? '#cbd5e1' : '#475569';
@@ -829,7 +847,7 @@
         function changeMonthlyChart() {
             const year = document.getElementById('monthlyYearFilter')?.value || @json($selectedYear);
             const period = document.getElementById('monthlyPeriodFilter')?.value || 'ytd';
-            fetch(`{{ route('dashboard.monthlyData') }}?year=${encodeURIComponent(year)}&period=${encodeURIComponent(period)}`)
+            fetch(`{{ request()->getBaseUrl() }}/dashboard/api/monthly-data?year=${encodeURIComponent(year)}&period=${encodeURIComponent(period)}${saBidangParam}`)
                 .then(res => res.json())
                 .then(data => {
 
@@ -1075,7 +1093,7 @@
             }
 
             debounceTimer = setTimeout(() => {
-                fetch(`{{ route('dashboard.searchItems') }}?q=${encodeURIComponent(q)}`)
+                fetch(`{{ request()->getBaseUrl() }}/dashboard/api/search-items?q=${encodeURIComponent(q)}${saBidangParam}`)
                     .then(res => res.json())
                     .then(items => {
                         activeIndex = -1;
@@ -1163,7 +1181,7 @@
             activeFilterName.textContent = itemName;
 
             // Fetch filtered chart data
-            fetch(`{{ route('dashboard.chartData') }}?item_id=${itemId}`)
+            fetch(`{{ request()->getBaseUrl() }}/dashboard/api/chart-data?item_id=${itemId}${saBidangParam}`)
                 .then(res => res.json())
                 .then(data => {
                     // Update monthly chart
@@ -1189,7 +1207,7 @@
             activeFilter.style.display = 'none';
 
             // Reset charts to original data
-            fetch(`{{ route('dashboard.chartData') }}`)
+            fetch(`{{ request()->getBaseUrl() }}/dashboard/api/chart-data?_=1${saBidangParam}`)
                 .then(res => res.json())
                 .then(data => {
                     monthlyChartInstance.data.labels = data.monthlyData.map(d => d.label);
@@ -1215,8 +1233,8 @@
         document.getElementById('categoryYearFilter').addEventListener('change', function () {
             const year = this.value;
             const url = year
-                ? `{{ route('dashboard.categoryByYear') }}?year=${year}`
-                : `{{ route('dashboard.categoryByYear') }}`;
+                ? `{{ request()->getBaseUrl() }}/dashboard/api/category-by-year?year=${year}${saBidangParam}`
+                : `{{ request()->getBaseUrl() }}/dashboard/api/category-by-year?_=1${saBidangParam}`;
 
             fetch(url)
                 .then(res => res.json())
@@ -1298,7 +1316,7 @@
                 loading.classList.add('show');
                 dashTxModal.show();
 
-                fetch(`{{ url('transactions') }}/${id}/edit-data`, {
+                fetch(`{{ request()->getBaseUrl() }}/transactions/${id}/edit-data`, {
                     headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                 })
                     .then(res => res.json())
@@ -1340,7 +1358,7 @@
                 const formData = new FormData(form);
                 formData.append('_method', 'PUT');
 
-                fetch(`{{ url('transactions') }}/${txId}`, {
+                fetch(`{{ request()->getBaseUrl() }}/transactions/${txId}`, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,

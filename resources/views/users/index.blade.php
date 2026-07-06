@@ -426,7 +426,7 @@
                     loading.classList.add('show');
                     userModal.show();
 
-                    fetch(`{{ url('users') }}/${id}/edit-data`, {
+                    fetch(`{{ request()->getBaseUrl() }}/users/${id}/edit-data`, {
                         headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
                     })
                         .then(res => res.json())
@@ -482,7 +482,7 @@
                 submitBtn.disabled = true;
 
                 const formData = new FormData(form);
-                const url = userId ? `{{ url('users') }}/${userId}` : '{{ route("users.store") }}';
+                const url = userId ? `{{ request()->getBaseUrl() }}/users/${userId}` : `{{ request()->getBaseUrl() }}/users`;
 
                 if (method === 'PUT') {
                     formData.append('_method', 'PUT');

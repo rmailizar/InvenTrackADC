@@ -61,6 +61,7 @@ class StuffRequestController extends Controller
             $totalItemsLastMonth = Item::where('bidang', 'teknik')
                 ->where('created_at', '<', $now->copy()->startOfMonth())
                 ->count();
+            $totalSoh = $allTeknikItems->sum(fn($item) => max(0, $item->current_stock));
 
             $criticalStockCount = $allTeknikItems
                 ->filter(fn($item) => $item->current_stock < $item->min_stock)
@@ -72,9 +73,52 @@ class StuffRequestController extends Controller
                 ->filter(fn($item) => $item->current_stock > $item->min_stock)
                 ->count();
 
+            $latestGR = Transaction::with(['item', 'user'])
+                ->where('bidang', 'teknik')
+                ->approved()
+                ->masuk()
+                ->latest()
+                ->first();
+
+            $latestGI = Transaction::with(['item', 'user'])
+                ->where('bidang', 'teknik')
+                ->approved()
+                ->keluar()
+                ->latest()
+                ->first();
+
+            $detailedSohTransactions = collect([$latestGR, $latestGI])
+                ->filter()
+                ->sortByDesc(fn($tx) => $tx->date ?? $tx->created_at)
+                ->values();
+
+            $recentTransactions = Transaction::with(['item', 'user'])
+                ->where('bidang', 'teknik')
+                ->approved()
+                ->latest()
+                ->limit(5)
+                ->get();
+
+            $recentReceipts = Transaction::with(['item', 'user'])
+                ->where('bidang', 'teknik')
+                ->approved()
+                ->masuk()
+                ->latest()
+                ->limit(5)
+                ->get();
+
+            $recentIssues = Transaction::with(['item', 'user'])
+                ->where('bidang', 'teknik')
+                ->approved()
+                ->keluar()
+                ->latest()
+                ->limit(5)
+                ->get();
+
             $publicDashboard = [
                 'totalItems' => $totalItems,
                 'totalItemsMonthlyChange' => $this->monthlyPercentageChange($totalItems, $totalItemsLastMonth),
+                'totalSoh' => $totalSoh,
                 'masukBulanIni' => Transaction::where('bidang', 'teknik')->approved()->masuk()
                     ->whereMonth('date', $now->month)
                     ->whereYear('date', $now->year)
@@ -92,11 +136,10 @@ class StuffRequestController extends Controller
                 'categoryData' => $this->publicShipUnloaderStockData($allTeknikItems),
                 'availableYears' => $availableYears->isNotEmpty() ? $availableYears : collect([$now->year]),
                 'selectedYear' => $selectedYear,
-                'recentTransactions' => Transaction::with(['item', 'user'])
-                    ->where('bidang', 'teknik')
-                    ->latest()
-                    ->limit(5)
-                    ->get(),
+                'recentTransactions' => $recentTransactions,
+                'detailedSohTransactions' => $detailedSohTransactions,
+                'recentReceipts' => $recentReceipts,
+                'recentIssues' => $recentIssues,
             ];
         }
 

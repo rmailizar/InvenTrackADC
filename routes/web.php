@@ -22,6 +22,7 @@ Route::get('/stock-request', [StuffRequestController::class, 'publicIndex'])->na
 Route::post('/request-stock', [StuffRequestController::class, 'store'])->name('public.stock-request.store');
 Route::get('/public/api/teknik/monthly-data', [StuffRequestController::class, 'publicMonthlyData'])->name('public.teknik.monthlyData');
 Route::get('/public/api/teknik/ship-unloader-data', [StuffRequestController::class, 'publicShipUnloaderData'])->name('public.teknik.shipUnloaderData');
+Route::post('/transactions', [TransactionController::class, 'store'])->name('transactions.store');
 
 
 // Auth Routes
@@ -56,7 +57,7 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictTeknikAccess::class])->g
     Route::get('/items/{item}/edit-data', [ItemController::class, 'edit'])->name('items.editData')->middleware('userAkses:admin');
 
     // Transactions - admin & staff
-    Route::resource('transactions', TransactionController::class)->only(['index', 'create', 'store'])->middleware('userAkses:admin,staf');
+    Route::resource('transactions', TransactionController::class)->only(['index', 'create'])->middleware('userAkses:admin,staf');
     Route::get('/transactions/{transaction}/edit', [TransactionController::class, 'edit'])->name('transactions.edit')->middleware('userAkses:admin');
     Route::get('/transactions/{transaction}/edit-data', [TransactionController::class, 'edit'])->name('transactions.editData')->middleware('userAkses:admin');
     Route::put('/transactions/{transaction}', [TransactionController::class, 'update'])->name('transactions.update')->middleware('userAkses:admin');

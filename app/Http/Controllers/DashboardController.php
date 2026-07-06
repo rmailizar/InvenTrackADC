@@ -23,6 +23,13 @@ class DashboardController extends Controller
             return redirect()->route('transactions.index');
         }
 
+        // Super Admin bidang tab switching
+        $saBidang = $this->superAdminBidangContext($request);
+        $isSuperAdmin = $user->isSuperAdmin();
+        if ($saBidang) {
+            $user = $this->createBidangProxy($saBidang);
+        }
+
         $now = Carbon::now();
         $yearExpr = \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'sqlite' ? "strftime('%Y', date) as year" : 'YEAR(date) as year';
 
@@ -131,6 +138,26 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        // Detailed SOH transactions (latest approved GR and latest approved GI)
+        $latestGR = Transaction::with(['item', 'user'])
+            ->visibleFor($user)
+            ->approved()
+            ->masuk()
+            ->latest()
+            ->first();
+
+        $latestGI = Transaction::with(['item', 'user'])
+            ->visibleFor($user)
+            ->approved()
+            ->keluar()
+            ->latest()
+            ->first();
+
+        $detailedSohTransactions = collect([$latestGR, $latestGI])
+            ->filter()
+            ->sortByDesc(fn($tx) => $tx->date ?? $tx->created_at)
+            ->values();
+
         // Pending transactions grouped by date (for admin daily approval)
         $pendingByDate = [];
         if ($user->isAdmin()) {
@@ -165,8 +192,11 @@ class DashboardController extends Controller
             'endYear',
             'topKeluar',
             'recentTransactions',
+            'detailedSohTransactions',
             'pendingByDate',
-            'items'
+            'items',
+            'saBidang',
+            'isSuperAdmin'
         ));
     }
 
@@ -181,10 +211,16 @@ class DashboardController extends Controller
 
     public function monthlyData(Request $request)
     {
-        $year = (int) ($request->year ?? now()->year);
-        $period = $request->period ?? (auth()->user()->isTeknik() ? 'thisMonth' : 'ytd');
+        $user = auth()->user();
+        $saBidang = $this->superAdminBidangContext($request);
+        if ($saBidang) {
+            $user = $this->createBidangProxy($saBidang);
+        }
 
-        return response()->json($this->monthlyChartData(auth()->user(), $year, $period));
+        $year = (int) ($request->year ?? now()->year);
+        $period = $request->period ?? ($user->isTeknik() ? 'thisMonth' : 'ytd');
+
+        return response()->json($this->monthlyChartData($user, $year, $period));
     }
 
     private function monthlyChartData($user, int $year, string $period = 'ytd'): array
@@ -351,8 +387,14 @@ class DashboardController extends Controller
      */
     public function searchItems(Request $request)
     {
+        $user = auth()->user();
+        $saBidang = $this->superAdminBidangContext($request);
+        if ($saBidang) {
+            $user = $this->createBidangProxy($saBidang);
+        }
+
         $q = $request->get('q', '');
-        $items = Item::visibleFor(auth()->user())
+        $items = Item::visibleFor($user)
             ->where(function ($query) use ($q) {
                 $query->where('name', 'like', "%{$q}%")
                     ->orWhere('category', 'like', "%{$q}%")
@@ -371,6 +413,12 @@ class DashboardController extends Controller
      */
     public function chartData(Request $request)
     {
+        $user = auth()->user();
+        $saBidang = $this->superAdminBidangContext($request);
+        if ($saBidang) {
+            $user = $this->createBidangProxy($saBidang);
+        }
+
         $itemId = $request->get('item_id');
         $now = Carbon::now();
 
@@ -380,10 +428,10 @@ class DashboardController extends Controller
             $month = $now->copy()->subMonths($i);
             $monthLabel = $month->translatedFormat('M Y');
 
-            $masukQuery = Transaction::visibleFor(auth()->user())->approved()->masuk()
+            $masukQuery = Transaction::visibleFor($user)->approved()->masuk()
                 ->whereMonth('date', $month->month)
                 ->whereYear('date', $month->year);
-            $keluarQuery = Transaction::visibleFor(auth()->user())->approved()->keluar()
+            $keluarQuery = Transaction::visibleFor($user)->approved()->keluar()
                 ->whereMonth('date', $month->month)
                 ->whereYear('date', $month->year);
 
@@ -404,8 +452,8 @@ class DashboardController extends Controller
         for ($i = 4; $i >= 0; $i--) {
             $year = $now->copy()->subYears($i)->year;
 
-            $masukQuery = Transaction::visibleFor(auth()->user())->approved()->masuk()->whereYear('date', $year);
-            $keluarQuery = Transaction::visibleFor(auth()->user())->approved()->keluar()->whereYear('date', $year);
+            $masukQuery = Transaction::visibleFor($user)->approved()->masuk()->whereYear('date', $year);
+            $keluarQuery = Transaction::visibleFor($user)->approved()->keluar()->whereYear('date', $year);
 
             if ($itemId) {
                 $masukQuery->where('item_id', $itemId);
@@ -429,6 +477,10 @@ class DashboardController extends Controller
     {
         $year = $request->get('year');
         $user = auth()->user();
+        $saBidang = $this->superAdminBidangContext($request);
+        if ($saBidang) {
+            $user = $this->createBidangProxy($saBidang);
+        }
 
         if ($user->isTeknik()) {
             return response()->json($this->shipUnloaderStockData($user, $year));

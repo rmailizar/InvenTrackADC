@@ -1,17 +1,20 @@
 @extends('layouts.app')
 
-@section('title', auth()->user()->isTeknik() ? 'Master SOH' : 'Master Barang')
-@section('subtitle', auth()->user()->isTeknik() ? 'Kelola daftar spare part inventory' : 'Kelola daftar barang inventory')
+@php
+$isTeknik = isset($saBidang) ? $saBidang === 'teknik' : auth()->user()->bidang === 'teknik';
+@endphp
+
+@section('title', $isTeknik ? 'Master SOH' : 'Master Barang')
+@section('subtitle', $isTeknik ? 'Kelola daftar spare part inventory' : 'Kelola daftar barang inventory')
 
 @section('content')
 @php
-$isTeknik = auth()->user()->bidang === 'teknik';
 $itemLabel = $isTeknik ? 'Spare Part' : 'Barang';
 $itemLowerLabel = $isTeknik ? 'spare part' : 'barang';
 $activeStockStatus = request('stock_status');
-$sohTotalUrl = route('items.index', request()->except('stock_status', 'page'));
-$sohLowUrl = route('items.index', array_merge(request()->except('stock_status', 'page'), ['stock_status' => 'low']));
-$sohCriticalUrl = route('items.index', array_merge(request()->except('stock_status', 'page'), ['stock_status' => 'critical']));
+$sohTotalUrl = route('items.index', array_merge(request()->except(['stock_status', 'page']), ['sa_bidang' => $saBidang ?? '']));
+$sohLowUrl = route('items.index', array_merge(request()->except(['stock_status', 'page']), ['stock_status' => 'low', 'sa_bidang' => $saBidang ?? '']));
+$sohCriticalUrl = route('items.index', array_merge(request()->except(['stock_status', 'page']), ['stock_status' => 'critical', 'sa_bidang' => $saBidang ?? '']));
 $itemDetailData = [];
 foreach ($items as $itemRow) {
 $itemDetailData[$itemRow->id] = [
@@ -30,10 +33,32 @@ $itemDetailData[$itemRow->id] = [
 }
 @endphp
 <div class="animate-fade-in">
+    {{-- Super Admin Bidang Tab Switcher --}}
+    @if(!empty($isSuperAdmin))
+    <div class="report-tabs mb-3 sa-bidang-tabs">
+        <a href="{{ route('items.index', ['sa_bidang' => 'umum']) }}"
+            class="report-tab sa-bidang-tab {{ ($saBidang ?? '') !== 'teknik' ? 'active' : '' }}"
+            data-sa-bidang="umum"
+            data-sa-section="itemsSection"
+            onclick="switchSaBidang('itemsSection', this); return false;">
+            <i class="bi bi-building"></i> Barang Bidang Umum
+        </a>
+        <a href="{{ route('items.index', ['sa_bidang' => 'teknik']) }}"
+            class="report-tab sa-bidang-tab {{ ($saBidang ?? '') === 'teknik' ? 'active' : '' }}"
+            data-sa-bidang="teknik"
+            data-sa-section="itemsSection"
+            onclick="switchSaBidang('itemsSection', this); return false;">
+            <i class="bi bi-tools"></i> Barang Bidang Teknik
+        </a>
+    </div>
+    @endif
     <!-- Header Actions Wrapper (for header redirection) -->
     <div class="header-action-wrapper d-none">
         <div class="section-header-actions">
             <form method="GET" action="{{ route('items.index') }}">
+                @if(!empty($saBidang))
+                    <input type="hidden" name="sa_bidang" value="{{ $saBidang }}">
+                @endif
                 <div class="action-row-1">
                     <div class="position-relative" id="itemSearchWrapper">
                         <input type="text"
@@ -59,7 +84,7 @@ $itemDetailData[$itemRow->id] = [
                     </button>
                 </div>
                 <div class="action-row-2">
-                    <a href="{{ route('items.index') }}" class="btn btn-reset" title="Reset Filter">
+                    <a href="{{ route('items.index', !empty($saBidang) ? ['sa_bidang' => $saBidang] : []) }}" class="btn btn-outline-teknik" title="Reset Filter">
                         <i class="bi bi-arrow-counterclockwise"></i>
                     </a>
                     <a href="{{ route('items.lookups.index') }}" class="btn {{ $isTeknik ? 'btn-outline-teknik' : 'btn-outline-primary' }}">
@@ -78,7 +103,7 @@ $itemDetailData[$itemRow->id] = [
                     <div class="soh-filter-title">Total SOH Items</div>
                     <div class="soh-filter-value">
                         {{ number_format($stockSummary['total'] ?? 0) }}
-                        <span>Stok</span>
+                        <span>Items</span>
                     </div>
                     <div class="soh-filter-caption">Lihat semua barang</div>
                 </div>
@@ -251,7 +276,7 @@ $itemDetailData[$itemRow->id] = [
                                         </span>
 
                                         @else
-                                        <span class="badge-status badge-approved">
+                                        <span class="badge-status badge-in-stock">
                                             In Stock
                                         </span>
                                         @endif
@@ -344,7 +369,8 @@ $itemDetailData[$itemRow->id] = [
     </div>
 </div>
 
-{{-- Item Modal (Create/Edit) --}}
+@if($isTeknik)
+{{-- Technical Item Modal (Create/Edit) --}}
 <div class="modal fade inventrack-modal" id="itemModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="position:relative;">
@@ -365,6 +391,7 @@ $itemDetailData[$itemRow->id] = [
                 <form id="itemForm" novalidate>
                     <input type="hidden" id="itemId" value="">
                     <input type="hidden" id="itemMethod" value="POST">
+                    <input type="hidden" name="bidang" value="teknik">
 
                     <div class="mb-3">
                         <label class="form-label">Nama {{ $itemLabel }} <span class="text-danger">*</span></label>
@@ -402,7 +429,6 @@ $itemDetailData[$itemRow->id] = [
                         <small class="text-muted">Sistem akan memberikan peringatan jika stok di bawah angka ini</small>
                     </div>
 
-                    @if($isTeknik || auth()->user()->isSuperAdmin())
                     <div class="technical-item-fields">
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
@@ -443,18 +469,6 @@ $itemDetailData[$itemRow->id] = [
                             </div>
                         </div>
                     </div>
-                    @endif
-
-                    @if(auth()->user()->isSuperAdmin())
-                    <div class="mb-3">
-                        <label class="form-label">Bidang <span class="text-danger">*</span></label>
-                        <select name="bidang" class="form-select" id="itemBidang" required>
-                            <option value="">-- Pilih Bidang --</option>
-                            <option value="umum">Umum</option>
-                            <option value="teknik">Teknik</option>
-                        </select>
-                    </div>
-                    @endif
                 </form>
             </div>
             <div class="modal-footer">
@@ -466,6 +480,77 @@ $itemDetailData[$itemRow->id] = [
         </div>
     </div>
 </div>
+@else
+{{-- General Item Modal (Create/Edit) --}}
+<div class="modal fade inventrack-modal" id="itemModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="position:relative;">
+            <div class="modal-loading-overlay" id="itemLoading">
+                <div class="modal-spinner"></div>
+            </div>
+            <div class="modal-header">
+                <h5 class="modal-title" id="itemModalTitle">
+                    <i class="bi bi-plus-circle-fill"></i> <span>Tambah {{ $itemLabel }}</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-error-alert" id="itemError">
+                    <i class="bi bi-exclamation-circle me-1"></i>
+                    <span id="itemErrorMsg"></span>
+                </div>
+                <form id="itemForm" novalidate>
+                    <input type="hidden" id="itemId" value="">
+                    <input type="hidden" id="itemMethod" value="POST">
+                    <input type="hidden" name="bidang" value="umum">
+
+                    <div class="mb-3">
+                        <label class="form-label">Nama {{ $itemLabel }} <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" placeholder="Masukkan nama {{ $itemLowerLabel }}" required
+                            id="itemName">
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Kategori <span class="text-danger">*</span></label>
+                            <input type="text" name="category" list="category-list" class="form-control"
+                                placeholder="Pilih atau ketik kategori" required id="itemCategory">
+                            <datalist id="category-list">
+                                @foreach($categories as $cat)
+                                <option value="{{ $cat }}">
+                                    @endforeach
+                            </datalist>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Satuan <span class="text-danger">*</span></label>
+                            <input type="text" name="unit" list="unit-list" class="form-control"
+                                placeholder="Pilih atau ketik satuan" required id="itemUnit">
+                            <datalist id="unit-list">
+                                @foreach($units as $u)
+                                <option value="{{ $u }}">
+                                    @endforeach
+                            </datalist>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Minimum Stok <span class="text-danger">*</span></label>
+                        <input type="number" name="min_stock" class="form-control" min="0" required id="itemMinStock"
+                            value="0">
+                        <small class="text-muted">Sistem akan memberikan peringatan jika stok di bawah angka ini</small>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal"><i class="bi bi-x-lg"></i> Batal</button>
+                <button type="button" class="btn btn-primary" id="itemSubmitBtn" onclick="submitItemForm()">
+                    <i class="bi bi-check-lg"></i> Simpan
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 @endsection
 
 @push('scripts')
@@ -547,7 +632,7 @@ $itemDetailData[$itemRow->id] = [
             loading.classList.add('show');
             itemModal.show();
 
-            fetch(`{{ url('items') }}/${id}/edit-data`, {
+            fetch(`{{ request()->getBaseUrl() }}/items/${id}/edit-data`, {
                     headers: {
                         'Accept': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest'
@@ -627,7 +712,7 @@ $itemDetailData[$itemRow->id] = [
         submitBtn.disabled = true;
 
         const formData = new FormData(form);
-        const url = itemId ? `{{ url('items') }}/${itemId}` : '{{ route("items.store") }}';
+        const url = itemId ? `{{ request()->getBaseUrl() }}/items/${itemId}` : `{{ request()->getBaseUrl() }}/items`;
 
         if (method === 'PUT') {
             formData.append('_method', 'PUT');

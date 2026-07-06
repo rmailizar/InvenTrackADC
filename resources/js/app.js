@@ -248,10 +248,13 @@ function sectionIdFromUrl(url) {
     const path = parsedUrl.pathname.replace(/^\/+/, '');
     const firstSegment = path.split('/')[0] || 'dashboard';
 
-    if (config.isTeknik && firstSegment === 'transactions') {
-        return parsedUrl.searchParams.get('type') === 'out'
-            ? 'transactionsIssueSection'
-            : 'transactionsReceiptSection';
+    if (firstSegment === 'transactions') {
+        const isTeknikCtx = config.isTeknik || (config.isSuperAdmin && parsedUrl.searchParams.get('sa_bidang') === 'teknik');
+        if (isTeknikCtx) {
+            return parsedUrl.searchParams.get('type') === 'out'
+                ? 'transactionsIssueSection'
+                : 'transactionsReceiptSection';
+        }
     }
 
     return routeSectionMap[firstSegment] || 'dashboardSection';
@@ -490,3 +493,65 @@ window.addEventListener('resize', syncTopbarActions);
 if (config.currentSectionId) {
     updateTopbarActions(config.currentSectionId);
 }
+
+async function switchSaBidang(sectionId, trigger) {
+    if (!sectionShell) return true;
+
+    const href = trigger.getAttribute('href');
+    const url = new URL(href, window.location.origin);
+    url.searchParams.set('inventrack_section', '1');
+
+    sectionShell.classList.add('section-loading');
+
+    try {
+        const response = await fetch(url.toString(), {
+            headers: {
+                Accept: 'text/html',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+
+        if (!response.ok) throw new Error(`Section request failed: ${response.status}`);
+
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = await response.text();
+        const fragment = wrapper.querySelector('.inventrack-section-fragment');
+        if (!fragment) throw new Error('Section fragment tidak ditemukan.');
+
+        // Find the existing section
+        let section = document.getElementById(sectionId);
+        if (!section) {
+            section = document.createElement('section');
+            section.id = sectionId;
+            section.className = 'content-section';
+            sectionShell.appendChild(section);
+        }
+
+        // Replace content
+        section.innerHTML = fragment.innerHTML;
+        section.dataset.title = fragment.dataset.title || '';
+        section.dataset.subtitle = fragment.dataset.subtitle || '';
+
+        // Execute scripts & relocate modals
+        wrapper.querySelectorAll('script').forEach((script) => section.appendChild(script));
+        executeSectionScripts(section);
+        relocateSectionModals(section);
+
+        setActiveSection(sectionId);
+        updatePageHeading(section.dataset.title, section.dataset.subtitle);
+
+        if (window.location.href !== new URL(href, window.location.origin).href) {
+            history.pushState({ sectionId }, '', href);
+        }
+    } catch (error) {
+        console.error(error);
+        window.location.href = href;
+        return true;
+    } finally {
+        sectionShell.classList.remove('section-loading');
+    }
+
+    return false;
+}
+
+window.switchSaBidang = switchSaBidang;

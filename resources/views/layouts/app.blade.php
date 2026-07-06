@@ -28,7 +28,8 @@
         }
     }
 
-    if (request()->routeIs('transactions.*') && auth()->check() && auth()->user()->isTeknik()) {
+    $isTeknikContext = auth()->check() && (auth()->user()->isTeknik() || (auth()->user()->isSuperAdmin() && request('sa_bidang') === 'teknik'));
+    if (request()->routeIs('transactions.*') && $isTeknikContext) {
         $currentSectionId = request('type') === 'out' ? 'transactionsIssueSection' : 'transactionsReceiptSection';
     }
 @endphp
@@ -127,7 +128,7 @@
                     onclick="switchSection('itemsSection', this); return false;"
                     data-section="itemsSection"
                     class="sidebar-link {{ request()->routeIs('items.*') ? 'active' : '' }}">
-                    <i class="{{ $isTeknik ? 'fa-solid fa-box-open' : 'bi bi-box-fill' }}"></i>
+                    <i class="{{ $isTeknik ? 'fa-solid fa-cubes-stacked' : 'bi bi-box-fill' }}"></i>
                     <span>{{ $isTeknik ? 'Master SOH' : 'Master Barang' }}</span>
                 </a>
             @endif
@@ -139,14 +140,14 @@
                         onclick="switchSection('transactionsReceiptSection', this); return false;"
                         data-section="transactionsReceiptSection"
                         class="sidebar-link {{ request()->routeIs('transactions.*') && request('type', 'in') === 'in' ? 'active' : '' }}">
-                        <i class="{{ $isTeknik ? 'fa-solid fa-dolly' : 'bi bi-box-arrow-in-down' }}"></i>
+                        <i class="{{ $isTeknik ? 'fa-solid fa-box-open' : 'bi bi-box-arrow-in-down' }}"></i>
                         <span>Goods Receipt</span>
                     </a>
                     <a href="{{ route('transactions.index', ['type' => 'out']) }}"
                         onclick="switchSection('transactionsIssueSection', this); return false;"
                         data-section="transactionsIssueSection"
                         class="sidebar-link {{ request()->routeIs('transactions.*') && request('type') === 'out' ? 'active' : '' }}">
-                        <i class="{{ $isTeknik ? 'fa-solid fa-cubes-stacked' : 'bi bi-box-arrow-in-up' }}"></i>
+                        <i class="{{ $isTeknik ? 'fa-solid fa-dolly' : 'bi bi-box-arrow-in-up' }}"></i>
                         <span>Goods Issue</span>
                     </a>
                 @else
@@ -270,7 +271,7 @@
                 </button>
 
                 <div class="sidebar-clock-container">
-                    <span class="text-muted" style="font-size:12px;">
+                    <span class="fw-bold tanggal" style="font-size:12px;">
                         {{ now()->translatedFormat('l, d M Y') }}
                         <span id="live-clock" class="ms-1 fw-bold"></span>
                     </span>
@@ -351,6 +352,7 @@
         window.inventrackConfig = {
             currentSectionId: @json($currentSectionId),
             isTeknik: @json(auth()->check() && auth()->user()->isTeknik()),
+            isSuperAdmin: @json(auth()->check() && auth()->user()->isSuperAdmin()),
             flash: {
                 success: @json(session('success')),
                 error: @json(session('error')),
