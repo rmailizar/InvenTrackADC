@@ -125,7 +125,7 @@
                                     <td style="white-space:nowrap;">{{ $stockRequest->created_at->format('d/m/Y H:i') }}</td>
                                     <td class="fw-600">{{ $stockRequest->user->name ?? '-' }}</td>
                                     <td>
-                                        <span class="badge-status" style="background:var(--primary-bg);color:var(--primary);justify-content:center;min-width:96px;">
+                                        <span>
                                             {{ $stockRequest->category ?: ($stockRequest->lines->first()?->category ?? '-') }}
                                         </span>
                                     </td>

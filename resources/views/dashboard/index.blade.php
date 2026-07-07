@@ -1,7 +1,7 @@
 @extends('layouts.app')
-
-@section('title', 'Dashboard')
-@section('subtitle', 'Ringkasan data inventory')
+@php $isTeknik = isset($saBidang) ? $saBidang === 'teknik' : auth()->user()->bidang === 'teknik'; @endphp
+@section('title', $isTeknik ? 'Overview' : 'Dashboard')
+@section('subtitle', 'Ringkasan data Barang')
 
 @section('content')
     @php

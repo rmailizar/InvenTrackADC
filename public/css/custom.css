@@ -2285,7 +2285,7 @@ body.public-layout .public-body {
 
     /* 2. Garis Tepi Kaca (Membuat efek potongan kaca lebih tegas) */
     border: 1px solid rgba(255, 255, 255, 0.15);
-    z-index: -1;
+    /* z-index: -1; */
 }
 
 [data-theme="dark"] .public-technical-chart-row .card {
@@ -5903,6 +5903,11 @@ body::before,
 }
 
 /* Pastikan card atau container di atasnya tidak memotong elemen yang keluar */
+#searchCard {
+    position: relative !important;
+    z-index: 100 !important; /* Agar menu autocomplete melayang di atas elemen charts/kaca di bawahnya */
+}
+
 #searchCard, 
 .card, 
 .card-body {
@@ -6043,6 +6048,35 @@ body::before,
         0 0 12px rgba(110, 231, 183, 0.5),
         0 0 20px rgba(52, 211, 153, 0.40),
         inset 0 0 10px rgba(16, 185, 129, 0.3) !important;
+}
+
+/* Styling khusus untuk checkbox ALL ketika aktif/checked (warna biru seperti badge-all) */
+.ship-checkbox-input[data-ship="all"]:checked + .ship-checkbox-box {
+    background: rgba(14, 165, 233, 0.15) !important;
+    color: #38bdf8 !important;
+    border: 1px solid rgba(14, 165, 233, 0.7) !important;
+    box-shadow: 
+        0 0 8px rgba(14, 165, 233, 0.3),
+        inset 0 0 6px rgba(14, 165, 233, 0.2) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    font-weight: 600 !important;
+}
+
+/* Hover ketika checkbox ALL sudah aktif/checked */
+.ship-checkbox-label:hover .ship-checkbox-input[data-ship="all"]:checked + .ship-checkbox-box {
+    box-shadow: 
+        0 0 14px rgba(14, 165, 233, 0.5),
+        inset 0 0 10px rgba(14, 165, 233, 0.3) !important;
+    border-color: rgba(14, 165, 233, 0.9) !important;
+}
+
+/* Hover ketika checkbox ALL masih kosong / belum aktif */
+.ship-checkbox-label:hover .ship-checkbox-input[data-ship="all"]:not(:checked) + .ship-checkbox-box {
+    border-color: rgba(14, 165, 233, 0.5) !important;
+    box-shadow: 
+        0 0 12px rgba(14, 165, 233, 0.3),
+        0 0 20px rgba(14, 165, 233, 0.2) !important;
 }
 
 #txInlineNoNormalisasi,

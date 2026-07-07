@@ -105,7 +105,7 @@ $itemDetailData[$itemRow->id] = [
                         {{ number_format($stockSummary['total'] ?? 0) }}
                         <span>Items</span>
                     </div>
-                    <div class="soh-filter-caption">Lihat semua barang</div>
+                    <div class="soh-filter-caption">Across all categories</div>
                 </div>
                 <div class="soh-filter-icon">
                     <i class="bi bi-stack"></i>
@@ -120,7 +120,7 @@ $itemDetailData[$itemRow->id] = [
                         {{ number_format($stockSummary['low'] ?? 0) }}
                         <span>Items</span>
                     </div>
-                    <div class="soh-filter-caption">Filter barang segera habis</div>
+                    <div class="soh-filter-caption">Requires reorder soon</div>
                 </div>
                 <div class="soh-filter-icon">
                     <i class="bi bi-exclamation-triangle-fill"></i>
@@ -135,7 +135,7 @@ $itemDetailData[$itemRow->id] = [
                         {{ number_format($stockSummary['critical'] ?? 0) }}
                         <span>Items</span>
                     </div>
-                    <div class="soh-filter-caption">Filter barang mendesak</div>
+                    <div class="soh-filter-caption">Immediate purchase required</div>
                 </div>
                 <div class="soh-filter-icon">
                     <i class="bi bi-radioactive"></i>

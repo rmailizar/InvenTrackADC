@@ -44,7 +44,7 @@ class Transaction extends Model
 
             $item = $transaction->relationLoaded('item')
                 ? $transaction->item
-                : Item::find($transaction->item_id);
+                : Item::withTrashed()->find($transaction->item_id);
 
             if (!$item) {
                 return;
@@ -58,13 +58,13 @@ class Transaction extends Model
                 return;
             }
 
-            Item::find($transaction->item_id)?->refreshShipUnloaderFromLatestTransaction();
+            Item::withTrashed()->find($transaction->item_id)?->refreshShipUnloaderFromLatestTransaction();
         });
     }
 
     public function item()
     {
-        return $this->belongsTo(Item::class);
+        return $this->belongsTo(Item::class)->withTrashed();
     }
 
     public function user()

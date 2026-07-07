@@ -112,7 +112,7 @@
                     data-section="dashboardSection"
                     class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
                     <i class="{{ $isTeknik ? 'fa-solid fa-chart-pie' : 'bi bi-grid-1x2-fill' }}"></i>
-                    <span>Dashboard</span>
+                    <span>{{ $isTeknik ? 'Overview' : 'Dashboard' }}</span>
                     @if(auth()->user()->isSuperAdmin() || auth()->user()->isAdmin())
                         @php $pendingTxCount = \App\Models\Transaction::visibleFor(auth()->user())->pending()->count(); @endphp
                         @if($pendingTxCount > 0)
@@ -318,7 +318,7 @@
         <!-- Page Content -->
         <div class="page-content" id="sectionShell">
             <div class="topbar-titles">
-                <div class="page-title" id="pageTitle">@yield('title', 'Dashboard')</div>
+                <div class="page-title" id="pageTitle">@yield('title', $isTeknik ? 'Overview' : 'Dashboard')</div>
                 <div class="page-subtitle" id="pageSubtitle">@yield('subtitle', '')</div>
             </div>
 

@@ -115,7 +115,17 @@
                                     </td>
                                     <td>{{ $tx->lokasi ?? $tx->item->lokasi ?? '-' }}</td>
                                     <td class="text-center fw-700">{{ $tx->volume === null ? '-' : number_format($tx->volume) }}</td>
-                                    <td class="text-center fw-700">{{ number_format($tx->quantity) }}</td>
+                                    <td class="text-center fw-700">
+                                        @if($tx->type === 'in')
+                                            <span class="text-success">
+                                                +{{ number_format($tx->quantity) }}
+                                            </span>
+                                        @else
+                                            <span class="text-danger">
+                                                -{{ number_format($tx->quantity) }}
+                                            </span>
+                                        @endif
+                                    </td>
                                     <td>{{ $tx->item->unit ?? '-' }}</td>
                                     <td>{{ $tx->user->name ?? 'Guest' }}</td>
                                     <td class="text-center">
@@ -161,7 +171,17 @@
                                     </td>
                                     <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
                                     <td>{{ $tx->item->category ?? '-' }}</td>
-                                    <td class="fw-700">{{ number_format($tx->quantity) }}</td>
+                                    <td class="text-center fw-700">
+                                        @if($tx->type === 'in')
+                                            <span class="text-success">
+                                                +{{ number_format($tx->quantity) }}
+                                            </span>
+                                        @else
+                                            <span class="text-danger">
+                                                -{{ number_format($tx->quantity) }}
+                                            </span>
+                                        @endif
+                                    </td>
                                     <td>{{ $tx->item->unit ?? '-' }}</td>
                                     <td>{{ $tx->price === null ? '-' : 'Rp ' . number_format($tx->price, 0, ',', '.') }}</td>
                                     <td>{{ $tx->user->name ?? '-' }}</td>

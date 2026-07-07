@@ -187,7 +187,7 @@
 
                                         <label class="ship-checkbox-label">
                                             <input class="ship-checkbox-input" type="checkbox" id="txShipAll" data-ship="all">
-                                            <span class="ship-checkbox-box {{ $activeTransactionType === 'out' ? 'ship-checkbox-box-issue' : '' }} px-2" style="width: auto; min-width: 24px;">ALL</span>
+                                            <span class="ship-checkbox-box px-2" style="width: auto; min-width: 24px;">ALL</span>
                                         </label>
 
                                     </div>

@@ -115,7 +115,7 @@
                                 <div class="technical-type-card-head">
                                     <div>
                                         <div class="technical-dashboard-card-title">Total Item Types</div>
-                                        <div class="technical-dashboard-card-subtitle">Tipe barang terdaftar</div>
+                                        <div class="technical-dashboard-card-subtitle">Categories Registered</div>
                                     </div>
                                     <div class="technical-type-card-total">{{ number_format($publicDashboard['typeSummary']['total_types'] ?? 0) }}</div>
                                 </div>
@@ -213,7 +213,17 @@
                                                         </td>
                                                         <td class="fw-700">{{ $tx->item?->name ?? 'Barang dihapus' }}</td>
                                                         <td>{{ $tx->item?->lokasi ?: '-' }}</td>
-                                                        <td class="text-end fw-800">{{ number_format($tx->quantity) }}</td>
+                                                        <td class="text-center fw-700">
+                                                            @if($tx->type === 'in')
+                                                                <span class="text-success">
+                                                                    +{{ number_format($tx->quantity) }}
+                                                                </span>
+                                                            @else
+                                                                <span class="text-danger">
+                                                                -{{ number_format($tx->quantity) }}
+                                                                </span>
+                                                            @endif
+                                                        </td>
                                                         <td>{{ $tx->item?->unit ?? '-' }}</td>
                                                     </tr>
                                                 @empty
@@ -301,7 +311,7 @@
                                         {{ number_format($publicDashboard['totalSoh'] ?? 0) }}
                                         <span>Items</span>
                                     </div>
-                                    <div class="soh-filter-caption">Lihat semua barang</div>
+                                    <div class="soh-filter-caption">Accross all categories</div>
                                 </div>
                                 <div class="soh-filter-icon">
                                     <i class="bi bi-stack"></i>
@@ -316,7 +326,7 @@
                                         {{ number_format($publicDashboard['lowStockCount'] ?? 0) }}
                                         <span>Items</span>
                                     </div>
-                                    <div class="soh-filter-caption">Filter barang segera habis</div>
+                                    <div class="soh-filter-caption">Requires reorder soon</div>
                                 </div>
                                 <div class="soh-filter-icon">
                                     <i class="bi bi-exclamation-triangle-fill"></i>
@@ -331,7 +341,7 @@
                                         {{ number_format($publicDashboard['criticalStockCount'] ?? 0) }}
                                         <span>Items</span>
                                     </div>
-                                    <div class="soh-filter-caption">Filter barang mendesak</div>
+                                    <div class="soh-filter-caption">Immediate purchase required</div>
                                 </div>
                                 <div class="soh-filter-icon">
                                     <i class="bi bi-radioactive"></i>
@@ -607,7 +617,17 @@
                                                         </td>
                                                         <td>{{ $tx->lokasi ?? $tx->item->lokasi ?? '-' }}</td>
                                                         <td class="text-center fw-700">{{ $tx->volume === null ? '-' : number_format($tx->volume) }}</td>
-                                                        <td class="text-center fw-700 text-success">+{{ number_format($tx->quantity) }}</td>
+                                                        <td class="text-center fw-700">
+                                                            @if($tx->type === 'in')
+                                                                <span class="text-success">
+                                                                    +{{ number_format($tx->quantity) }}
+                                                                </span>
+                                                            @else
+                                                                <span class="text-danger">
+                                                                    -{{ number_format($tx->quantity) }}
+                                                                </span>
+                                                            @endif
+                                                        </td>
                                                         <td>{{ $tx->item->unit ?? '-' }}</td>
                                                         <td>{{ $tx->user->name ?? 'Guest' }}</td>
                                                     </tr>
@@ -707,7 +727,7 @@
                                                 @endforeach
                                                 <label class="ship-checkbox-label">
                                                     <input class="ship-checkbox-input" type="checkbox" id="publicGIShipAll" data-ship="all">
-                                                    <span class="ship-checkbox-box ship-checkbox-box-issue px-2" style="width: auto; min-width: 24px;">ALL</span>
+                                                    <span class="ship-checkbox-box px-2" style="width: auto; min-width: 24px;">ALL</span>
                                                 </label>
                                             </div>
                                         </div>
@@ -790,7 +810,17 @@
                                                         </td>
                                                         <td>{{ $tx->lokasi ?? $tx->item->lokasi ?? '-' }}</td>
                                                         <td class="text-center fw-700">{{ $tx->volume === null ? '-' : number_format($tx->volume) }}</td>
-                                                        <td class="text-center fw-700 text-warning">-{{ number_format($tx->quantity) }}</td>
+                                                        <td class="text-center fw-700">
+                                                            @if($tx->type === 'in')
+                                                                <span class="text-success">
+                                                                    +{{ number_format($tx->quantity) }}
+                                                                </span>
+                                                            @else
+                                                                <span class="text-danger">
+                                                                    -{{ number_format($tx->quantity) }}
+                                                                </span>
+                                                            @endif
+                                                        </td>
                                                         <td>{{ $tx->item->unit ?? '-' }}</td>
                                                         <td>{{ $tx->user->name ?? 'Guest' }}</td>
                                                     </tr>
