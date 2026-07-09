@@ -56,39 +56,50 @@
         <div class="header-action-wrapper d-none">
             <div class="section-header-actions">
                 <form method="GET" action="{{ route('stock-requests.index') }}">
-                    <div class="action-row-1">
-                        <select name="year" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
-                            <option value="">Semua Tahun</option>
-                            @foreach($years as $yr)
-                                <option value="{{ $yr }}" {{ request('year') == $yr ? 'selected' : '' }}>{{ $yr }}</option>
-                            @endforeach
-                        </select>
-                        <select name="month" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
-                            <option value="">Semua Bulan</option>
-                            @foreach($months as $num => $name)
-                                <option value="{{ $num }}" {{ request('month') == $num ? 'selected' : '' }}>{{ $name }}</option>
-                            @endforeach
-                        </select>
-                        <select name="category" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
-                            <option value="">Semua Kategori</option>
-                            @foreach($categories as $category)
-                                <option value="{{ $category }}" {{ request('category') == $category ? 'selected' : '' }}>{{ $category }}</option>
-                            @endforeach
-                        </select>
-                        <select name="status" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
-                            <option value="">Semua Status</option>
-                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
-                            <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
-                        </select>
-                    </div>
-                    <div class="action-row-2">
-                        <a href="{{ route('stock-requests.index') }}" class="btn btn-reset btn-sm" title="Reset Filter">
-                            <i class="bi bi-arrow-counterclockwise"></i>
-                        </a>
-                        <a href="{{ route('stock-requests.export', $exportParams) }}" class="btn btn-success btn-sm">
-                            <i class="bi bi-file-earmark-excel-fill me-1"></i> Export Excel
-                        </a>
+                    <div class="action-row-1 sr-filter-row">
+                        <div class="sr-select-row">
+                            <select name="year" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">Semua Tahun</option>
+                                @foreach($years as $yr)
+                                    <option value="{{ $yr }}" {{ request('year') == $yr ? 'selected' : '' }}>{{ $yr }}</option>
+                                @endforeach
+                            </select>
+                            <select name="month" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">Semua Bulan</option>
+                                @foreach($months as $num => $name)
+                                    <option value="{{ $num }}" {{ request('month') == $num ? 'selected' : '' }}>{{ $name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        
+                        <div class="sr-select-row">
+                            <select name="category" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">Semua Kategori</option>
+                                @foreach($categories as $category)
+                                    <option value="{{ $category }}" {{ request('category') == $category ? 'selected' : '' }}>{{ $category }}</option>
+                                @endforeach
+                            </select>
+                            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">Semua Status</option>
+                                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
+                                <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                            </select>
+                        </div>
+
+                        <div class="sr-action-row d-flex align-items-center gap-2" style="flex-wrap: nowrap !important;">
+                             <a href="{{ route('stock-requests.index') }}" 
+                                class="btn btn-reset btn-outline-reset" 
+                                style="flex: 0 0 auto !important;"
+                                title="Reset Filter">
+                                <i class="bi bi-arrow-counterclockwise fs-5"></i>
+                            </a>
+                            <a href="{{ route('stock-requests.export', $exportParams) }}" 
+                                class="btn btn-success btn-sm w-100"
+                                style="flex: 1 1 auto !important; height: 38px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important;">
+                                <i class="bi bi-file-earmark-excel-fill me-1"></i> Export Excel
+                            </a>
+                        </div>
                     </div>
                 </form>
             </div>

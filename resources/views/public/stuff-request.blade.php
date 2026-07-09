@@ -57,6 +57,18 @@
                 </div>
 
                 <div class="header-actions d-flex align-items-center gap-2">
+                    <div class="report-tabs mb-0 me-2" style="background: transparent; border: none; padding: 0; gap: 0.5rem; display: flex;">
+                        <a href="{{ route('public.stuff-request', array_merge(request()->except(['bidang', 'page']), ['bidang' => 'umum'])) }}"
+                            class="report-tab {{ $activeBidang === 'umum' ? 'active' : '' }}" style="padding: 6px 12px; font-size: 12px; border-radius: 8px; white-space: nowrap;">
+                            <i class="bi bi-building me-1"></i>
+                            General Affair
+                        </a>
+                        <a href="{{ route('public.stuff-request', array_merge(request()->except(['bidang', 'page']), ['bidang' => 'teknik'])) }}"
+                            class="report-tab {{ $activeBidang === 'teknik' ? 'active' : '' }}" style="padding: 6px 12px; font-size: 12px; border-radius: 8px; white-space: nowrap;">
+                            <i class="bi bi-tools me-1"></i>
+                            SU-SpareTracker
+                        </a>
+                    </div>
                     <button class="btn-theme-toggle" onclick="toggleTheme()" title="Ganti tema">
                         <i class="bi bi-sun-fill icon-sun"></i>
                         <i class="bi bi-moon-fill icon-moon"></i>
@@ -74,6 +86,7 @@
         <div class="public-body">
             <div class="container">
                 @if($activeBidang === 'teknik' && $publicDashboard)
+                    <h1 class="fw-bold mb-4">SU-SpareTracker Dashboard</h1>
                     <div class="technical-dashboard-cards mb-4">
                         {{-- Total Spare Parts (SOH) --}}
                         <div class="technical-dashboard-card technical-total-card filter-card-btn active" data-filter="all" style="cursor: pointer;">
@@ -138,10 +151,10 @@
                         <div class="col-lg-8">
                             <div class="card">
                                 <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-                                    <span>
-                                        <i class="bi bi-graph-up text-primary-custom me-2"></i>
-                                        Goods Receipt vs Goods Issue (12 Bulan)
-                                    </span>
+                                    <div>
+                                        <h4 class="mb-0 fw-bold">Movement Analysis</h4>
+                                        <small class="text-secondary" style="font-size: 13px;">GR vs GI tracking trend</small>
+                                    </div>
                                     <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
                                         <select id="publicMonthlyPeriodFilter" class="form-select form-select-sm"
                                             style="width:auto; min-width:140px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px; padding:4px 28px 4px 10px;">
@@ -167,14 +180,10 @@
                         <div class="col-lg-4">
                             <div class="card">
                                 <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
-                                    <span><i class="bi bi-pie-chart-fill text-primary-custom me-2"></i>Stok per Ship Unloader</span>
-                                    <select id="publicShipYearFilter" class="form-select form-select-sm"
-                                        style="width:auto; min-width:120px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px; padding:4px 28px 4px 10px;">
-                                        <option value="">Semua Tahun</option>
-                                        @foreach($publicDashboard['availableYears'] as $year)
-                                            <option value="{{ $year }}">{{ $year }}</option>
-                                        @endforeach
-                                    </select>
+                                    <div>
+                                        <h4 class="mb-0 fw-bold">Asset Distribution</h4>
+                                        <small class="text-secondary" style="font-size: 13px;">By Ship Unloader Unit</small>
+                                    </div>
                                 </div>
                                 <div class="card-body">
                                     <div class="chart-container" style="height:320px;">
@@ -187,56 +196,53 @@
 
                     <div class="row g-3 mb-4 technical-soh-activity-row">
                         <div class="col-lg-8">
-                            <div class="card technical-soh-detail-card" style="height: 235px; min-height: 235px;">
+                            <div class="card technical-soh-detail-card">
                                 <div class="card-header">
-                                    <span><i class="bi bi-table text-primary-custom me-2"></i>Detailed Stock On Hand Table</span>
+                                    <h4 class="fw-bold">Detailed Stock On Hand Table</h4>
                                 </div>
                                 <div class="card-body p-0">
                                     <div class="table-responsive">
                                         <table class="table technical-soh-table mb-0">
-                                            <thead>
+                                             <thead>
                                                 <tr>
+                                                    <th>Date</th>
                                                     <th>No. Norm</th>
-                                                    <th>Spare Part Name</th>
-                                                    <th>Location</th>
-                                                    <th class="text-end">Volume</th>
-                                                    <th>Satuan</th>
+                                                    <th class="col-name-wrap">Spare Part Name</th>
+                                                    <th class="text-end">Volume</th>           
                                                 </tr>
-                                            </thead>
-                                            <tbody>
-                                                 @forelse($publicDashboard['detailedSohTransactions'] as $tx)
-                                                    <tr>
-                                                        <td>
-                                                            <span class="technical-soh-norm {{ $tx->type === 'in' ? 'norm-in' : 'norm-out' }}">
-                                                                {{ $tx->item?->no_normalisasi ?: 'NORM-' . str_pad($tx->item_id, 4, '0', STR_PAD_LEFT) }}
-                                                            </span>
-                                                        </td>
-                                                        <td class="fw-700">{{ $tx->item?->name ?? 'Barang dihapus' }}</td>
-                                                        <td>{{ $tx->item?->lokasi ?: '-' }}</td>
-                                                        <td class="text-center fw-700">
-                                                            @if($tx->type === 'in')
-                                                                <span class="text-success">
-                                                                    +{{ number_format($tx->quantity) }}
-                                                                </span>
-                                                            @else
-                                                                <span class="text-danger">
-                                                                -{{ number_format($tx->quantity) }}
-                                                                </span>
-                                                            @endif
-                                                        </td>
-                                                        <td>{{ $tx->item?->unit ?? '-' }}</td>
-                                                    </tr>
-                                                @empty
-                                                    <tr>
-                                                        <td colspan="5">
-                                                            <div class="empty-state" style="padding:26px 10px;">
-                                                                <i class="bi bi-inbox" style="font-size:34px;"></i>
-                                                                <h6 class="mt-2" style="font-size:13px;">Belum ada data transaksi terbaru</h6>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                @endforelse
-                                            </tbody>
+                                             </thead>
+                                             <tbody>
+                                                  @forelse($publicDashboard['detailedSohTransactions'] as $tx)
+                                                     <tr>
+                                                         <td class="text-secondary">{{ $tx->date ? $tx->date->format('Y-m-d') : ($tx->created_at ? $tx->created_at->format('Y-m-d') : '-') }}</td>
+                                                         <td>
+                                                             <span class="{{ $tx->type === 'in' ? 'text-in' : 'text-out' }} fw-bold" style="font-family: 'Roboto Mono', monospace; font-size:13px;">
+                                                                 {{ $tx->item?->no_normalisasi ?: 'NORM-' . str_pad($tx->item_id, 4, '0', STR_PAD_LEFT) }}
+                                                             </span>
+                                                         </td>
+                                                         <td class="fw-700 col-name-wrap">{{ $tx->item?->name ?? 'Barang dihapus' }}</td>
+                                                         <td class="text-end">
+                                                             <div class="d-flex flex-column align-items-end">
+                                                                 <span class="{{ $tx->type === 'in' ? 'text-success' : 'text-danger' }} fw-bold">
+                                                                     {{ $tx->type === 'in' ? '+' : '-' }}{{ number_format($tx->quantity) }}
+                                                                 </span>
+                                                                 <span class="text-secondary small text-uppercase" style="font-size: 11px;">
+                                                                     {{ $tx->item?->unit ?? 'PCS' }}
+                                                                 </span>
+                                                             </div>
+                                                         </td>
+                                                     </tr>
+                                                 @empty
+                                                     <tr>
+                                                         <td colspan="4">
+                                                             <div class="empty-state" style="padding:26px 10px;">
+                                                                 <i class="bi bi-inbox" style="font-size:34px;"></i>
+                                                                 <h6 class="mt-2" style="font-size:13px;">Belum ada data transaksi terbaru</h6>
+                                                             </div>
+                                                         </td>
+                                                     </tr>
+                                                 @endforelse
+                                             </tbody>
                                         </table>
                                     </div>
                                 </div>
@@ -246,7 +252,7 @@
                         <div class="col-lg-4">
                             <div class="card technical-activity-card" style="height: 235px; min-height: 235px;">
                                 <div class="card-header">
-                                    <span><i class="bi bi-clock-fill text-primary-custom me-2"></i>Recent Activity Feed</span>
+                                    <h4 class="fw-bold">Recent Activity Feed</h4>
                                 </div>
                                 <div class="card-body technical-activity-feed">
                                     @forelse($publicDashboard['recentTransactions'] as $tx)
@@ -281,28 +287,12 @@
                     </div>
                 @endif
 
-                @if($activeBidang === 'umum')
-                <div class="report-tabs mb-3">
-                    <a href="{{ route('public.stuff-request', array_merge(request()->except(['bidang', 'page']), ['bidang' => 'umum'])) }}"
-                        class="report-tab {{ $activeBidang === 'umum' ? 'active' : '' }}">
-                        <i class="bi bi-building"></i>
-                        Barang Bidang Umum
-                    </a>
-                    <a href="{{ route('public.stuff-request', array_merge(request()->except(['bidang', 'page']), ['bidang' => 'teknik'])) }}"
-                        class="report-tab {{ $activeBidang === 'teknik' ? 'active' : '' }}">
-                        <i class="bi bi-tools"></i>
-                        Barang Bidang Teknik
-                    </a>
-                </div>
-                @endif
+
 
                 @if($activeBidang === 'teknik')
-                    <div class="section-title">
-                        <i class="bi bi-clipboard-data-fill"></i> Daftar Barang Bidang Teknik
-                    </div>
 
                     {{-- Card Filter SOH --}}
-                    <div class="soh-filter-cards mb-4">
+                    <div class="soh-filter-cards mb-4" style="margin-top: 2rem;" id="soh-filter-card">
                         <div class="soh-filter-card-slot">
                             <div class="soh-filter-card soh-total active filter-card-btn" data-filter="all" style="cursor: pointer;">
                                 <div>
@@ -402,11 +392,12 @@
                                                 data-normalisasi="{{ $item->no_normalisasi ?? '' }}"
                                                 data-component="{{ $item->component ?? '' }}"
                                                 data-category="{{ $item->category ?? '' }}"
+                                                data-unit="{{ strtolower($item->unit ?? '') }}"
                                                 data-status="{{ $statusClass }}">
                                                 <td>
                                                     <span class="technical-soh-norm norm-in">{{ $item->no_normalisasi ?? '-' }}</span>
                                                 </td>
-                                                <td class="fw-600 name-cell">{{ $item->name }}</td>
+                                                <td class="fw-600 name-cell col-name-wrap">{{ $item->name }}</td>
                                                 <td class="component-cell">{{ $item->component ?? '-' }}</td>
                                                 <td class="category-cell">{{ $item->category ?? '-' }}</td>
                                                 <td class="location-cell">{{ $item->lokasi ?? '-' }}</td>
@@ -465,10 +456,10 @@
                         <div class="col-lg-6">
                             <div class="request-form-card" style="height: 100%;">
                                 <div class="request-form-header">
-                                    <h5><i class="bi bi-box-arrow-in-down me-2 text-success"></i>Goods Receipt</h5>
+                                    <h4><i class="bi bi-box-arrow-in-down me-2 text-success"></i>Goods Receipt</h4>
                                     <p>Input penerimaan barang bidang teknik</p>
                                 </div>
-                                <div class="request-form-body">
+                                <div class="request-form-body text-uppercase">
                                     <form method="POST" action="{{ route('transactions.store') }}" id="publicGRForm">
                                         @csrf
                                         <input type="hidden" name="type" value="in">
@@ -480,7 +471,7 @@
 
                                         <div class="mb-3">
                                             <label class="form-label">No Normalisasi</label>
-                                            <input type="text" class="form-control" id="publicGRNoNormalisasi" readonly placeholder="000-000-000">
+                                            <input type="text" class="form-control" id="publicGRNoNormalisasi" readonly placeholder="00.000.000.0000">
                                         </div>
 
                                         <div class="mb-3">
@@ -503,28 +494,25 @@
                                             </select>
                                         </div>
 
-                                        <div class="row g-2 mb-3">
-                                            <div class="col-6">
-                                                <label class="form-label">Komponen</label>
-                                                <input type="text" class="form-control" id="publicGRCategory" readonly placeholder="Auto Fill">
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label">Tipe Barang</label>
-                                                <input type="text" class="form-control" id="publicGRItemCategory" readonly placeholder="Auto Fill">
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label">Stok</label>
-                                                <input type="text" class="form-control" id="publicGRStock" readonly placeholder="Auto Fill">
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label">Volume</label>
-                                                <input type="text" class="form-control" id="publicGRVolume" readonly placeholder="Auto Fill">
-                                            </div>
-                                            <div class="col-12">
-                                                <label class="form-label">Lokasi</label>
-                                                <input type="text" class="form-control" id="publicGRLokasi" readonly placeholder="Auto Fill">
-                                            </div>
-                                        </div>
+                                        <div class="mb-3">
+                                             <label class="form-label">Tipe Barang</label>
+                                             <input type="text" class="form-control" id="publicGRItemCategory" readonly placeholder="Auto Fill">
+                                         </div>
+
+                                         <div class="mb-3">
+                                             <label class="form-label">Komponen</label>
+                                             <input type="text" class="form-control" id="publicGRCategory" readonly placeholder="Auto Fill">
+                                         </div>
+
+                                         <div class="mb-3">
+                                             <label class="form-label">Stok</label>
+                                             <input type="text" class="form-control" id="publicGRStock" readonly placeholder="Auto Fill">
+                                         </div>
+
+                                         <div class="mb-3">
+                                             <label class="form-label">Store Room</label>
+                                             <input type="text" class="form-control" id="publicGRLokasi" readonly placeholder="Auto Fill">
+                                         </div>
 
                                         <div class="mb-3">
                                             <label class="form-label">Ship Unloader <span class="text-danger">*</span></label>
@@ -554,7 +542,7 @@
                                         </div>
 
                                         <button type="submit" class="btn w-100 btn-receipt-submit">
-                                            <i class="bi bi-send-fill me-1"></i> Process Goods Receipt
+                                           Process Goods Receipt
                                         </button>
                                     </form>
                                 </div>
@@ -567,18 +555,18 @@
                                     <span><i class="bi bi-table text-success me-2"></i>History Goods Receipt</span>
                                 </div>
                                 <div class="card-body p-0">
-                                    <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                                    <div class="table-responsive">
                                         <table class="table mb-0 align-middle" style="min-width: 1000px;">
                                             <thead>
                                                 <tr>
                                                     <th style="width:50px;">No</th>
                                                     <th>Tanggal</th>
                                                     <th>No Normalisasi</th>
-                                                    <th>Nama Barang</th>
+                                                    <th class="col-name-wrap">Nama Barang</th>
                                                     <th>Komponen</th>
                                                     <th>Tipe Barang</th>
                                                     <th style="width: 100px;">Ship Unloader</th>
-                                                    <th>Lokasi</th>
+                                                    <th>Store Room</th>
                                                     <th class="text-center">Volume</th>
                                                     <th class="text-center">Jumlah</th>
                                                     <th>Satuan</th>
@@ -592,10 +580,10 @@
                                                         $isAllActive = count($activeShips) === 4;
                                                     @endphp
                                                     <tr>
-                                                        <td>{{ $index + 1 }}</td>
+                                                        <td>{{ ($publicDashboard['recentReceipts']->currentPage() - 1) * $publicDashboard['recentReceipts']->perPage() + $index + 1 }}</td>
                                                         <td>{{ $tx->date->format('d/m/Y') }}</td>
                                                         <td><span class="norm-text-in">{{ $tx->no_normalisasi ?? $tx->item->no_normalisasi ?? '-' }}</span></td>
-                                                        <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
+                                                        <td class="fw-600 col-name-wrap">{{ $tx->item->name ?? '-' }}</td>
                                                         <td>{{ $tx->item->component ?? '-' }}</td>
                                                         <td>{{ $tx->item->category ?? '-' }}</td>
                                                         <td class="text-nowrap align-middle" style="width: 100px;">
@@ -644,6 +632,11 @@
                                             </tbody>
                                         </table>
                                     </div>
+                                    @if($publicDashboard['recentReceipts']->hasPages())
+                                        <div class="px-3 py-2 border-top d-flex justify-content-center">
+                                            {{ $publicDashboard['recentReceipts']->appends(request()->except('gr_page'))->links('pagination.custom') }}
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -655,10 +648,10 @@
                         <div class="col-lg-6">
                             <div class="request-form-card" style="height: 100%;">
                                 <div class="request-form-header">
-                                    <h5><i class="bi bi-box-arrow-up me-2 text-warning"></i>Goods Issue</h5>
+                                    <h4><i class="bi bi-box-arrow-up me-2 text-warning"></i>Goods Issue</h4>
                                     <p>Input pengeluaran barang bidang teknik</p>
                                 </div>
-                                <div class="request-form-body">
+                                <div class="request-form-body text-uppercase">
                                     <form method="POST" action="{{ route('transactions.store') }}" id="publicGIForm">
                                         @csrf
                                         <input type="hidden" name="type" value="out">
@@ -670,7 +663,7 @@
 
                                         <div class="mb-3">
                                             <label class="form-label">No Normalisasi</label>
-                                            <input type="text" class="form-control" id="publicGINoNormalisasi" readonly placeholder="000-000-000">
+                                            <input type="text" class="form-control" id="publicGINoNormalisasi" readonly placeholder="00.000.000.0000">
                                         </div>
 
                                         <div class="mb-3">
@@ -693,27 +686,24 @@
                                             </select>
                                         </div>
 
-                                        <div class="row g-2 mb-3">
-                                            <div class="col-6">
-                                                <label class="form-label">Komponen</label>
-                                                <input type="text" class="form-control" id="publicGICategory" readonly placeholder="Auto Fill">
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label">Tipe Barang</label>
-                                                <input type="text" class="form-control" id="publicGIItemCategory" readonly placeholder="Auto Fill">
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label">Stok</label>
-                                                <input type="text" class="form-control" id="publicGIStock" readonly placeholder="Auto Fill">
-                                            </div>
-                                            <div class="col-6">
-                                                <label class="form-label">Volume</label>
-                                                <input type="text" class="form-control" id="publicGIVolume" readonly placeholder="Auto Fill">
-                                            </div>
-                                            <div class="col-12">
-                                                <label class="form-label">Lokasi</label>
-                                                <input type="text" class="form-control" id="publicGILokasi" readonly placeholder="Auto Fill">
-                                            </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Tipe Barang</label>
+                                            <input type="text" class="form-control" id="publicGIItemCategory" readonly placeholder="Auto Fill">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Komponen</label>
+                                            <input type="text" class="form-control" id="publicGICategory" readonly placeholder="Auto Fill">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Stok</label>
+                                            <input type="text" class="form-control" id="publicGIStock" readonly placeholder="Auto Fill">
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label">Store Room</label>
+                                            <input type="text" class="form-control" id="publicGILokasi" readonly placeholder="Auto Fill">
                                         </div>
 
                                         <div class="mb-3">
@@ -747,7 +737,7 @@
                                         </div>
 
                                         <button type="submit" class="btn w-100 btn-issue-submit">
-                                            <i class="bi bi-send-fill me-1"></i> Process Goods Issue
+                                          Process Goods Issue
                                         </button>
                                     </form>
                                 </div>
@@ -760,18 +750,18 @@
                                     <span><i class="bi bi-table text-warning me-2"></i>History Goods Issue</span>
                                 </div>
                                 <div class="card-body p-0">
-                                    <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
+                                    <div class="table-responsive">
                                         <table class="table mb-0 align-middle" style="min-width: 1000px;">
                                             <thead>
                                                 <tr>
                                                     <th style="width:50px;">No</th>
                                                     <th>Tanggal</th>
                                                     <th>No Normalisasi</th>
-                                                    <th>Nama Barang</th>
+                                                    <th class="col-name-wrap">Nama Barang</th>
                                                     <th>Komponen</th>
                                                     <th>Tipe Barang</th>
                                                     <th style="width: 100px;">Ship Unloader</th>
-                                                    <th>Lokasi</th>
+                                                    <th>Store Room</th>
                                                     <th class="text-center">Volume</th>
                                                     <th class="text-center">Jumlah</th>
                                                     <th>Satuan</th>
@@ -785,10 +775,10 @@
                                                         $isAllActive = count($activeShips) === 4;
                                                     @endphp
                                                     <tr>
-                                                        <td>{{ $index + 1 }}</td>
+                                                        <td>{{ ($publicDashboard['recentIssues']->currentPage() - 1) * $publicDashboard['recentIssues']->perPage() + $index + 1 }}</td>
                                                         <td>{{ $tx->date->format('d/m/Y') }}</td>
                                                         <td><span class="norm-text-out">{{ $tx->no_normalisasi ?? $tx->item->no_normalisasi ?? '-' }}</span></td>
-                                                        <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
+                                                        <td class="fw-600 col-name-wrap">{{ $tx->item->name ?? '-' }}</td>
                                                         <td>{{ $tx->item->component ?? '-' }}</td>
                                                         <td>{{ $tx->item->category ?? '-' }}</td>
                                                         <td class="text-nowrap align-middle" style="width: 100px;">
@@ -837,24 +827,17 @@
                                             </tbody>
                                         </table>
                                     </div>
+                                    @if($publicDashboard['recentIssues']->hasPages())
+                                        <div class="px-3 py-2 border-top d-flex justify-content-center">
+                                            {{ $publicDashboard['recentIssues']->appends(request()->except('gi_page'))->links('pagination.custom') }}
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {{-- Switcher --}}
-                    <div class="report-tabs mt-4 mb-3">
-                        <a href="{{ route('public.stuff-request', array_merge(request()->except(['bidang', 'page']), ['bidang' => 'umum'])) }}"
-                            class="report-tab {{ $activeBidang === 'umum' ? 'active' : '' }}">
-                            <i class="bi bi-building"></i>
-                            Barang Bidang Umum
-                        </a>
-                        <a href="{{ route('public.stuff-request', array_merge(request()->except(['bidang', 'page']), ['bidang' => 'teknik'])) }}"
-                            class="report-tab {{ $activeBidang === 'teknik' ? 'active' : '' }}">
-                            <i class="bi bi-tools"></i>
-                            Barang Bidang Teknik
-                        </a>
-                    </div>
+
                 @else
                 <div class="row g-4">
                     {{-- Left: Stock Recap --}}
@@ -867,27 +850,32 @@
                         <div class="filter-bar mb-3">
                             <form method="GET" action="{{ route('public.stuff-request') }}">
                                 <input type="hidden" name="bidang" value="{{ $activeBidang }}">
-                                <div class="row align-items-end g-2">
-                                    <div class="col-md-5">
+                                <div class="row g-2 align-items-center">
+                                    <div class="col">
                                         <div class="position-relative" id="publicUmumSearchWrapper">
-                                            <input type="text" id="publicUmumSearch" name="search" class="form-control"
-                                                placeholder="Cari nama barang..."
-                                                value="{{ request('search') }}" autocomplete="off">
-                                            <div id="publicUmumSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+                                            <input
+                                                type="text"
+                                                id="publicUmumSearch"
+                                                name="search"
+                                                class="form-control"
+                                                placeholder="Cari nama barang, kategori, atau satuan"
+                                                value="{{ request('search') }}"
+                                                autocomplete="off">
+
+                                            <div id="publicUmumSearchSuggestions"
+                                                class="autocomplete-suggestions"
+                                                style="display:none;">
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="col-md-4">
-                                        <select name="category" class="form-select">
-                                            <option value="">Semua {{ $activeBidang === 'teknik' ? 'Tipe Barang' : 'Kategori' }}</option>
-                                            @foreach($categories as $cat)
-                                                <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                                            @endforeach
-                                        </select>
+
+                                    <div class="col-auto">
+                                        <a href="{{ route('public.stuff-request', ['bidang' => $activeBidang]) }}"
+                                            class="btn btn-outline-reset">
+                                            <i class="bi bi-arrow-counterclockwise fs-5"></i>
+                                        </a>
                                     </div>
-                                    <div class="col-md-3 d-flex gap-2">
-                                        <button type="submit" class="btn btn-primary btn-sm flex-fill"><i class="bi bi-search"></i> Cari</button>
-                                        <a href="{{ route('public.stuff-request', ['bidang' => $activeBidang]) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-lg"></i></a>
-                                    </div>
+
                                 </div>
                             </form>
                         </div>
@@ -903,10 +891,10 @@
                                                 @if($activeBidang === 'teknik')
                                                     <th>No Normalisasi</th>
                                                 @endif
-                                                <th>Nama Barang</th>
+                                                <th class="col-name-wrap">Nama Barang</th>
                                                 <th>{{ $activeBidang === 'teknik' ? 'Tipe Barang' : 'Kategori' }}</th>
                                                 @if($activeBidang === 'teknik')
-                                                    <th>Lokasi</th>
+                                                    <th>Store Room</th>
                                                 @endif
                                                 <th>Satuan</th>
                                                 <th class="text-center">Stok</th>
@@ -918,12 +906,13 @@
                                             @php $stock = $item->current_stock; @endphp
                                             <tr data-item-id="{{ $item->id }}"
                                                 data-name="{{ strtolower($item->name) }}"
-                                                data-category="{{ strtolower($item->category ?? '') }}">
+                                                data-category="{{ strtolower($item->category ?? '') }}"
+                                                data-unit="{{ strtolower($item->unit ?? '') }}">
                                                 <td>{{ $index + 1 }}</td>
                                                 @if($activeBidang === 'teknik')
                                                     <td class="fw-600">{{ $item->no_normalisasi ?? '-' }}</td>
                                                 @endif
-                                                <td class="fw-600">{{ $item->name }}</td>
+                                                <td class="fw-600 col-name-wrap">{{ $item->name }}</td>
                                                 <td>{{ $activeBidang === 'teknik' ? ($item->category ?? '-') : $item->category }}</td>
                                                 @if($activeBidang === 'teknik')
                                                     <td>{{ $item->lokasi ?? '-' }}</td>
@@ -1474,7 +1463,7 @@
                     filterTable();
                     
                     // Smooth scroll to table card
-                    const tableCard = document.getElementById('public-teknik-table-card');
+                    const tableCard = document.getElementById('soh-filter-card');
                     if (tableCard) {
                         tableCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
@@ -1526,12 +1515,13 @@
                         const category = (row.dataset.category || '').toLowerCase();
                         const component = (row.dataset.component || '').toLowerCase();
                         const normalisasi = (row.dataset.normalisasi || '').toLowerCase();
+                        const unit = (row.dataset.unit || '').toLowerCase();
 
                         let matched = false;
                         if (isTeknikSection) {
-                            matched = name.includes(keyword) || component.includes(keyword) || normalisasi.includes(keyword);
+                            matched = name.includes(keyword) || component.includes(keyword) || normalisasi.includes(keyword) || unit.includes(keyword);
                         } else {
-                            matched = name.includes(keyword) || category.includes(keyword);
+                            matched = name.includes(keyword) || category.includes(keyword) || unit.includes(keyword);
                         }
 
                         if (matched) {
@@ -1626,13 +1616,13 @@
                     const hasItem = Boolean(select.value);
                     const selected = select.options[select.selectedIndex];
 
-                    normalisasi.value = hasItem ? (selected.dataset.noNormalisasi || '') : '';
-                    category.value = hasItem ? (selected.dataset.component || '') : '';
-                    itemCategory.value = hasItem ? (selected.dataset.category || '') : '';
-                    stock.value = hasItem ? (selected.dataset.stock || '0') : '';
-                    volume.value = hasItem ? (selected.dataset.volume || '') : '';
-                    lokasi.value = hasItem ? (selected.dataset.lokasi || '') : '';
-                    unit.value = hasItem ? (selected.dataset.unit || '') : '';
+                    if (normalisasi) normalisasi.value = hasItem ? (selected.dataset.noNormalisasi || '') : '';
+                    if (category) category.value = hasItem ? (selected.dataset.component || '') : '';
+                    if (itemCategory) itemCategory.value = hasItem ? (selected.dataset.category || '') : '';
+                    if (stock) stock.value = hasItem ? (selected.dataset.stock || '0') : '';
+                    if (volume) volume.value = hasItem ? (selected.dataset.volume || '') : '';
+                    if (lokasi) lokasi.value = hasItem ? (selected.dataset.lokasi || '') : '';
+                    if (unit) unit.value = hasItem ? (selected.dataset.unit || '') : '';
 
                     checkStock();
                 });

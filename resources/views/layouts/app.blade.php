@@ -52,6 +52,10 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <!-- SweetAlert2 -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <!-- Google Fonts Roboto Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="{{ asset('css/custom.css') }}?v={{ filemtime(public_path('css/custom.css')) }}" rel="stylesheet">
     <!-- Logo  -->
@@ -318,7 +322,7 @@
         <!-- Page Content -->
         <div class="page-content" id="sectionShell">
             <div class="topbar-titles">
-                <div class="page-title" id="pageTitle">@yield('title', $isTeknik ? 'Overview' : 'Dashboard')</div>
+                <div class="page-title" id="pageTitle">@yield('title', 'Dashboard')</div>
                 <div class="page-subtitle" id="pageSubtitle">@yield('subtitle', '')</div>
             </div>
 

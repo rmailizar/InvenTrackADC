@@ -18,54 +18,62 @@
         <div class="header-action-wrapper d-none">
             <div class="section-header-actions">
                 <form method="GET" action="{{ $isApprovalManager ? route('pendingUsers.index') : route('users.index') }}">
-                    <div class="action-row-1">
-                        <div class="position-relative" id="userSearchWrapper">
-                            <input type="text"
-                                id="userSearchInput"
-                                class="form-control form-control-sm"
-                                name="search"
-                                value="{{ request('search') }}"
-                                autocomplete="off"
-                                placeholder="Cari user..."
-                                style="width: 180px;">
-                            <div id="userSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+                    <div class="action-row-1 usr-filter-row">
+                        <div class="usr-search-row d-flex align-items-center gap-2" style="flex-wrap: nowrap !important;">
+                            <div class="position-relative" id="userSearchWrapper" style="flex: 1 1 auto !important; width: auto !important; min-width: 0 !important;">
+                                <input type="text"
+                                    id="userSearchInput"
+                                    class="form-control form-control-sm"
+                                    name="search"
+                                    value="{{ request('search') }}"
+                                    autocomplete="off"
+                                    placeholder="Cari user...">
+                                <div id="userSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+                            </div>
+                            <a href="{{ $isApprovalManager ? route('pendingUsers.index') : route('users.index') }}" 
+                                class="btn btn-reset btn-outline-reset" 
+                                style="flex: 0 0 auto !important;"
+                                title="Reset Filter">
+                                <i class="bi bi-arrow-counterclockwise fs-5"></i>
+                            </a>
                         </div>
-                        <select name="role" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
-                            <option value="">Semua Role</option>
+                        
+                        <div class="usr-select-row">
+                            <select name="role" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">Semua Role</option>
+                                @if(auth()->user()->isSuperAdmin())
+                                    <option value="superadmin" {{ request('role') == 'superadmin' ? 'selected' : '' }}>Superadmin</option>
+                                @endif
+                                <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                                <option value="manajer" {{ request('role') == 'manajer' ? 'selected' : '' }}>Manajer</option>
+                                @if(!$isTeknikActor)
+                                    <option value="staf" {{ request('role') == 'staf' ? 'selected' : '' }}>Staf</option>
+                                @endif
+                            </select>
                             @if(auth()->user()->isSuperAdmin())
-                                <option value="superadmin" {{ request('role') == 'superadmin' ? 'selected' : '' }}>Superadmin</option>
+                                <select name="bidang" class="form-select form-select-sm" onchange="this.form.submit()">
+                                    <option value="">Semua Bidang</option>
+                                    <option value="umum" {{ request('bidang') == 'umum' ? 'selected' : '' }}>Umum</option>
+                                    <option value="teknik" {{ request('bidang') == 'teknik' ? 'selected' : '' }}>Teknik</option>
+                                </select>
                             @endif
-                            <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
-                            <option value="manajer" {{ request('role') == 'manajer' ? 'selected' : '' }}>Manajer</option>
-                            @if(!$isTeknikActor)
-                                <option value="staf" {{ request('role') == 'staf' ? 'selected' : '' }}>Staf</option>
+                            @if($canManageUsers)
+                                <select name="account_status" class="form-select form-select-sm" onchange="this.form.submit()">
+                                    <option value="">Semua Status</option>
+                                    <option value="pending" {{ request('account_status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                    <option value="approved" {{ request('account_status') == 'approved' ? 'selected' : '' }}>Approved</option>
+                                    <option value="rejected" {{ request('account_status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                </select>
                             @endif
-                        </select>
-                        @if(auth()->user()->isSuperAdmin())
-                            <select name="bidang" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
-                                <option value="">Semua Bidang</option>
-                                <option value="umum" {{ request('bidang') == 'umum' ? 'selected' : '' }}>Umum</option>
-                                <option value="teknik" {{ request('bidang') == 'teknik' ? 'selected' : '' }}>Teknik</option>
-                            </select>
-                        @endif
+                        </div>
+                        
                         @if($canManageUsers)
-                            <select name="account_status" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
-                                <option value="">Semua Status</option>
-                                <option value="pending" {{ request('account_status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                                <option value="approved" {{ request('account_status') == 'approved' ? 'selected' : '' }}>Approved</option>
-                                <option value="rejected" {{ request('account_status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
-                            </select>
+                            <div class="usr-action-row">
+                                <button type="button" class="btn btn-primary btn-sm w-100" onclick="openUserModal()">
+                                    <i class="bi bi-person-plus-fill me-1"></i> Tambah User
+                                </button>
+                            </div>
                         @endif
-                        @if($canManageUsers)
-                            <button type="button" class="btn btn-primary btn-sm" onclick="openUserModal()">
-                                <i class="bi bi-person-plus-fill"></i> Tambah User
-                            </button>
-                        @endif
-                    </div>
-                    <div class="action-row-2">
-                        <a href="{{ $isApprovalManager ? route('pendingUsers.index') : route('users.index') }}" class="btn btn-reset btn-sm" title="Reset Filter">
-                            <i class="bi bi-arrow-counterclockwise"></i> 
-                        </a>
                     </div>
                 </form>
             </div>

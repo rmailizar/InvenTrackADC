@@ -46,45 +46,50 @@
         <div class="header-action-wrapper d-none">
             <div class="section-header-actions">
                 <form method="GET" action="{{ route('stuff-requests.index') }}">
-                    <div class="action-row-1">
-                        <div class="position-relative" id="stuffRequestsSearchWrapper">
-                            <input type="text"
-                                id="stuffRequestsSearchInput"
-                                class="form-control form-control-sm"
-                                name="search"
-                                value="{{ request('search') }}"
-                                autocomplete="off"
-                                placeholder="Cari pemohon/barang..."
-                                style="width: 180px;">
-                            <div id="stuffRequestsSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+                    <div class="action-row-1 strreq-filter-row">
+                        <div class="strreq-search-row d-flex align-items-center gap-2" style="flex-wrap: nowrap !important;">
+                            <div class="position-relative" id="stuffRequestsSearchWrapper" style="flex: 1 1 auto !important; width: auto !important; min-width: 0 !important;">
+                                <input type="text"
+                                    id="stuffRequestsSearchInput"
+                                    class="form-control form-control-sm"
+                                    name="search"
+                                    value="{{ request('search') }}"
+                                    autocomplete="off"
+                                    placeholder="Cari pemohon/barang...">
+                                <div id="stuffRequestsSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+                            </div>
+                            <a href="{{ route('stuff-requests.index') }}" 
+                                class="btn btn-reset btn-outline-reset" 
+                                style="flex: 0 0 auto !important;"
+                                title="Reset Filter">
+                                <i class="bi bi-arrow-counterclockwise fs-5"></i>
+                            </a>
                         </div>
-                        <select name="status" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
-                            <option value="">Semua Status</option>
-                            <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
-                            @unless($isTeknik)
-                                <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
-                                <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
-                            @endunless
-                            <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Done</option>
-                            <option value="cancel" {{ request('status') == 'cancel' ? 'selected' : '' }}>Cancel</option>
-                        </select>
-                        <select name="year" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
-                            <option value="">Semua Tahun</option>
-                            @foreach($years as $yr)
-                                <option value="{{ $yr }}" {{ request('year') == $yr ? 'selected' : '' }}>{{ $yr }}</option>
-                            @endforeach
-                        </select>
-                        <select name="month" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
-                            <option value="">Semua Bulan</option>
-                            @foreach($months as $num => $name)
-                                <option value="{{ $num }}" {{ request('month') == $num ? 'selected' : '' }}>{{ $name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="action-row-2">
-                        <a href="{{ route('stuff-requests.index') }}" class="btn btn-reset btn-sm" title="Reset Filter">
-                            <i class="bi bi-arrow-counterclockwise"></i>
-                        </a>
+                        
+                        <div class="strreq-select-row">
+                            <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">Semua Status</option>
+                                <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                                @unless($isTeknik)
+                                    <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
+                                    <option value="rejected" {{ request('status') == 'rejected' ? 'selected' : '' }}>Rejected</option>
+                                @endunless
+                                <option value="completed" {{ request('status') == 'completed' ? 'selected' : '' }}>Done</option>
+                                <option value="cancel" {{ request('status') == 'cancel' ? 'selected' : '' }}>Cancel</option>
+                            </select>
+                            <select name="year" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">Semua Tahun</option>
+                                @foreach($years as $yr)
+                                    <option value="{{ $yr }}" {{ request('year') == $yr ? 'selected' : '' }}>{{ $yr }}</option>
+                                @endforeach
+                            </select>
+                            <select name="month" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">Semua Bulan</option>
+                                @foreach($months as $num => $name)
+                                    <option value="{{ $num }}" {{ request('month') == $num ? 'selected' : '' }}>{{ $name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                 </form>
             </div>

@@ -116,7 +116,7 @@ class DashboardController extends Controller
         }
 
         $categoryData = $user->isTeknik()
-            ? $this->shipUnloaderStockData($user)
+            ? $this->shipUnloaderStockData($user, (int) date('Y'))
             : $this->categoryStockData($user);
         $technicalTypeSummary = $user->isTeknik()
             ? $this->technicalTypeSummary($allItems)

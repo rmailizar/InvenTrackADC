@@ -1,6 +1,6 @@
 @if ($paginator->hasPages())
 <nav aria-label="Pagination">
-    <ul class="pagination justify-content-center mb-0 {{ auth()->user()->bidang === 'teknik' ? 'theme-teknik' : '' }}">
+    <ul class="pagination justify-content-center mb-0 {{ (auth()->user() && auth()->user()->bidang === 'teknik') || request('bidang') === 'teknik' ? 'theme-teknik' : '' }}">
         {{-- Previous --}}
         @if ($paginator->onFirstPage())
             <li class="page-item disabled"><span class="page-link"><i class="bi bi-chevron-left"></i></span></li>
@@ -18,7 +18,7 @@
                 @foreach ($element as $page => $url)
                     @if ($page == $paginator->currentPage())
                         {{-- Tambahkan kondisi check teknik di sini untuk menyuntikkan class tambahan --}}
-                        <li class="page-item active {{ auth()->user()->bidang === 'teknik' ? 'page-teknik' : '' }}">
+                        <li class="page-item active {{ (auth()->user() && auth()->user()->bidang === 'teknik') || request('bidang') === 'teknik' ? 'page-teknik' : '' }}">
                             <span class="page-link">{{ $page }}</span>
                         </li>
                     @else

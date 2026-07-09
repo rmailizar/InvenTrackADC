@@ -85,7 +85,7 @@
                         <div class="technical-type-card-head">
                             <div>
                                 <div class="technical-dashboard-card-title">Total Item Types</div>
-                                <div class="technical-dashboard-card-subtitle">Tipe barang terdaftar</div>
+                                <div class="technical-dashboard-card-subtitle">Categories registered</div>
                             </div>
                             <div class="technical-type-card-total">{{ number_format($technicalTypeSummary['total_types'] ?? 0) }}</div>
                         </div>
@@ -204,7 +204,7 @@
                                 <table class="table" style="margin-bottom:0;">
                                     <thead>
                                         <tr>
-                                            <th>Barang</th>
+                                            <th class="col-name-wrap">Barang</th>
                                             <th>{{ $componentLabel }}</th>
                                             <th>Jenis</th>
                                             <th>Jumlah</th>
@@ -220,7 +220,7 @@
                                     <tbody>
                                         @foreach($transactions as $tx)
                                             <tr>
-                                                <td class="fw-600">{{ $tx->item->name ?? 'Barang dihapus' }}</td>
+                                                <td class="fw-600 col-name-wrap">{{ $tx->item->name ?? 'Barang dihapus' }}</td>
                                                 <td>{{ $isTeknik ? ($tx->item->component ?? '-') : ($tx->item->category ?? '-') }}</td>
                                                 <td>
                                                     <span class="badge-status badge-{{ $tx->type }}">
@@ -299,11 +299,18 @@
         <div class="row g-3 mb-4 public-technical-chart-row">
             <div class="{{ $isTeknik ? 'col-lg-8' : 'col-lg-8' }}">
                 <div class="card">
-                    <div class="card-header d-flex align-items-center justify-content-between">
-                        <span>
-                            <i class="bi bi-graph-up text-primary-custom me-2"></i>
-                            {{ $receiptLabel }} vs {{ $issueLabel }} (12 Bulan)
-                        </span>
+                    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        @if($isTeknik)
+                            <div>
+                                <h5 class="mb-0 fw-bold">Movement Analysis</h5>
+                                <small class="text-secondary" style="font-size: 11px;">GR vs GI tracking trend</small>
+                            </div>
+                        @else
+                            <span>
+                                <i class="bi bi-graph-up text-primary-custom me-2"></i>
+                                {{ $receiptLabel }} vs {{ $issueLabel }} (12 Bulan)
+                            </span>
+                        @endif
 
                         <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
                             @if($isTeknik)
@@ -334,15 +341,22 @@
             </div>
             <div class="col-lg-4">
                 <div class="card">
-                    <div class="card-header d-flex align-items-center justify-content-between">
-                        <span><i class="bi bi-pie-chart-fill text-primary-custom me-2"></i>Stok per {{ $distributionLabel }}</span>
-                        <select id="categoryYearFilter" class="form-select form-select-sm"
-                            style="width:auto; min-width:120px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px; padding:4px 28px 4px 10px;">
-                            <option value="">Semua Tahun</option>
-                            @foreach($availableYears as $year)
-                                <option value="{{ $year }}">{{ $year }}</option>
-                            @endforeach
-                        </select>
+                    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        @if($isTeknik)
+                            <div>
+                                <h5 class="mb-0 fw-bold">Asset Distribution</h5>
+                                <small class="text-secondary" style="font-size: 11px;">By Ship Unloader Unit</small>
+                            </div>
+                        @else
+                            <span><i class="bi bi-pie-chart-fill text-primary-custom me-2"></i>Stok per {{ $distributionLabel }}</span>
+                            <select id="categoryYearFilter" onchange="changeCategoryChart()" class="form-select form-select-sm"
+                                style="width:auto; min-width:120px; background:var(--body-bg); border:1px solid var(--border-color); color:var(--text-color); border-radius:8px; font-size:12px; padding:4px 28px 4px 10px;">
+                                <option value="">Semua Tahun</option>
+                                @foreach($availableYears as $year)
+                                    <option value="{{ $year }}">{{ $year }}</option>
+                                @endforeach
+                            </select>
+                        @endif
                     </div>
                     <div class="card-body">
                         <div class="chart-container" style="height:320px;">
@@ -357,11 +371,18 @@
         <div class="row g-3 mb-4 public-technical-chart-row">
             <div class="{{ $isTeknik ? 'col-lg-12' : 'col-lg-8' }}">
                 <div class="card">
-                    <div class="card-header d-flex align-items-center justify-content-between">
-                        <span>
-                            <i class="bi bi-activity text-primary-custom me-2"></i>
-                            {{ $receiptLabel }} vs {{ $issueLabel }} (Tahunan)
-                        </span>
+                    <div class="card-header d-flex align-items-center justify-content-between flex-wrap gap-2">
+                        @if($isTeknik)
+                            <div>
+                                <h5 class="mb-0 fw-bold">Movement Analysis</h5>
+                                <small class="text-secondary" style="font-size: 11px;">GR vs GI tracking trend</small>
+                            </div>
+                        @else
+                            <span>
+                                <i class="bi bi-activity text-primary-custom me-2"></i>
+                                {{ $receiptLabel }} vs {{ $issueLabel }} (Tahunan)
+                            </span>
+                        @endif
 
                         <div class="d-flex align-items-center gap-2">
                             <select onchange="changeYearRange()" id="startYear" class="form-select form-select-sm"
@@ -398,7 +419,7 @@
         @if($isTeknik)
             <div class="row g-3 mb-4 technical-soh-activity-row">
                 <div class="col-lg-8">
-                    <div class="card technical-soh-detail-card" style="height: 235px; min-height: 235px;">
+                    <div class="card technical-soh-detail-card">
                         <div class="card-header">
                             <span><i class="bi bi-table text-primary-custom me-2"></i>Detailed Stock On Hand Table</span>
                         </div>
@@ -407,29 +428,36 @@
                                 <table class="table technical-soh-table mb-0">
                                     <thead>
                                         <tr>
+                                            <th>Date</th>
                                             <th>No. Norm</th>
-                                            <th>Spare Part Name</th>
-                                            <th>Location</th>
+                                            <th class="col-name-wrap">Spare Part Name</th>
                                             <th class="text-end">Volume</th>
-                                            <th>Satuan</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @forelse($detailedSohTransactions as $tx)
                                             <tr>
+                                                <td class="text-secondary">{{ $tx->date ? $tx->date->format('Y-m-d') : ($tx->created_at ? $tx->created_at->format('Y-m-d') : '-') }}</td>
                                                 <td>
-                                                    <span class="technical-soh-norm {{ $tx->type === 'in' ? 'norm-in' : 'norm-out' }}">
+                                                    <span class="{{ $tx->type === 'in' ? 'text-in' : 'text-out' }} fw-bold" style="font-family: 'Roboto Mono', monospace; font-size:13px;">
                                                         {{ $tx->item?->no_normalisasi ?: 'NORM-' . str_pad($tx->item_id, 4, '0', STR_PAD_LEFT) }}
                                                     </span>
                                                 </td>
-                                                <td class="fw-700">{{ $tx->item?->name ?? 'Barang dihapus' }}</td>
-                                                <td>{{ $tx->item?->lokasi ?: '-' }}</td>
-                                                <td class="text-end fw-800">{{ number_format($tx->quantity) }}</td>
-                                                <td>{{ $tx->item?->unit ?? '-' }}</td>
+                                                <td class="fw-medium col-name-wrap">{{ $tx->item?->name ?? 'Barang dihapus' }}</td>
+                                                <td>
+                                                    <div class="d-flex flex-column">
+                                                        <span class="{{ $tx->type === 'in' ? 'text-success' : 'text-danger' }} fw-bold">
+                                                            {{ $tx->type === 'in' ? '+' : '-' }}{{ number_format($tx->quantity) }}
+                                                        </span>
+                                                        <span class="text-secondary small text-uppercase" style="font-size: 11px;">
+                                                            {{ $tx->item?->unit ?? 'PCS' }}
+                                                        </span>
+                                                    </div>
+                                                </td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="5">
+                                                <td colspan="4">
                                                     <div class="empty-state" style="padding:26px 10px;">
                                                         <i class="bi bi-inbox" style="font-size:34px;"></i>
                                                         <h6 class="mt-2" style="font-size:13px;">Belum ada data transaksi terbaru</h6>
@@ -1083,154 +1111,157 @@
         let selectedItemId = null;
         let activeIndex = -1;
 
-        searchInput.addEventListener('input', function () {
-            const q = this.value.trim();
-            clearTimeout(debounceTimer);
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                const q = this.value.trim();
+                clearTimeout(debounceTimer);
 
-            if (q.length < 1) {
-                suggestionsBox.style.display = 'none';
-                return;
-            }
+                if (q.length < 1) {
+                    suggestionsBox.style.display = 'none';
+                    return;
+                }
 
-            debounceTimer = setTimeout(() => {
-                fetch(`{{ request()->getBaseUrl() }}/dashboard/api/search-items?q=${encodeURIComponent(q)}${saBidangParam}`)
-                    .then(res => res.json())
-                    .then(items => {
-                        activeIndex = -1;
-                        if (items.length === 0) {
-                            suggestionsBox.innerHTML = '<div class="autocomplete-no-result"><i class="bi bi-search me-1"></i>Tidak ada barang ditemukan</div>';
-                        } else {
-                            suggestionsBox.innerHTML = items.map((item, idx) => `
-                                <div class="autocomplete-item"
-                                    data-id="${item.id}"
-                                    data-name="${item.name}"
-                                    data-index="${idx}">
-                                    
-                                    <div class="item-icon">
-                                        <i class="bi bi-box-seam"></i>
-                                    </div>
-
-                                    <div>
-                                        <div class="item-name">
-                                            ${highlightMatch(item.name, q)}
+                debounceTimer = setTimeout(() => {
+                    fetch(`{{ request()->getBaseUrl() }}/dashboard/api/search-items?q=${encodeURIComponent(q)}${saBidangParam}`)
+                        .then(res => res.json())
+                        .then(items => {
+                            activeIndex = -1;
+                            if (items.length === 0) {
+                                suggestionsBox.innerHTML = '<div class="autocomplete-no-result"><i class="bi bi-search me-1"></i>Tidak ada barang ditemukan</div>';
+                            } else {
+                                suggestionsBox.innerHTML = items.map((item, idx) => `
+                                    <div class="autocomplete-item"
+                                        data-id="${item.id}"
+                                        data-name="${item.name}"
+                                        data-index="${idx}">
+                                        
+                                        <div class="item-icon">
+                                            <i class="bi bi-box-seam"></i>
                                         </div>
 
-                                        <div class="item-category">
-                                            ${item.no_normalisasi ? item.no_normalisasi + ' · ' : ''}
-                                            ${item.category || ''}
+                                        <div>
+                                            <div class="item-name">
+                                                ${highlightMatch(item.name, q)}
+                                            </div>
+
+                                            <div class="item-category">
+                                                ${item.no_normalisasi ? item.no_normalisasi + ' · ' : ''}
+                                                ${item.category || ''}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            `).join('');
+                                `).join('');
 
-                            // Event klik pada item autocomplete
-                            suggestionsBox.querySelectorAll('.autocomplete-item').forEach(itemEl => {
-                                itemEl.addEventListener('click', function () {
-                                    selectItem(this.dataset.id, this.dataset.name);
+                                // Event klik pada item autocomplete
+                                suggestionsBox.querySelectorAll('.autocomplete-item').forEach(itemEl => {
+                                    itemEl.addEventListener('click', function () {
+                                        selectItem(this.dataset.id, this.dataset.name);
+                                    });
                                 });
-                            });
-                        }
-                        suggestionsBox.style.display = 'block';
-                    })
-                    .catch(() => {
-                        suggestionsBox.style.display = 'none';
+                            }
+                            suggestionsBox.style.display = 'block';
+                        })
+                        .catch(() => {
+                            suggestionsBox.style.display = 'none';
+                        });
+                }, 250);
+            });
+
+            // Keyboard navigation
+            searchInput.addEventListener('keydown', function (e) {
+                const items = suggestionsBox.querySelectorAll('.autocomplete-item');
+                if (!items.length) return;
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    activeIndex = Math.min(activeIndex + 1, items.length - 1);
+                    updateActiveItem(items);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    activeIndex = Math.max(activeIndex - 1, 0);
+                    updateActiveItem(items);
+                } else if (e.key === 'Enter' && activeIndex >= 0) {
+                    e.preventDefault();
+                    const active = items[activeIndex];
+                    selectItem(active.dataset.id, active.dataset.name);
+                } else if (e.key === 'Escape') {
+                    suggestionsBox.style.display = 'none';
+                }
+            });
+
+            function updateActiveItem(items) {
+                items.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
+                if (items[activeIndex]) {
+                    items[activeIndex].scrollIntoView({ block: 'nearest' });
+                }
+            }
+
+            function highlightMatch(text, query) {
+                const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+                return text.replace(regex, '<mark style="background:var(--primary-bg);color:var(--primary);padding:0 2px;border-radius:3px;">$1</mark>');
+            }
+
+            function selectItem(itemId, itemName) {
+                selectedItemId = itemId;
+                searchInput.value = itemName;
+                suggestionsBox.style.display = 'none';
+                clearBtn.style.display = 'inline-flex';
+                activeFilter.style.display = 'block';
+                activeFilterName.textContent = itemName;
+
+                // Fetch filtered chart data
+                fetch(`{{ request()->getBaseUrl() }}/dashboard/api/chart-data?item_id=${itemId}${saBidangParam}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        // Update monthly chart
+                        monthlyChartInstance.data.labels = data.monthlyData.map(d => d.label);
+                        monthlyChartInstance.data.datasets[0].data = data.monthlyData.map(d => d.masuk);
+                        monthlyChartInstance.data.datasets[1].data = data.monthlyData.map(d => d.keluar);
+                        monthlyChartInstance.update('active');
+
+                        // Update yearly chart
+                        yearlyChartInstance.data.labels = data.yearlyData.map(d => d.label);
+                        yearlyChartInstance.data.datasets[0].data = data.yearlyData.map(d => d.masuk);
+                        yearlyChartInstance.data.datasets[1].data = data.yearlyData.map(d => d.keluar);
+                        yearlyChartInstance.update('active');
                     });
-            }, 250);
-        });
+            }
 
-        // Keyboard navigation
-        searchInput.addEventListener('keydown', function (e) {
-            const items = suggestionsBox.querySelectorAll('.autocomplete-item');
-            if (!items.length) return;
-
-            if (e.key === 'ArrowDown') {
-                e.preventDefault();
-                activeIndex = Math.min(activeIndex + 1, items.length - 1);
-                updateActiveItem(items);
-            } else if (e.key === 'ArrowUp') {
-                e.preventDefault();
-                activeIndex = Math.max(activeIndex - 1, 0);
-                updateActiveItem(items);
-            } else if (e.key === 'Enter' && activeIndex >= 0) {
-                e.preventDefault();
-                const active = items[activeIndex];
-                selectItem(active.dataset.id, active.dataset.name);
-            } else if (e.key === 'Escape') {
+            // Clear / reset search
+            clearBtn.addEventListener('click', function () {
+                selectedItemId = null;
+                searchInput.value = '';
                 suggestionsBox.style.display = 'none';
-            }
-        });
+                clearBtn.style.display = 'none';
+                activeFilter.style.display = 'none';
 
-        function updateActiveItem(items) {
-            items.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
-            if (items[activeIndex]) {
-                items[activeIndex].scrollIntoView({ block: 'nearest' });
-            }
+                // Reset charts to original data
+                fetch(`{{ request()->getBaseUrl() }}/dashboard/api/chart-data?_=1${saBidangParam}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        monthlyChartInstance.data.labels = data.monthlyData.map(d => d.label);
+                        monthlyChartInstance.data.datasets[0].data = data.monthlyData.map(d => d.masuk);
+                        monthlyChartInstance.data.datasets[1].data = data.monthlyData.map(d => d.keluar);
+                        monthlyChartInstance.update('active');
+
+                        yearlyChartInstance.data.labels = data.yearlyData.map(d => d.label);
+                        yearlyChartInstance.data.datasets[0].data = data.yearlyData.map(d => d.masuk);
+                        yearlyChartInstance.data.datasets[1].data = data.yearlyData.map(d => d.keluar);
+                        yearlyChartInstance.update('active');
+                    });
+            });
+
+            // Close suggestions when clicking outside
+            document.addEventListener('click', function (e) {
+                const searchWrapper = document.getElementById('searchWrapper');
+                if (searchWrapper && !searchWrapper.contains(e.target)) {
+                    suggestionsBox.style.display = 'none';
+                }
+            });
         }
-
-        function highlightMatch(text, query) {
-            const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-            return text.replace(regex, '<mark style="background:var(--primary-bg);color:var(--primary);padding:0 2px;border-radius:3px;">$1</mark>');
-        }
-
-        function selectItem(itemId, itemName) {
-            selectedItemId = itemId;
-            searchInput.value = itemName;
-            suggestionsBox.style.display = 'none';
-            clearBtn.style.display = 'inline-flex';
-            activeFilter.style.display = 'block';
-            activeFilterName.textContent = itemName;
-
-            // Fetch filtered chart data
-            fetch(`{{ request()->getBaseUrl() }}/dashboard/api/chart-data?item_id=${itemId}${saBidangParam}`)
-                .then(res => res.json())
-                .then(data => {
-                    // Update monthly chart
-                    monthlyChartInstance.data.labels = data.monthlyData.map(d => d.label);
-                    monthlyChartInstance.data.datasets[0].data = data.monthlyData.map(d => d.masuk);
-                    monthlyChartInstance.data.datasets[1].data = data.monthlyData.map(d => d.keluar);
-                    monthlyChartInstance.update('active');
-
-                    // Update yearly chart
-                    yearlyChartInstance.data.labels = data.yearlyData.map(d => d.label);
-                    yearlyChartInstance.data.datasets[0].data = data.yearlyData.map(d => d.masuk);
-                    yearlyChartInstance.data.datasets[1].data = data.yearlyData.map(d => d.keluar);
-                    yearlyChartInstance.update('active');
-                });
-        }
-
-        // Clear / reset search
-        clearBtn.addEventListener('click', function () {
-            selectedItemId = null;
-            searchInput.value = '';
-            suggestionsBox.style.display = 'none';
-            clearBtn.style.display = 'none';
-            activeFilter.style.display = 'none';
-
-            // Reset charts to original data
-            fetch(`{{ request()->getBaseUrl() }}/dashboard/api/chart-data?_=1${saBidangParam}`)
-                .then(res => res.json())
-                .then(data => {
-                    monthlyChartInstance.data.labels = data.monthlyData.map(d => d.label);
-                    monthlyChartInstance.data.datasets[0].data = data.monthlyData.map(d => d.masuk);
-                    monthlyChartInstance.data.datasets[1].data = data.monthlyData.map(d => d.keluar);
-                    monthlyChartInstance.update('active');
-
-                    yearlyChartInstance.data.labels = data.yearlyData.map(d => d.label);
-                    yearlyChartInstance.data.datasets[0].data = data.yearlyData.map(d => d.masuk);
-                    yearlyChartInstance.data.datasets[1].data = data.yearlyData.map(d => d.keluar);
-                    yearlyChartInstance.update('active');
-                });
-        });
-
-        // Close suggestions when clicking outside
-        document.addEventListener('click', function (e) {
-            if (!document.getElementById('searchWrapper').contains(e.target)) {
-                suggestionsBox.style.display = 'none';
-            }
-        });
 
         // ===== Category Year Filter =====
-        document.getElementById('categoryYearFilter').addEventListener('change', function () {
+        document.getElementById('categoryYearFilter')?.addEventListener('change', function () {
             const year = this.value;
             const url = year
                 ? `{{ request()->getBaseUrl() }}/dashboard/api/category-by-year?year=${year}${saBidangParam}`

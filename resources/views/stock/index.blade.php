@@ -12,43 +12,51 @@
         <div class="header-action-wrapper d-none">
             <div class="section-header-actions">
                 <form method="GET" action="{{ route('stock.index') }}">
-                    <div class="action-row-1">
-                        <div class="position-relative" id="stockSearchWrapper">
-                            <input type="text"
-                                id="stockSearchInput"
-                                class="form-control form-control-sm"
-                                name="search"
-                                value="{{ request('search') }}"
-                                autocomplete="off"
-                                placeholder="Cari barang..."
-                                style="width: 180px;">
-                            <div id="stockSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+                    <div class="action-row-1 stock-filter-row">
+                        <div class="stock-search-row d-flex align-items-center gap-2" style="flex-wrap: nowrap !important;">
+                            <div class="position-relative" id="stockSearchWrapper" style="flex: 1 1 auto !important; width: auto !important; min-width: 0 !important;">
+                                <input type="text"
+                                    id="stockSearchInput"
+                                    class="form-control form-control-sm"
+                                    name="search"
+                                    value="{{ request('search') }}"
+                                    autocomplete="off"
+                                    placeholder="Cari barang...">
+                                <div id="stockSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+                            </div>
+                            <a href="{{ route('stock.index') }}" 
+                                class="btn btn-reset btn-outline-reset" 
+                                style="flex: 0 0 auto !important;"
+                                title="Reset Filter">
+                                <i class="bi bi-arrow-counterclockwise fs-5"></i>
+                            </a>
                         </div>
-                        <select name="category" class="form-select form-select-sm" style="width: 130px;" onchange="this.form.submit()">
-                            <option value="">Semua {{ $isTeknik ? 'Tipe' : 'Kategori' }}</option>
-                            @foreach($categories as $cat)
-                                <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                            @endforeach
-                        </select>
-                        <select name="stock_status" class="form-select form-select-sm" style="width: 110px;" onchange="this.form.submit()">
-                            <option value="">Semua Status</option>
-                            <option value="low" {{ request('stock_status') == 'low' ? 'selected' : '' }}>Stok Rendah</option>
-                        </select>
-                    </div>
-                    <div class="action-row-2">
-                        <a href="{{ route('stock.index') }}" class="btn btn-reset btn-sm" title="Reset Filter">
-                            <i class="bi bi-arrow-counterclockwise"></i>
-                        </a>
-                        <button type="button" class="btn btn-warning btn-sm stock-trigger-btn"
-                            data-bs-toggle="modal" data-bs-target="#stockRequestModal"
-                            {{ $requestOrderCount + $outOfStockCount === 0 ? 'disabled' : '' }}>
-                            <i class="bi bi-exclamation-triangle-fill me-1"></i> Request Order: {{ $requestOrderCount }}
-                        </button>
-                        <button type="button" class="btn btn-danger btn-sm stock-trigger-btn"
-                            data-bs-toggle="modal" data-bs-target="#stockRequestModal"
-                            {{ $requestOrderCount + $outOfStockCount === 0 ? 'disabled' : '' }}>
-                            <i class="bi bi-x-circle-fill me-1"></i> Out of Stock: {{ $outOfStockCount }}
-                        </button>
+                        
+                        <div class="stock-select-row">
+                            <select name="category" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">Semua {{ $isTeknik ? 'Tipe' : 'Kategori' }}</option>
+                                @foreach($categories as $cat)
+                                    <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                @endforeach
+                            </select>
+                            <select name="stock_status" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">Semua Status</option>
+                                <option value="low" {{ request('stock_status') == 'low' ? 'selected' : '' }}>Stok Rendah</option>
+                            </select>
+                        </div>
+                        
+                        <div class="stock-warning-row">
+                            <button type="button" class="btn btn-warning btn-sm stock-trigger-btn w-100"
+                                data-bs-toggle="modal" data-bs-target="#stockRequestModal"
+                                {{ $requestOrderCount + $outOfStockCount === 0 ? 'disabled' : '' }}>
+                                <i class="bi bi-exclamation-triangle-fill me-1"></i> Req Order: {{ $requestOrderCount }}
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm stock-trigger-btn w-100"
+                                data-bs-toggle="modal" data-bs-target="#stockRequestModal"
+                                {{ $requestOrderCount + $outOfStockCount === 0 ? 'disabled' : '' }}>
+                                <i class="bi bi-x-circle-fill me-1"></i> Out of Stock: {{ $outOfStockCount }}
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>

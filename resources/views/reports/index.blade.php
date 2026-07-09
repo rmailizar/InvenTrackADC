@@ -49,66 +49,93 @@
             <div class="section-header-actions">
                 <form method="GET" action="{{ route('reports.index') }}">
                     <input type="hidden" name="table" value="{{ $activeTable }}">
-                    <div class="action-row-1">
+                    <div class="action-row-1 rep-filter-row">
                         @if($isStock)
-                            <div class="position-relative" id="reportsSearchWrapper">
-                                <input type="text"
-                                    id="reportsSearchInput"
-                                    class="form-control form-control-sm"
-                                    name="search"
-                                    value="{{ request('search') }}"
-                                    autocomplete="off"
-                                    placeholder="Cari barang..."
-                                    style="width: 160px;">
-                                <div id="reportsSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+                            <div class="rep-search-row d-flex align-items-center gap-2" style="flex-wrap: nowrap !important;">
+                                <div class="position-relative" id="reportsSearchWrapper" style="flex: 1 1 auto !important; width: auto !important; min-width: 0 !important;">
+                                    <input type="text"
+                                        id="reportsSearchInput"
+                                        class="form-control form-control-sm"
+                                        name="search"
+                                        value="{{ request('search') }}"
+                                        autocomplete="off"
+                                        placeholder="Cari barang...">
+                                    <div id="reportsSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+                                </div>
+                                <a href="{{ route('reports.index', ['table' => $activeTable]) }}" 
+                                    class="btn btn-reset btn-outline-reset" 
+                                    style="flex: 0 0 auto !important;"
+                                    title="Reset Filter">
+                                    <i class="bi bi-arrow-counterclockwise fs-5"></i>
+                                </a>
                             </div>
-                            <select name="category" class="form-select form-select-sm" style="width: 130px;" onchange="this.form.submit()">
-                                <option value="">Semua {{ $isTeknik ? 'Tipe' : 'Kategori' }}</option>
-                                @foreach($categories as $cat)
-                                    <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                                @endforeach
-                            </select>
-                            <select name="stock_status" class="form-select form-select-sm" style="width: 110px;" onchange="this.form.submit()">
-                                <option value="">Semua Status</option>
-                                <option value="low" {{ request('stock_status') == 'low' ? 'selected' : '' }}>Stok Rendah</option>
-                            </select>
-                        @else
-                            <select name="year" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
-                                <option value="">Semua Tahun</option>
-                                @foreach($years as $y)
-                                    <option value="{{ $y }}" {{ request('year') == $y ? 'selected' : '' }}>{{ $y }}</option>
-                                @endforeach
-                            </select>
-                            <select name="month" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
-                                <option value="">Semua Bulan</option>
-                                @foreach($months as $num => $name)
-                                    <option value="{{ $num }}" {{ request('month') == $num ? 'selected' : '' }}>{{ $name }}</option>
-                                @endforeach
-                            </select>
-                            <select name="category" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
-                                <option value="">Semua {{ $isTeknik ? 'Tipe' : 'Kategori' }}</option>
-                                @foreach($categories as $cat)
-                                    <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                                @endforeach
-                            </select>
-                            <select name="type" class="form-select form-select-sm" style="width: 100px;" onchange="this.form.submit()">
-                                <option value="">Semua Jenis</option>
-                                <option value="in" {{ request('type') == 'in' ? 'selected' : '' }}>{{ $isTeknik ? 'GR (IN)' : 'In' }}</option>
-                                <option value="out" {{ request('type') == 'out' ? 'selected' : '' }}>{{ $isTeknik ? 'GI (OUT)' : 'Out' }}</option>
-                            </select>
-                            @unless($isTeknik)
-                                <select name="price_filter" class="form-select form-select-sm" style="width: 110px;" onchange="this.form.submit()">
-                                    <option value="">Semua Harga</option>
-                                    <option value="tertinggi" {{ request('price_filter') == 'tertinggi' ? 'selected' : '' }}>Tertinggi</option>
-                                    <option value="terendah" {{ request('price_filter') == 'terendah' ? 'selected' : '' }}>Terendah</option>
+                            <div class="rep-select-row">
+                                <select name="category" class="form-select form-select-sm" onchange="this.form.submit()">
+                                    <option value="">Semua {{ $isTeknik ? 'Tipe' : 'Kategori' }}</option>
+                                    @foreach($categories as $cat)
+                                        <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                    @endforeach
                                 </select>
-                            @endunless
+                                <select name="stock_status" class="form-select form-select-sm" onchange="this.form.submit()">
+                                    <option value="">Semua Status</option>
+                                    <option value="low" {{ request('stock_status') == 'low' ? 'selected' : '' }}>Stok Rendah</option>
+                                </select>
+                            </div>
+                        @else
+                            <div class="rep-select-row">
+                                <select name="year" class="form-select form-select-sm" onchange="this.form.submit()">
+                                    <option value="">Semua Tahun</option>
+                                    @foreach($years as $y)
+                                        <option value="{{ $y }}" {{ request('year') == $y ? 'selected' : '' }}>{{ $y }}</option>
+                                    @endforeach
+                                </select>
+                                <select name="month" class="form-select form-select-sm" onchange="this.form.submit()">
+                                    <option value="">Semua Bulan</option>
+                                    @foreach($months as $num => $name)
+                                        <option value="{{ $num }}" {{ request('month') == $num ? 'selected' : '' }}>{{ $name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            
+                            <div class="rep-select-row">
+                                <select name="category" class="form-select form-select-sm" onchange="this.form.submit()">
+                                    <option value="">Semua {{ $isTeknik ? 'Tipe' : 'Kategori' }}</option>
+                                    @foreach($categories as $cat)
+                                        <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                    @endforeach
+                                </select>
+                                @if($isTeknik)
+                                    <select name="type" class="form-select form-select-sm" onchange="this.form.submit()">
+                                        <option value="">Semua Jenis</option>
+                                        <option value="in" {{ request('type') == 'in' ? 'selected' : '' }}>GR (IN)</option>
+                                        <option value="out" {{ request('type') == 'out' ? 'selected' : '' }}>GI (OUT)</option>
+                                    </select>
+                                @else
+                                    <select name="type" class="form-select form-select-sm" onchange="this.form.submit()">
+                                        <option value="">Semua Jenis</option>
+                                        <option value="in" {{ request('type') == 'in' ? 'selected' : '' }}>In</option>
+                                        <option value="out" {{ request('type') == 'out' ? 'selected' : '' }}>Out</option>
+                                    </select>
+                                @endif
+                            </div>
+
+                            <div class="rep-select-row">
+                                @unless($isTeknik)
+                                    <select name="price_filter" class="form-select form-select-sm" onchange="this.form.submit()">
+                                        <option value="">Semua Harga</option>
+                                        <option value="tertinggi" {{ request('price_filter') == 'tertinggi' ? 'selected' : '' }}>Tertinggi</option>
+                                        <option value="terendah" {{ request('price_filter') == 'terendah' ? 'selected' : '' }}>Terendah</option>
+                                    </select>
+                                @endunless
+                                <a href="{{ route('reports.index', ['table' => $activeTable]) }}" 
+                                    class="btn btn-reset btn-outline-reset @if($isTeknik) w-100 @endif" 
+                                    style="@if(!$isTeknik) flex: 0 0 38px !important; width: 38px !important; min-width: 38px !important; @else width: 100% !important; @endif"
+                                    title="Reset Filter">
+                                    <i class="bi bi-arrow-counterclockwise fs-5"></i>
+                                </a>
+                            </div>
                         @endif
                     </div>
-                    <div class="action-row-2">
-                        <a href="{{ route('reports.index', ['table' => $activeTable]) }}" class="btn btn-reset btn-sm" title="Reset Filter">
-                            <i class="bi bi-arrow-counterclockwise"></i>
-                        </a>
                     </div>
                 </form>
             </div>

@@ -918,7 +918,7 @@ body.public-layout .public-page {
     color: white;
     position: sticky;
     top: 0;
-    z-index: 1040;
+    z-index: 999999;
     /* Disamakan atau disesuaikan dengan kebutuhan layering */
     transition: var(--transition);
 }
@@ -1943,9 +1943,13 @@ body.public-layout .public-body {
 }
 
 .technical-type-card-row small {
-    color: var(--text-secondary);
+    color: #2563eb;
     font-size: 10px;
     font-weight: 600;
+}
+
+.technical-type-card-row:nth-child(even) small {
+    color: var(--warning);
 }
 
 @media (min-width: 992px) {
@@ -2154,12 +2158,20 @@ body.public-layout .public-body {
 
 /* 2. VARIAN TRANSAKSI MASUK (norm-in) - Efek Kaca Biru Terang */
 .technical-soh-norm.norm-in {
-    color: #60a5fa !important;
+    color: #318af7 !important;
     /* Warna teks biru tajam */
     background: rgba(37, 99, 235, 0.12) !important;
     /* Efek pendaran neon pada huruf */
-    text-shadow: 0 0 6px rgba(37, 99, 235, 0.45),
-        0 0 1px rgba(37, 99, 235, 0.2);
+    /* text-shadow: 0 0 6px rgba(37, 99, 235, 0.45),
+        0 0 1px rgba(37, 99, 235, 0.2); */
+}
+
+.text-in {
+    color: #318af7 !important;
+}
+
+.text-out {
+    color: #fbbf24 !important;
 }
 
 /* 3. VARIAN TRANSAKSI KELUAR (norm-out) - Efek Kaca Jingga/Oranye */
@@ -2183,26 +2195,21 @@ body.public-layout .public-body {
 
 .technical-soh-table th:nth-child(1),
 .technical-soh-table td:nth-child(1) {
-    width: 16%;
+    width: 15%;
 }
 
 .technical-soh-table th:nth-child(2),
 .technical-soh-table td:nth-child(2) {
-    width: 32%;
+    width: 20%;
 }
 
 .technical-soh-table th:nth-child(3),
 .technical-soh-table td:nth-child(3) {
-    width: 26%;
+    width: 53%;
 }
 
 .technical-soh-table th:nth-child(4),
 .technical-soh-table td:nth-child(4) {
-    width: 14%;
-}
-
-.technical-soh-table th:nth-child(5),
-.technical-soh-table td:nth-child(5) {
     width: 12%;
 }
 
@@ -2344,7 +2351,7 @@ body.public-layout .public-body {
     min-width: 0;
     color: var(--text-primary);
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 500;
     line-height: 1.25;
 }
 
@@ -2903,7 +2910,7 @@ border: 1px solid rgba(110, 231, 183, 0.7) !important;
 
 .badge-approved {
     background: var(--success-bg);
-    color: var(--success-dark);
+    color: #33e0a9;
 }
 
 .badge-approved::before {
@@ -2912,7 +2919,7 @@ border: 1px solid rgba(110, 231, 183, 0.7) !important;
 
 .badge-rejected {
     background: var(--danger-bg);
-    color: var(--danger-dark);
+    color: #f56565;
 }
 
 .badge-rejected::before {
@@ -3082,6 +3089,26 @@ border: 1px solid rgba(110, 231, 183, 0.7) !important;
     border: 1.5px solid var(--primary) !important;
 }
 
+.btn-outline-reset {
+    border: 1.5px solid var(--primary) !important;
+    color: var(--primary) !important;
+    background: transparent !important;
+
+    width: 48px;
+    height: 45px;
+    padding: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-outline-reset:hover {
+    background: var(--primary) !important;
+    color: white !important;
+    border: 1.5px solid var(--primary) !important;
+}
+
 .btn-outline-secondary {
     border: 1.5px solid var(--border-color);
     color: var(--text-secondary);
@@ -3107,7 +3134,7 @@ border: 1px solid rgba(110, 231, 183, 0.7) !important;
     width: 20px;
     height: 24px;
     padding: 0;
-    font-size: 16px;
+    font-size: 14px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -5923,6 +5950,7 @@ body::before,
     gap: 10px !important;
     color: var(--text-color, #334155) !important;
     transition: background 0.2s ease !important;
+    text-transform: capitalize !important;
 }
 
 /* Efek hover atau saat dipilih menggunakan keyboard arrow */
@@ -6060,7 +6088,7 @@ body::before,
         inset 0 0 6px rgba(14, 165, 233, 0.2) !important;
     backdrop-filter: blur(4px) !important;
     -webkit-backdrop-filter: blur(4px) !important;
-    font-weight: 600 !important;
+    font-weight: 900 !important;
 }
 
 /* Hover ketika checkbox ALL sudah aktif/checked */
@@ -6448,20 +6476,35 @@ body::before,
     .header-action-wrapper .action-row-1,
     .header-action-wrapper .action-row-2 {
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         gap: 8px;
         width: 100%;
     }
 
     .header-action-wrapper .action-row-1 > *,
     .header-action-wrapper .action-row-2 > * {
-        flex: 1 1 auto;
+        flex: 1 1 calc(50% - 4px);
         min-width: 120px;
         height: 38px !important;
     }
 
-    .header-action-wrapper #itemSearchWrapper {
-        flex: 1 1 100%;
+    /* All search input wrappers should take 100% width on mobile */
+    .header-action-wrapper [id$="SearchWrapper"] {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+    }
+
+    /* Reset button should be a compact square button and NOT stretch */
+    .header-action-wrapper .btn-reset,
+    .header-action-wrapper [title="Reset Filter"] {
+        flex: 0 0 38px !important;
+        width: 38px !important;
+        min-width: 38px !important;
+        height: 38px !important;
+        padding: 0 !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 
     /* Style form control inputs and buttons inside wrapper for mobile size */
@@ -6674,4 +6717,955 @@ table th, table td {
     margin-top: -20px;
     z-index: 1;
     position: relative;
+}
+
+/* Custom media queries for public stuff request search form on small devices */
+@media (max-width: 575.98px) {
+    #publicTeknikSearchForm {
+        width: 100% !important;
+    }
+    #publicTeknikSearchWrapper {
+        width: 100% !important;
+    }
+    #publicTeknikSearch {
+        width: 100% !important;
+    }
+}
+
+/* Styling for switcher inside header */
+.header-switcher {
+    display: inline-flex !important;
+    flex-wrap: nowrap !important;
+    gap: 6px !important;
+    align-items: center !important;
+    flex-shrink: 0 !important;
+}
+
+.header-switcher .report-tab {
+    padding: 6px 12px !important;
+    font-size: 12px !important;
+    border-radius: 8px !important;
+    gap: 6px !important;
+    box-shadow: none !important;
+    white-space: nowrap !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    flex-shrink: 0 !important; /* Mencegah tombol menyusut dan menyebabkan teks tumpang tindih */
+}
+
+.header-switcher .report-tab.active {
+    background: linear-gradient(135deg, #0f3b32, var(--primary-dark)) !important;
+    color: #ffffff !important;
+}
+
+.header-switcher .report-tab:hover {
+    background: linear-gradient(135deg, #0f3b32, var(--primary-dark)) !important;
+    color: #fff !important;
+}
+
+/* Optimasi header public pada mobile: sembunyikan teks switcher dan buat sejajar secara horizontal */
+@media (max-width: 767.98px) {
+    .header-wrapper {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 10px !important;
+    }
+    
+    .brand {
+        flex: 0 0 auto !important;
+        margin-right: auto !important;
+        text-align: left !important;
+    }
+    
+    .brand-logo-wrapper {
+        margin-left: 0 !important;
+        margin-bottom: 0 !important;
+    }
+    
+    .public-header .app-logo {
+        height: 48px !important;
+    }
+    
+    .header-actions {
+        flex: 0 0 auto !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        gap: 8px !important;
+    }
+    
+    .report-tabs {
+        flex-direction: row !important;
+        gap: 6px !important;
+    }
+    
+    .report-tab {
+        position: relative !important;
+        font-size: 0 !important; /* Menyembunyikan teks 'General Affair' & 'SU-SpareTracker' */
+        padding: 0 !important;
+        min-height: 32px !important;
+        height: 32px !important;
+        width: 32px !important;
+        border-radius: 8px !important;
+    }
+    
+    .report-tab i,
+    .report-tab i.me-1 {
+        position: absolute !important;
+        left: 50% !important;
+        top: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        font-size: 15px !important;
+        margin: 0 !important;
+        margin-right: 0 !important;
+        padding: 0 !important;
+    }
+}
+
+/* Force text-wrap for Nama Spare Part and Nama Barang columns */
+.col-name-wrap,
+th.col-name-wrap,
+td.col-name-wrap {
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    min-width: 180px !important;
+    max-width: 320px !important;
+}
+
+/* Force autocomplete suggestion wrappers and suggestion lists to sit above table headers and charts */
+.filter-bar,
+#publicTeknikSearchWrapper,
+#publicUmumSearchWrapper,
+#searchWrapper,
+#itemSearchWrapper,
+#reportsSearchWrapper,
+#stockSearchWrapper,
+#stuffRequestsSearchWrapper,
+#txSearchWrapper,
+#userSearchWrapper,
+.position-relative:has(.autocomplete-suggestions) {
+    position: relative !important;
+    z-index: 1050 !important;
+}
+
+.autocomplete-suggestions {
+    z-index: 99999 !important;
+}
+
+/* Detailed Stock On Hand Card height auto optimization */
+.technical-soh-detail-card {
+    height: auto !important;
+    min-height: unset !important;
+    overflow: hidden !important; /* Mencegah konten meluber ke samping card */
+}
+
+.technical-soh-detail-card .card-body {
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+}
+
+.technical-soh-detail-card .table-responsive {
+    width: 100% !important;
+    overflow-x: auto !important; /* Mengizinkan scroll ke samping di mobile */
+    overflow-y: visible !important; /* Menghindari scroll atas-bawah */
+    -webkit-overflow-scrolling: touch;
+}
+
+.technical-soh-table {
+    table-layout: auto !important; /* Membuat kolom tabel menyesuaikan panjang nilainya */
+    width: 100% !important;
+    min-width: 640px !important; /* Menjamin lebar minimal agar bisa di-scroll horizontal di mobile */
+}
+
+.header-action-wrapper form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.action-row-1 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+/* Search memenuhi sisa ruang */
+.item-search-wrapper {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* Input memenuhi wrapper */
+.item-search-wrapper input {
+    width: 100%;
+}
+
+/* Tombol reset tidak ikut melebar */
+.action-row-1 .btn-reset {
+    flex: 0 0 auto;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.action-row-2,
+.action-row-3 {
+    display: flex;
+}
+
+.action-row-2 .btn,
+.action-row-3 .btn {
+    width: 100%;
+}
+
+/* Responsive Desktop Optimization for Items Action Header */
+@media (min-width: 992px) {
+    .header-action-wrapper form {
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 12px !important;
+    }
+    
+    .action-row-1 {
+        flex: 0 0 auto !important;
+        width: auto !important;
+    }
+    
+    .item-search-wrapper {
+        width: 320px !important;
+        flex: 0 0 320px !important;
+    }
+    
+    .action-row-2,
+    .action-row-3 {
+        display: inline-flex !important;
+        width: auto !important;
+    }
+    
+    .action-row-2 .btn,
+    .action-row-3 .btn {
+        width: auto !important;
+        white-space: nowrap !important;
+        height: 38px !important;
+    }
+    
+    .action-row-1 .btn-reset {
+        width: 38px !important;
+        height: 38px !important;
+    }
+}
+
+/* Transactions Filter Layout Styling */
+.tx-search-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tx-select-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+@media (max-width: 991.98px) {
+    .header-action-wrapper .tx-filter-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+    
+    .tx-search-row {
+        width: 100% !important;
+    }
+    
+    #txSearchWrapper {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+    }
+    
+    .tx-search-row .btn-reset {
+        flex: 0 0 38px !important;
+        width: 38px !important;
+        height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+    }
+    
+    .tx-select-row {
+        width: 100% !important;
+        gap: 8px !important;
+    }
+    
+    .tx-select-row select {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        height: 38px !important;
+    }
+}
+
+@media (min-width: 992px) {
+    .tx-filter-row {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 12px !important;
+        width: auto !important;
+    }
+    
+    .tx-search-row {
+        flex: 0 0 auto !important;
+    }
+    
+    #txSearchWrapper {
+        width: 320px !important;
+        flex: 0 0 320px !important;
+    }
+    
+    .tx-search-row .btn-reset {
+        width: 38px !important;
+        height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+    }
+    
+    .tx-select-row {
+        flex: 0 0 auto !important;
+        display: flex !important;
+        gap: 8px !important;
+    }
+    
+    .tx-select-row select {
+        width: 130px !important;
+    }
+}
+
+/* Items Action Row 1 mobile layout optimization (horizontal Search + Reset) */
+@media (max-width: 991.98px) {
+    .items-filter-row {
+        display: flex !important;
+        flex-direction: row !important; /* Memaksa agar selalu berjejer ke samping */
+        flex-wrap: nowrap !important;
+        width: 100% !important;
+        gap: 10px !important;
+    }
+    
+    .items-filter-row #itemSearchWrapper {
+        flex: 1 1 auto !important;
+        width: auto !important;
+        min-width: 0 !important;
+    }
+    
+    .items-filter-row .btn-reset {
+        flex: 0 0 38px !important;
+        width: 38px !important;
+        height: 38px !important;
+        min-width: 38px !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        border-radius: var(--radius-sm) !important;
+    }
+}
+
+/* Stock Recap (Stok) Filter Layout Styling */
+.stock-search-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stock-select-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stock-warning-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+@media (max-width: 991.98px) {
+    .header-action-wrapper .stock-filter-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+    
+    .stock-search-row {
+        width: 100% !important;
+    }
+    
+    #stockSearchWrapper {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+    }
+    
+    .stock-search-row .btn-reset {
+        flex: 0 0 38px !important;
+        width: 38px !important;
+        height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+    }
+    
+    .stock-select-row {
+        width: 100% !important;
+        gap: 8px !important;
+    }
+    
+    .stock-select-row select {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        height: 38px !important;
+    }
+    
+    .stock-warning-row {
+        width: 100% !important;
+        gap: 8px !important;
+    }
+    
+    .stock-warning-row .btn {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        height: 38px !important;
+        white-space: nowrap !important;
+        font-size: 13px !important;
+    }
+}
+
+@media (min-width: 992px) {
+    .stock-filter-row {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 12px !important;
+        width: auto !important;
+    }
+    
+    .stock-search-row {
+        flex: 0 0 auto !important;
+    }
+    
+    #stockSearchWrapper {
+        width: 320px !important;
+        flex: 0 0 320px !important;
+    }
+    
+    .stock-search-row .btn-reset {
+        width: 38px !important;
+        height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+    }
+    
+    .stock-select-row {
+        flex: 0 0 auto !important;
+        display: flex !important;
+        gap: 8px !important;
+    }
+    
+    .stock-select-row select {
+        width: 130px !important;
+    }
+    
+    .stock-warning-row {
+        flex: 0 0 auto !important;
+        display: flex !important;
+        gap: 8px !important;
+    }
+    
+    .stock-warning-row .btn {
+        width: auto !important;
+        height: 38px !important;
+    }
+}
+
+/* Stock Request Filter Layout Styling */
+.sr-select-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sr-action-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+@media (max-width: 991.98px) {
+    .header-action-wrapper .sr-filter-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+    
+    .sr-select-row {
+        width: 100% !important;
+        gap: 8px !important;
+    }
+    
+    .sr-select-row select {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        height: 38px !important;
+    }
+    
+    .sr-action-row {
+        width: 100% !important;
+        gap: 8px !important;
+    }
+    
+    .sr-action-row .btn-reset {
+        flex: 0 0 38px !important;
+        width: 38px !important;
+        height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+    }
+    
+    .sr-action-row .btn-success {
+        flex: 1 1 auto !important;
+        height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 14px !important;
+    }
+}
+
+@media (min-width: 992px) {
+    .sr-filter-row {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 12px !important;
+        width: auto !important;
+    }
+    
+    .sr-select-row {
+        flex: 0 0 auto !important;
+        display: flex !important;
+        gap: 8px !important;
+    }
+    
+    .sr-select-row select {
+        width: 130px !important;
+    }
+    
+    .sr-action-row {
+        flex: 0 0 auto !important;
+        display: flex !important;
+        gap: 8px !important;
+        width: auto !important;
+    }
+    
+    .sr-action-row .btn-reset {
+        width: 38px !important;
+        height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+    }
+    
+    .sr-action-row .btn-success {
+        width: auto !important;
+        height: 38px !important;
+        white-space: nowrap !important;
+    }
+}
+
+/* Stuff Request (Permintaan Barang) Filter Layout Styling */
+.strreq-search-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.strreq-select-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+@media (max-width: 991.98px) {
+    .header-action-wrapper .strreq-filter-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+    
+    .strreq-search-row {
+        width: 100% !important;
+    }
+    
+    #stuffRequestsSearchWrapper {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+    }
+    
+    .strreq-search-row .btn-reset {
+        flex: 0 0 38px !important;
+        width: 38px !important;
+        height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+    }
+    
+    .strreq-select-row {
+        width: 100% !important;
+        gap: 8px !important;
+    }
+    
+    .strreq-select-row select {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        height: 38px !important;
+    }
+}
+
+@media (min-width: 992px) {
+    .strreq-filter-row {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 12px !important;
+        width: auto !important;
+    }
+    
+    .strreq-search-row {
+        flex: 0 0 auto !important;
+    }
+    
+    #stuffRequestsSearchWrapper {
+        width: 320px !important;
+        flex: 0 0 320px !important;
+    }
+    
+    .strreq-search-row .btn-reset {
+        width: 38px !important;
+        height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+    }
+    
+    .strreq-select-row {
+        flex: 0 0 auto !important;
+        display: flex !important;
+        gap: 8px !important;
+    }
+    
+    .strreq-select-row select {
+        width: 130px !important;
+    }
+}
+
+/* Reports (Laporan) Filter Layout Styling */
+.rep-search-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.rep-select-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+@media (max-width: 991.98px) {
+    .header-action-wrapper .rep-filter-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+    
+    .rep-search-row {
+        width: 100% !important;
+    }
+    
+    #reportsSearchWrapper {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+    }
+    
+    .rep-search-row .btn-reset {
+        flex: 0 0 38px !important;
+        width: 38px !important;
+        height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+    }
+    
+    .rep-select-row {
+        width: 100% !important;
+        gap: 8px !important;
+    }
+    
+    .rep-select-row select {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        height: 38px !important;
+    }
+}
+
+@media (min-width: 992px) {
+    .rep-filter-row {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 12px !important;
+        width: auto !important;
+    }
+    
+    .rep-search-row {
+        flex: 0 0 auto !important;
+    }
+    
+    #reportsSearchWrapper {
+        width: 320px !important;
+        flex: 0 0 320px !important;
+    }
+    
+    .rep-search-row .btn-reset {
+        width: 38px !important;
+        height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+    }
+    
+    .rep-select-row {
+        flex: 0 0 auto !important;
+        display: flex !important;
+        gap: 8px !important;
+    }
+    
+    .rep-select-row select {
+        width: 130px !important;
+    }
+    
+    .rep-select-row .btn-reset {
+        width: 38px !important;
+        height: 38px !important;
+        flex: 0 0 38px !important;
+        min-width: 38px !important;
+    }
+}
+
+/* User Management Filter Layout Styling */
+.usr-search-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.usr-select-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.usr-action-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+@media (max-width: 991.98px) {
+    .header-action-wrapper .usr-filter-row {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 10px !important;
+        width: 100% !important;
+    }
+    
+    .usr-search-row {
+        width: 100% !important;
+    }
+    
+    #userSearchWrapper {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+    }
+    
+    .usr-search-row .btn-reset {
+        flex: 0 0 38px !important;
+        width: 38px !important;
+        height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+    }
+    
+    .usr-select-row {
+        width: 100% !important;
+        gap: 8px !important;
+    }
+    
+    .usr-select-row select {
+        flex: 1 1 0 !important;
+        min-width: 0 !important;
+        height: 38px !important;
+    }
+    
+    .usr-action-row {
+        width: 100% !important;
+        display: flex !important;
+    }
+    
+    .usr-action-row .btn {
+        width: 100% !important;
+        height: 38px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+}
+
+@media (min-width: 992px) {
+    .usr-filter-row {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 12px !important;
+        width: auto !important;
+    }
+    
+    .usr-search-row {
+        flex: 0 0 auto !important;
+    }
+    
+    #userSearchWrapper {
+        width: 320px !important;
+        flex: 0 0 320px !important;
+    }
+    
+    .usr-search-row .btn-reset {
+        width: 38px !important;
+        height: 38px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        padding: 0 !important;
+    }
+    
+    .usr-select-row {
+        flex: 0 0 auto !important;
+        display: flex !important;
+        gap: 8px !important;
+    }
+    
+    .usr-select-row select {
+        width: 130px !important;
+    }
+    
+    .usr-action-row {
+        flex: 0 0 auto !important;
+        display: flex !important;
+    }
+    
+    .usr-action-row .btn {
+        width: auto !important;
+        height: 38px !important;
+        white-space: nowrap !important;
+    }
+}
+
+/* Import Page Option Cards mobile optimization */
+@media (max-width: 991.98px) {
+    .import-type-inner {
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        gap: 10px !important;
+        padding: 16px 12px !important;
+    }
+}
+
+/* Remove sidebar bleeding shadow on mobile when closed */
+@media (max-width: 991.98px) {
+    .sidebar:not(.show) {
+        box-shadow: none !important;
+    }
+}
+
+/* Global Reset Button height & width alignment across all pages */
+.btn-reset,
+.header-action-wrapper .btn-reset,
+.header-action-wrapper [title="Reset Filter"] {
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: var(--radius-sm) !important;
+}
+
+.btn-reset i,
+.header-action-wrapper [title="Reset Filter"] i {
+    font-size: 15px !important;
+}
+
+/* Desktop Sizing (Form controls are 30-31px high) */
+@media (min-width: 992px) {
+    .btn-reset,
+    .header-action-wrapper .btn-reset,
+    .header-action-wrapper [title="Reset Filter"] {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+    }
+}
+
+/* Mobile Sizing (Form controls are 38px high) */
+@media (max-width: 991.98px) {
+    .btn-reset,
+    .header-action-wrapper .btn-reset,
+    .header-action-wrapper [title="Reset Filter"] {
+        width: 38px !important;
+        height: 38px !important;
+        min-width: 38px !important;
+    }
+    
+    /* Except if it is forced to take full width */
+    .btn-reset.w-100 {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
 }

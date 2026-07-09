@@ -104,16 +104,14 @@ class StuffRequestController extends Controller
                 ->approved()
                 ->masuk()
                 ->latest()
-                ->limit(5)
-                ->get();
+                ->paginate(15, ['*'], 'gr_page');
 
             $recentIssues = Transaction::with(['item', 'user'])
                 ->where('bidang', 'teknik')
                 ->approved()
                 ->keluar()
                 ->latest()
-                ->limit(5)
-                ->get();
+                ->paginate(15, ['*'], 'gi_page');
 
             $publicDashboard = [
                 'totalItems' => $totalItems,
@@ -133,7 +131,7 @@ class StuffRequestController extends Controller
                 'typeSummary' => $this->publicTechnicalTypeSummary($allTeknikItems),
                 'selectedMonthlyPeriod' => $request->monthly_period ?? 'thisMonth',
                 'monthlyData' => $this->publicMonthlyChartData((int) $selectedYear, $request->monthly_period ?? 'thisMonth'),
-                'categoryData' => $this->publicShipUnloaderStockData($allTeknikItems),
+                'categoryData' => $this->publicShipUnloaderStockData($allTeknikItems, (int) date('Y')),
                 'availableYears' => $availableYears->isNotEmpty() ? $availableYears : collect([$now->year]),
                 'selectedYear' => $selectedYear,
                 'recentTransactions' => $recentTransactions,

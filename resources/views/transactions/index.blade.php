@@ -65,42 +65,44 @@
                     @if($isTeknik)
                         <input type="hidden" name="type" value="{{ $activeTransactionType }}">
                     @endif
-                    <div class="action-row-1">
-                        <div class="position-relative" id="txSearchWrapper">
-                            <input type="text"
-                                id="txSearchInput"
-                                class="form-control form-control-sm"
-                                name="search"
-                                value="{{ request('search') }}"
-                                autocomplete="off"
-                                placeholder="Cari barang..."
-                                style="width: 180px;">
-                            <div id="txSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+                    <div class="action-row-1 tx-filter-row">
+                        <div class="tx-search-row">
+                            <div class="position-relative" id="txSearchWrapper">
+                                <input type="text"
+                                    id="txSearchInput"
+                                    class="form-control form-control-sm"
+                                    name="search"
+                                    value="{{ request('search') }}"
+                                    autocomplete="off"
+                                    placeholder="Cari barang...">
+                                <div id="txSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+                            </div>
+                            <a href="{{ $isTeknik ? route('transactions.index', array_merge(['type' => $activeTransactionType], !empty($saBidang) ? ['sa_bidang' => $saBidang] : [])) : route('transactions.index', !empty($saBidang) ? ['sa_bidang' => $saBidang] : []) }}" class="btn btn-reset btn-outline-reset" title="Reset Filter">
+                                <i class="bi bi-arrow-counterclockwise fs-5"></i>
+                            </a>
                         </div>
-                        @unless($isTeknik)
-                            <select name="type" class="form-select form-select-sm" style="width: 100px;" onchange="this.form.submit()">
-                                <option value="">Semua Jenis</option>
-                                <option value="in" {{ request('type') == 'in' ? 'selected' : '' }}>In</option>
-                                <option value="out" {{ request('type') == 'out' ? 'selected' : '' }}>Out</option>
+                        
+                        <div class="tx-select-row">
+                            @unless($isTeknik)
+                                <select name="type" class="form-select form-select-sm" onchange="this.form.submit()">
+                                    <option value="">Semua Jenis</option>
+                                    <option value="in" {{ request('type') == 'in' ? 'selected' : '' }}>In</option>
+                                    <option value="out" {{ request('type') == 'out' ? 'selected' : '' }}>Out</option>
+                                </select>
+                            @endunless
+                            <select name="year" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">Semua Tahun</option>
+                                @foreach($years as $yr)
+                                    <option value="{{ $yr }}" {{ request('year') == $yr ? 'selected' : '' }}>{{ $yr }}</option>
+                                @endforeach
                             </select>
-                        @endunless
-                        <select name="year" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
-                            <option value="">Semua Tahun</option>
-                            @foreach($years as $yr)
-                                <option value="{{ $yr }}" {{ request('year') == $yr ? 'selected' : '' }}>{{ $yr }}</option>
-                            @endforeach
-                        </select>
-                        <select name="month" class="form-select form-select-sm" style="width: 120px;" onchange="this.form.submit()">
-                            <option value="">Semua Bulan</option>
-                            @foreach($months as $num => $name)
-                                <option value="{{ $num }}" {{ request('month') == $num ? 'selected' : '' }}>{{ $name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="action-row-2">
-                        <a href="{{ $isTeknik ? route('transactions.index', array_merge(['type' => $activeTransactionType], !empty($saBidang) ? ['sa_bidang' => $saBidang] : [])) : route('transactions.index', !empty($saBidang) ? ['sa_bidang' => $saBidang] : []) }}" class="btn btn-reset btn-sm" title="Reset Filter">
-                            <i class="bi bi-arrow-counterclockwise"></i>
-                        </a>
+                            <select name="month" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">Semua Bulan</option>
+                                @foreach($months as $num => $name)
+                                    <option value="{{ $num }}" {{ request('month') == $num ? 'selected' : '' }}>{{ $name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -117,7 +119,7 @@
                             </span>
                         </div>
                         <div class="card-body">
-                            <form method="POST" action="{{ route('transactions.store') }}" id="txInlineForm">
+                            <form method="POST" action="{{ route('transactions.store') }}" id="txInlineForm" class="text-uppercase">
                                 @csrf
                                 <input type="hidden" name="type" value="{{ $activeTransactionType }}">
 
@@ -128,7 +130,7 @@
 
                                 <div class="mb-3">
                                 <label class="form-label">No Normalisasi</label>
-                                <input type="text" class="form-control" id="txInlineNoNormalisasi" readonly placeholder="000-000-000">
+                                <input type="text" class="form-control" id="txInlineNoNormalisasi" readonly placeholder="00.000.000.0000">
                                 </div>
 
                                 <div class="mb-3">
@@ -151,28 +153,25 @@
                                     </select>
                                 </div>
 
-                                <div class="row g-2 mb-3">
-                                    <div class="col-6">
-                                        <label class="form-label">Komponen</label>
-                                        <input type="text" class="form-control" id="txInlineCategory" readonly placeholder="Auto Fill">
-                                    </div>
-                                    <div class="col-6">
-                                        <label class="form-label">Tipe Barang</label>
-                                        <input type="text" class="form-control" id="txInlineItemCategory" readonly placeholder="Auto Fill">
-                                    </div>
-                                    <div class="col-6">
-                                        <label class="form-label">Stok</label>
-                                        <input type="text" class="form-control" id="txInlineStock" readonly placeholder="Auto Fill">
-                                    </div>
-                                    <div class="col-6">
-                                        <label class="form-label">Volume</label>
-                                        <input type="text" class="form-control" id="txInlineVolume" readonly placeholder="Auto Fill">
-                                    </div>
-                                    <div class="col-12">
-                                        <label class="form-label">Lokasi</label>
-                                        <input type="text" class="form-control" id="txInlineLokasi" readonly placeholder="Auto Fill">
-                                    </div>
-                                </div>
+                                 <div class="mb-3">
+                                     <label class="form-label">Tipe Barang</label>
+                                     <input type="text" class="form-control" id="txInlineItemCategory" readonly placeholder="Auto Fill">
+                                 </div>
+
+                                 <div class="mb-3">
+                                     <label class="form-label">Komponen</label>
+                                     <input type="text" class="form-control" id="txInlineCategory" readonly placeholder="Auto Fill">
+                                 </div>
+
+                                 <div class="mb-3">
+                                     <label class="form-label">Stok</label>
+                                     <input type="text" class="form-control" id="txInlineStock" readonly placeholder="Auto Fill">
+                                 </div>
+
+                                 <div class="mb-3">
+                                     <label class="form-label">Store Room</label>
+                                     <input type="text" class="form-control" id="txInlineLokasi" readonly placeholder="Auto Fill">
+                                 </div>
 
                                 <div class="mb-3">
                                     <label class="form-label">Ship Unloader <span class="text-danger">*</span></label>
@@ -522,10 +521,15 @@
                 getInlineField('txInlineNoNormalisasi').value = hasItem ? (selected.dataset.noNormalisasi || '') : '';
                 getInlineField('txInlineLokasi').value = hasItem ? (selected.dataset.lokasi || '') : '';
 
-                var ships = (hasItem && selected.dataset.shipUnloader) ? selected.dataset.shipUnloader.split(',') : [];
-                root.querySelectorAll('.ship-checkbox-input').forEach(el => {
-                    el.checked = ships.includes(el.value.toString());
+                root.querySelectorAll('.tx-ship-checkbox').forEach(el => {
+                    el.checked = false;
+                    el.disabled = false;
                 });
+                var txShipAll = root.querySelector('#txShipAll');
+                if (txShipAll) {
+                    txShipAll.checked = false;
+                    txShipAll.disabled = false;
+                }
                 checkInlineStock();
             }
 
@@ -664,10 +668,17 @@
                         setBadgeState(allBadge, ships.length > 0 && allNumbersAreActive);
                     }
 
-                    // Tetap pertahankan status keaslian form input checkbox bawaan backend Anda (di dalam modal)
+                    // Jangan centang otomatis, biarkan kosong agar dipilih manual oleh user seperti halaman public
                     txModalEl.querySelectorAll('.tx-ship-checkbox').forEach(el => {
-                        el.checked = ships.includes(el.value.toString());
+                        el.checked = false;
+                        el.disabled = false;
                     });
+                    
+                    var modalAll = txModalEl.querySelector('#txModalShipAll');
+                    if (modalAll) {
+                        modalAll.checked = false;
+                        modalAll.disabled = false;
+                    }
                 }
             } else {
                 txCategoryInput.value = '';

@@ -38,7 +38,7 @@
                                     </span>
                                 </th>
                                 <th>No Normalisasi</th>
-                                <th>Nama Barang</th>
+                                <th class="col-name-wrap">Nama Barang</th>
                                 <th>Komponen</th>
                                 <th>Tipe Barang</th>
                                 <th style="width: 100px;">Ship Unloader</th>
@@ -64,7 +64,7 @@
                                     </span>
                                 </th>
                                 <th>Jenis</th>
-                                <th>Barang</th>
+                                <th class="col-name-wrap">Barang</th>
                                 <th>Kategori</th>
                                 <th>Jumlah</th>
                                 <th>Satuan</th>
@@ -86,7 +86,7 @@
                                 <td>{{ $tx->date->format('d/m/Y') }}</td>
                                 @if($isTeknik)
                                     <td><span class="{{ $tx->type === 'in' ? 'norm-text-in' : 'norm-text-out' }}">{{ $tx->no_normalisasi ?? $tx->item->no_normalisasi ?? '-' }}</span></td>
-                                    <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
+                                    <td class="fw-600 col-name-wrap">{{ $tx->item->name ?? '-' }}</td>
                                     <td>{{ $tx->item->component ?? '-' }}</td>
                                     <td>{{ $tx->item->category ?? '-' }}</td>
                                     <td class="text-nowrap align-middle" style="width: 100px;">
@@ -169,7 +169,7 @@
                                             {{ $tx->type_label }}
                                         </span>
                                     </td>
-                                    <td class="fw-600">{{ $tx->item->name ?? '-' }}</td>
+                                    <td class="fw-600 col-name-wrap">{{ $tx->item->name ?? '-' }}</td>
                                     <td>{{ $tx->item->category ?? '-' }}</td>
                                     <td class="text-center fw-700">
                                         @if($tx->type === 'in')

@@ -4,12 +4,12 @@
 $isTeknik = isset($saBidang) ? $saBidang === 'teknik' : auth()->user()->bidang === 'teknik';
 @endphp
 
-@section('title', $isTeknik ? 'Master SOH' : 'Master Barang')
-@section('subtitle', $isTeknik ? 'Kelola daftar spare part inventory' : 'Kelola daftar barang inventory')
+@section('title', $isTeknik ? 'Master Stock On Hand (SOH)' : 'Master Barang')
+@section('subtitle', $isTeknik ? '' : 'Kelola daftar barang inventory')
 
 @section('content')
 @php
-$itemLabel = $isTeknik ? 'Spare Part' : 'Barang';
+$itemLabel = $isTeknik ? 'Data Master SOH' : 'Barang';
 $itemLowerLabel = $isTeknik ? 'spare part' : 'barang';
 $activeStockStatus = request('stock_status');
 $sohTotalUrl = route('items.index', array_merge(request()->except(['stock_status', 'page']), ['sa_bidang' => $saBidang ?? '']));
@@ -59,38 +59,52 @@ $itemDetailData[$itemRow->id] = [
                 @if(!empty($saBidang))
                     <input type="hidden" name="sa_bidang" value="{{ $saBidang }}">
                 @endif
-                <div class="action-row-1">
-                    <div class="position-relative" id="itemSearchWrapper">
-                        <input type="text"
+
+                {{-- Baris 1 : Search + Reset --}}
+                <div class="action-row-1 items-filter-row d-flex align-items-center gap-2" style="flex-wrap: nowrap !important; width: 100%;">
+                    <div id="itemSearchWrapper" class="item-search-wrapper" style="flex: 1 1 auto !important; width: auto !important; min-width: 0 !important;">
+                        <input
+                            type="text"
                             id="itemsSearchInput"
                             class="form-control form-control-sm"
                             name="search"
                             value="{{ request('search') }}"
                             autocomplete="off"
-                            placeholder="Cari {{ $itemLowerLabel }}..."
-                            style="width: 240px;">
-                        <div id="itemSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
+                            placeholder="Cari {{ $itemLowerLabel }}...">
+
+                        <div id="itemSearchSuggestions"
+                            class="autocomplete-suggestions"
+                            style="display:none;">
+                        </div>
                     </div>
-                    @unless($isTeknik)
-                        <select name="category" class="form-select form-select-sm" style="width: 140px;" onchange="this.form.submit()">
-                            <option value="">Semua Kategori</option>
-                            @foreach($categories as $cat)
-                                <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
-                            @endforeach
-                        </select>
-                    @endunless
-                    <button type="button" class="btn btn-primary" onclick="openItemModal()">
-                        <i class="bi bi-plus-lg"></i> Tambah
+
+                    <a href="{{ route('items.index', !empty($saBidang) ? ['sa_bidang' => $saBidang] : []) }}"
+                        class="btn btn-reset btn-outline-teknik"
+                        style="flex: 0 0 auto !important;"
+                        title="Reset Filter">
+                        <i class="bi bi-arrow-counterclockwise fs-5"></i>
+                    </a>
+                </div>
+
+                {{-- Baris 2 : Tambah --}}
+                <div class="action-row-2">
+                    <button type="button"
+                        class="btn btn-primary w-100"
+                        onclick="openItemModal()">
+                        <i class="bi bi-plus-lg"></i>
+                        Tambah
                     </button>
                 </div>
-                <div class="action-row-2">
-                    <a href="{{ route('items.index', !empty($saBidang) ? ['sa_bidang' => $saBidang] : []) }}" class="btn btn-outline-teknik" title="Reset Filter">
-                        <i class="bi bi-arrow-counterclockwise"></i>
-                    </a>
-                    <a href="{{ route('items.lookups.index') }}" class="btn {{ $isTeknik ? 'btn-outline-teknik' : 'btn-outline-primary' }}">
-                        <i class="bi bi-sliders2"></i> Kelola
+
+                {{-- Baris 3 : Kelola --}}
+                <div class="action-row-3">
+                    <a href="{{ route('items.lookups.index') }}"
+                        class="btn {{ $isTeknik ? 'btn-outline-teknik' : 'btn-outline-primary' }} w-100">
+                        <i class="bi bi-sliders2"></i>
+                        Kelola
                     </a>
                 </div>
+
             </form>
         </div>
     </div>
@@ -154,15 +168,15 @@ $itemDetailData[$itemRow->id] = [
                         @if($isTeknik)
                         <tr>
                             <th style="width:50px;">No</th>
-                            <th>No Normalisasi</th>
+                            <th>No. Normalisasi</th>
                             <th>Nama Spare Part</th>
-                            <th>Komponen</th>
                             <th>Tipe Barang</th>
+                            <th>Komponen</th>                          
                             <th>Store Room</th>
                             <th>Ship Unloader</th>
                             <th>Low Limit
                                 (Aktual)</th>
-                            <th>Min Stok</th>
+                            <th>Min. Stok</th>
                             <th>Volume</th>
                             <th>Satuan</th>
                             <th>Status</th>
@@ -177,7 +191,7 @@ $itemDetailData[$itemRow->id] = [
                             <th>Bidang</th>
                             @endif
                             <th>Satuan</th>
-                            <th>Min Stok</th>
+                            <th>Min. Stok</th>
                             <th>Stok Saat Ini</th>
                             <th>Status</th>
                             <th style="width:100px;">Aksi</th>
@@ -201,7 +215,7 @@ $itemDetailData[$itemRow->id] = [
                         >
                             <td>{{ $items->firstItem() + $index }}</td>
                             @if($isTeknik)
-                            <td>
+                            <td style="font-family: 'Major Mono Display', monospace; font-size:13px;" >
                                 @if($item->current_stock < $item->min_stock)
                                     <span class="badge-status badge-rejected position-relative badge-critical-teknik">
                                         {{ $item->no_normalisasi ?? '-' }}
@@ -216,9 +230,9 @@ $itemDetailData[$itemRow->id] = [
                                     </span>
                                 @endif
                             </td>
-                            <td class="fw-600">{{ $item->name }}</td>
-                            <td>{{ $item->category }}</td>
+                            <td class="fw-600 col-name-wrap">{{ $item->name }}</td>
                             <td>{{ $item->component ?? '-' }}</td>
+                            <td>{{ $item->category }}</td>                           
                             <td class="text-nowrap align-middle">
                                 <div class="d-flex flex-nowrap align-items-center gap-1">
                                     {{ $item->lokasi ?? '-' }}
@@ -316,14 +330,19 @@ $itemDetailData[$itemRow->id] = [
 
                                     <button type="button" class="btn-action edit" title="Edit"
                                         onclick="openItemModal({{ $item->id }})">
-                                        <i class="bi bi-pencil-fill"></i>
+                                        <i class="fa-solid fa-edit"></i>
                                     </button>
 
                                     <form action="{{ route('items.destroy', $item) }}" method="POST"
                                         id="deleteItem-{{ $item->id }}">
                                         @csrf @method('DELETE')
                                         <button type="button" class="btn-action delete" title="Hapus"
-                                            onclick="swalConfirm('Hapus {{ $itemLabel }}', 'Yakin hapus {{ $itemLowerLabel }} ini? Data yang sudah dihapus tidak bisa dikembalikan.', 'warning', 'Ya, Hapus', '#deleteItem-{{ $item->id }}')">
+                                            @if($isTeknik)
+                                                onclick="swalConfirm('Hapus Permanen?', 'Menghapus master {{ $item->no_normalisasi ?? '-' }} juga akan mempengaruhi kalkulasi akumulasi SOH.', 'warning', 'Ya, Hapus Data', '#deleteItem-{{ $item->id }}')"
+                                            @else
+                                                onclick="swalConfirm('Hapus {{ $itemLabel }}', 'Yakin hapus {{ $itemLowerLabel }} ini? Data yang sudah dihapus tidak bisa dikembalikan.', 'warning', 'Ya, Hapus', '#deleteItem-{{ $item->id }}')"
+                                            @endif
+                                        >
                                             <i class="bi bi-trash-fill"></i>
                                         </button>
                                     </form>
@@ -352,7 +371,7 @@ $itemDetailData[$itemRow->id] = [
     @endif
 </div>
 
-<div class="modal fade inventrack-modal" id="itemDetailModal" tabindex="-1" aria-hidden="true">
+<div class="modal fade inventrack-modal text-uppercase" id="itemDetailModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
@@ -388,7 +407,7 @@ $itemDetailData[$itemRow->id] = [
                     <i class="bi bi-exclamation-circle me-1"></i>
                     <span id="itemErrorMsg"></span>
                 </div>
-                <form id="itemForm" novalidate>
+                <form id="itemForm" novalidate class="text-uppercase">
                     <input type="hidden" id="itemId" value="">
                     <input type="hidden" id="itemMethod" value="POST">
                     <input type="hidden" name="bidang" value="teknik">
@@ -401,9 +420,9 @@ $itemDetailData[$itemRow->id] = [
 
                     <div class="row g-3 mb-3">
                         <div class="col-md-6">
-                            <label class="form-label">Kategori <span class="text-danger">*</span></label>
+                            <label class="form-label">Komponen <span class="text-danger">*</span></label>
                             <input type="text" name="category" list="category-list" class="form-control"
-                                placeholder="Pilih atau ketik kategori" required id="itemCategory">
+                                placeholder="Pilih atau ketik Komponen" required id="itemCategory">
                             <datalist id="category-list">
                                 @foreach($categories as $cat)
                                 <option value="{{ $cat }}">
@@ -426,25 +445,25 @@ $itemDetailData[$itemRow->id] = [
                         <label class="form-label">Minimum Stok <span class="text-danger">*</span></label>
                         <input type="number" name="min_stock" class="form-control" min="0" required id="itemMinStock"
                             value="0">
-                        <small class="text-muted">Sistem akan memberikan peringatan jika stok di bawah angka ini</small>
+                        <small class="text-muted text-lowercase">Sistem akan memberikan peringatan jika stok di bawah jumlah minimum</small>
                     </div>
 
                     <div class="technical-item-fields">
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">No Normalisasi / No Seri</label>
-                                <input type="text" name="no_normalisasi" class="form-control" placeholder="Contoh: SU-01-MTR-001" id="itemNoNormalisasi">
+                                <label class="form-label">No. Normalisasi</label>
+                                <input type="text" name="no_normalisasi" class="form-control" placeholder="00.000.000.0000" id="itemNoNormalisasi">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Lokasi</label>
-                                <input type="text" name="lokasi" class="form-control" placeholder="Letak penyimpanan" id="itemLokasi">
+                                <label class="form-label">Volume</label>
+                                <input type="number" name="volume" class="form-control" min="0" id="itemVolume" value="0">
                             </div>
                         </div>
 
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">Komponen</label>
-                                <input type="text" name="component" list="component-list" class="form-control" placeholder="Pilih atau ketik komponen" id="itemComponent">
+                                <label class="form-label">Tipe Barang</label>
+                                <input type="text" name="component" list="component-list" class="form-control" placeholder="Pilih atau ketik tipe barang" id="itemComponent">
                                 <datalist id="component-list">
                                     @foreach($components as $component)
                                     <option value="{{ $component }}">
@@ -452,20 +471,8 @@ $itemDetailData[$itemRow->id] = [
                                 </datalist>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Volume</label>
-                                <input type="number" name="volume" class="form-control" min="0" id="itemVolume" value="0">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Stok Saat Ini</label>
-                                <input type="number" class="form-control" min="0" id="itemCurrentStock" value="0" readonly>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Ship Unloader</label>
-                                <div class="d-flex flex-wrap gap-1" id="itemShipBadges">
-                                    @foreach([1, 2, 3, 4] as $ship)
-                                    <span class="badge badge-ship-inactive" data-ship="{{ $ship }}">{{ $ship }}</span>
-                                    @endforeach
-                                </div>
+                                <label class="form-label">Store room</label>
+                                <input type="text" name="lokasi" class="form-control" placeholder="Letak penyimpanan" id="itemLokasi">
                             </div>
                         </div>
                     </div>
@@ -537,7 +544,7 @@ $itemDetailData[$itemRow->id] = [
                         <label class="form-label">Minimum Stok <span class="text-danger">*</span></label>
                         <input type="number" name="min_stock" class="form-control" min="0" required id="itemMinStock"
                             value="0">
-                        <small class="text-muted">Sistem akan memberikan peringatan jika stok di bawah angka ini</small>
+                        <small class="text-muted">Sistem akan memberikan peringatan jika stok di bawah jumlah minimum</small>
                     </div>
                 </form>
             </div>
@@ -647,12 +654,20 @@ $itemDetailData[$itemRow->id] = [
                     document.getElementById('itemMinStock').value = data.min_stock;
                     if (document.getElementById('itemNoNormalisasi')) {
                         document.getElementById('itemNoNormalisasi').value = data.no_normalisasi || '';
-                        document.getElementById('itemLokasi').value = data.lokasi || '';
-                        document.getElementById('itemCurrentStock').value = data.current_stock || 0;
-                        document.getElementById('itemComponent').value = data.component || '';
-                        document.getElementById('itemVolume').value = data.volume || 0;
-                        paintItemShipBadges(data.stock_ship_unloader || '');
                     }
+                    if (document.getElementById('itemLokasi')) {
+                        document.getElementById('itemLokasi').value = data.lokasi || '';
+                    }
+                    if (document.getElementById('itemCurrentStock')) {
+                        document.getElementById('itemCurrentStock').value = data.current_stock || 0;
+                    }
+                    if (document.getElementById('itemComponent')) {
+                        document.getElementById('itemComponent').value = data.component || '';
+                    }
+                    if (document.getElementById('itemVolume')) {
+                        document.getElementById('itemVolume').value = data.volume || 0;
+                    }
+                    paintItemShipBadges(data.stock_ship_unloader || '');
                     if (document.getElementById('itemBidang')) {
                         document.getElementById('itemBidang').value = data.bidang || '';
                     }
