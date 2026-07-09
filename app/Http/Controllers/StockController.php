@@ -10,7 +10,11 @@ class StockController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Item::query()->visibleFor(auth()->user());
+        $isSuperAdmin = auth()->check() && auth()->user()->isSuperAdmin();
+        $saBidang = $this->superAdminBidangContext($request);
+        $viewUser = $saBidang ? $this->createBidangProxy($saBidang) : auth()->user();
+
+        $query = Item::query()->visibleFor($viewUser);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -24,10 +28,10 @@ class StockController extends Controller
         }
 
         if ($request->filled('category')) {
-            $query->where(auth()->user()?->isTeknik() ? 'component' : 'category', $request->category);
+            $query->where($viewUser?->isTeknik() ? 'component' : 'category', $request->category);
         }
 
-        $stockRequestItems = $this->stockRequestTriggerItems();
+        $stockRequestItems = $this->stockRequestTriggerItems($viewUser);
         $pendingStockRequestItemIds = $this->pendingStockRequestItemIds();
         $stockRequestItems = $stockRequestItems->map(function ($item) use ($pendingStockRequestItemIds) {
             $item['has_pending_request'] = in_array($item['id'], $pendingStockRequestItemIds, true);
@@ -37,10 +41,24 @@ class StockController extends Controller
         $requestOrderCount = $stockRequestItems->where('stock_status', 'request_order')->count();
         $outOfStockCount = $stockRequestItems->where('stock_status', 'out_of_stock')->count();
 
-        if ($request->filled('stock_status') && $request->stock_status === 'low') {
-            $items = $query->get()->filter(fn($item) => $item->is_low_stock);
-            $categoryColumn = auth()->user()?->isTeknik() ? 'component' : 'category';
-            $categories = Item::visibleFor(auth()->user())->select($categoryColumn)->whereNotNull($categoryColumn)->distinct()->orderBy($categoryColumn)->pluck($categoryColumn);
+        if ($request->filled('stock_status')) {
+            $status = $request->stock_status;
+            $items = $query->get()->filter(function ($item) use ($status) {
+                $currentStock = $item->current_stock;
+                $minStock = $item->min_stock;
+
+                return match ($status) {
+                    'safe', 'ready' => $currentStock > $minStock,
+                    'in_stock' => $currentStock > $minStock,
+                    'request_stock', 'request_order' => $currentStock > 0 && $currentStock <= $minStock,
+                    'out_of_stock' => $currentStock <= 0,
+                    'critical' => $currentStock < $minStock,
+                    'low', 'low_stock' => $currentStock == $minStock,
+                    default => true,
+                };
+            });
+            $categoryColumn = $viewUser?->isTeknik() ? 'component' : 'category';
+            $categories = Item::visibleFor($viewUser)->select($categoryColumn)->whereNotNull($categoryColumn)->distinct()->orderBy($categoryColumn)->pluck($categoryColumn);
 
             return view('stock.index', [
                 'items' => $items,
@@ -49,12 +67,15 @@ class StockController extends Controller
                 'stockRequestItems' => $stockRequestItems,
                 'requestOrderCount' => $requestOrderCount,
                 'outOfStockCount' => $outOfStockCount,
+                'isSuperAdmin' => $isSuperAdmin,
+                'saBidang' => $saBidang,
+                'isTeknik' => $viewUser?->isTeknik(),
             ]);
         }
 
         $items = $query->orderBy('name')->paginate(15)->withQueryString();
-        $categoryColumn = auth()->user()?->isTeknik() ? 'component' : 'category';
-        $categories = Item::visibleFor(auth()->user())->select($categoryColumn)->whereNotNull($categoryColumn)->distinct()->orderBy($categoryColumn)->pluck($categoryColumn);
+        $categoryColumn = $viewUser?->isTeknik() ? 'component' : 'category';
+        $categories = Item::visibleFor($viewUser)->select($categoryColumn)->whereNotNull($categoryColumn)->distinct()->orderBy($categoryColumn)->pluck($categoryColumn);
 
         return view('stock.index', compact(
             'items',
@@ -62,12 +83,17 @@ class StockController extends Controller
             'stockRequestItems',
             'requestOrderCount',
             'outOfStockCount'
-        ) + ['paginated' => true]);
+        ) + [
+            'paginated' => true,
+            'isSuperAdmin' => $isSuperAdmin,
+            'saBidang' => $saBidang,
+            'isTeknik' => $viewUser?->isTeknik(),
+        ]);
     }
 
-    private function stockRequestTriggerItems()
+    private function stockRequestTriggerItems($viewUser)
     {
-        return Item::visibleFor(auth()->user())
+        return Item::visibleFor($viewUser)
             ->orderBy('name')
             ->get()
             ->map(function (Item $item) {

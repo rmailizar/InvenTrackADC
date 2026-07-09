@@ -78,7 +78,15 @@
                                 </select>
                                 <select name="stock_status" class="form-select form-select-sm" onchange="this.form.submit()">
                                     <option value="">Semua Status</option>
-                                    <option value="low" {{ request('stock_status') == 'low' ? 'selected' : '' }}>Stok Rendah</option>
+                                    @if($isTeknik)
+                                        <option value="in_stock" {{ request('stock_status') == 'in_stock' ? 'selected' : '' }}>In Stock</option>
+                                        <option value="low_stock" {{ request('stock_status') == 'low_stock' ? 'selected' : '' }}>Low Stock</option>
+                                        <option value="critical" {{ request('stock_status') == 'critical' ? 'selected' : '' }}>Critical</option>
+                                    @else
+                                        <option value="ready" {{ request('stock_status') == 'ready' ? 'selected' : '' }}>Ready</option>
+                                        <option value="request_stock" {{ request('stock_status') == 'request_stock' ? 'selected' : '' }}>Request Stock</option>
+                                        <option value="out_of_stock" {{ request('stock_status') == 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
+                                    @endif
                                 </select>
                             </div>
                         @else

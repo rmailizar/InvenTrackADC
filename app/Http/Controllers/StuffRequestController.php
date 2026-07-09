@@ -104,14 +104,14 @@ class StuffRequestController extends Controller
                 ->approved()
                 ->masuk()
                 ->latest()
-                ->paginate(15, ['*'], 'gr_page');
+                ->paginate(10, ['*'], 'gr_page');
 
             $recentIssues = Transaction::with(['item', 'user'])
                 ->where('bidang', 'teknik')
                 ->approved()
                 ->keluar()
                 ->latest()
-                ->paginate(15, ['*'], 'gi_page');
+                ->paginate(10, ['*'], 'gi_page');
 
             $publicDashboard = [
                 'totalItems' => $totalItems,

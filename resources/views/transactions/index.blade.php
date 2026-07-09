@@ -215,7 +215,6 @@
                                     @else
                                         btn-primary
                                     @endif">
-                                    <i class="bi bi-send-fill"></i>
                                     Process {{ $pageTitle }}
                                 </button>
                             </form>

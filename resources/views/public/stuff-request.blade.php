@@ -214,7 +214,7 @@
                                              <tbody>
                                                   @forelse($publicDashboard['detailedSohTransactions'] as $tx)
                                                      <tr>
-                                                         <td class="text-secondary">{{ $tx->date ? $tx->date->format('Y-m-d') : ($tx->created_at ? $tx->created_at->format('Y-m-d') : '-') }}</td>
+                                                         <td class="text-secondary" style="font-size: 13px !important;">{{ $tx->date ? $tx->date->format('Y-m-d') : ($tx->created_at ? $tx->created_at->format('Y-m-d') : '-') }}</td>
                                                          <td>
                                                              <span class="{{ $tx->type === 'in' ? 'text-in' : 'text-out' }} fw-bold" style="font-family: 'Roboto Mono', monospace; font-size:13px;">
                                                                  {{ $tx->item?->no_normalisasi ?: 'NORM-' . str_pad($tx->item_id, 4, '0', STR_PAD_LEFT) }}
@@ -342,7 +342,7 @@
 
                     <div class="card mb-4" id="public-teknik-table-card">
                         <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <span><i class="bi bi-table text-primary-custom me-2"></i>Daftar Barang Teknik</span>
+                            <span class="fs-5"><i class="bi bi-table text-primary-custom me-2"></i>Master Stock On Hand (SOH)</span>
                             <div class="d-flex align-items-center gap-2">
                                 <form method="GET" action="{{ route('public.stuff-request') }}" id="publicTeknikSearchForm" class="m-0">
                                     <input type="hidden" name="bidang" value="teknik">
@@ -394,8 +394,20 @@
                                                 data-category="{{ $item->category ?? '' }}"
                                                 data-unit="{{ strtolower($item->unit ?? '') }}"
                                                 data-status="{{ $statusClass }}">
-                                                <td>
-                                                    <span class="technical-soh-norm norm-in">{{ $item->no_normalisasi ?? '-' }}</span>
+                                                <td style="font-family: 'Major Mono Display', monospace; font-size:13px;">
+                                                    @if($item->current_stock < $item->min_stock)
+                                                        <span class="badge-status badge-rejected position-relative badge-critical-teknik">
+                                                            {{ $item->no_normalisasi ?? '-' }}
+                                                        </span>
+                                                    @elseif($item->current_stock == $item->min_stock)
+                                                        <span class="badge-status technical-soh-norm norm-out">
+                                                            {{ $item->no_normalisasi ?? '-' }}
+                                                        </span>
+                                                    @else
+                                                        <span class="badge-status badge-approved">
+                                                            {{ $item->no_normalisasi ?? '-' }}
+                                                        </span>
+                                                    @endif
                                                 </td>
                                                 <td class="fw-600 name-cell col-name-wrap">{{ $item->name }}</td>
                                                 <td class="component-cell">{{ $item->component ?? '-' }}</td>
@@ -453,7 +465,7 @@
                     {{-- Goods Receipt Section --}}
                     <div class="row g-4 mb-4">
                         {{-- Goods Receipt Form --}}
-                        <div class="col-lg-6">
+                        <div class="col-lg-4">
                             <div class="request-form-card" style="height: 100%;">
                                 <div class="request-form-header">
                                     <h4><i class="bi bi-box-arrow-in-down me-2 text-success"></i>Goods Receipt</h4>
@@ -549,10 +561,10 @@
                             </div>
                         </div>
                         {{-- Goods Receipt History Table --}}
-                        <div class="col-lg-6">
+                        <div class="col-lg-8">
                             <div class="card" style="height: 100%;">
                                 <div class="card-header">
-                                    <span><i class="bi bi-table text-success me-2"></i>History Goods Receipt</span>
+                                    <span class="fs-5"><i class="bi bi-table text-success me-2"></i>Recent GR Log</span>
                                 </div>
                                 <div class="card-body p-0">
                                     <div class="table-responsive">
@@ -645,7 +657,7 @@
                     {{-- Goods Issue Section --}}
                     <div class="row g-4 mb-4">
                         {{-- Goods Issue Form --}}
-                        <div class="col-lg-6">
+                        <div class="col-lg-4">
                             <div class="request-form-card" style="height: 100%;">
                                 <div class="request-form-header">
                                     <h4><i class="bi bi-box-arrow-up me-2 text-warning"></i>Goods Issue</h4>
@@ -744,10 +756,10 @@
                             </div>
                         </div>
                         {{-- Goods Issue History Table --}}
-                        <div class="col-lg-6">
+                        <div class="col-lg-8">
                             <div class="card" style="height: 100%;">
                                 <div class="card-header">
-                                    <span><i class="bi bi-table text-warning me-2"></i>History Goods Issue</span>
+                                    <span class="fs-5"><i class="bi bi-table text-warning me-2"></i>Recent GI Log</span>
                                 </div>
                                 <div class="card-body p-0">
                                     <div class="table-responsive">

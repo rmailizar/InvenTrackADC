@@ -193,9 +193,18 @@ class ReportController extends Controller
         });
 
         if ($request->filled('stock_status')) {
-            $rows = $rows->filter(function ($row) use ($request) {
-                return match ($request->stock_status) {
-                    'low' => $row->stok_akhir <= $row->item->min_stock,
+            $status = $request->stock_status;
+            $rows = $rows->filter(function ($row) use ($status) {
+                $stokAkhir = $row->stok_akhir;
+                $minStock = $row->item->min_stock;
+
+                return match ($status) {
+                    'safe', 'ready' => $stokAkhir > $minStock,
+                    'in_stock' => $stokAkhir > $minStock,
+                    'request_stock', 'request_order' => $stokAkhir > 0 && $stokAkhir <= $minStock,
+                    'out_of_stock' => $stokAkhir <= 0,
+                    'critical' => $stokAkhir < $minStock,
+                    'low', 'low_stock' => $stokAkhir == $minStock,
                     default => true,
                 };
             });

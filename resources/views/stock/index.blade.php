@@ -5,13 +5,36 @@
 
 @section('content')
     @php
-        $isTeknik = auth()->user()->bidang === 'teknik';
+        $isTeknik = $isTeknik ?? (auth()->user()->bidang === 'teknik');
     @endphp
     <div class="animate-fade-in">
+        {{-- Super Admin Bidang Tab Switcher --}}
+        @if(!empty($isSuperAdmin))
+        <div class="report-tabs mb-3 sa-bidang-tabs">
+            <a href="{{ route('stock.index', ['sa_bidang' => 'umum']) }}"
+                class="report-tab sa-bidang-tab {{ ($saBidang ?? '') !== 'teknik' ? 'active' : '' }}"
+                data-sa-bidang="umum"
+                data-sa-section="stockSection"
+                onclick="switchSaBidang('stockSection', this); return false;">
+                <i class="bi bi-building"></i> Bidang Umum
+            </a>
+            <a href="{{ route('stock.index', ['sa_bidang' => 'teknik']) }}"
+                class="report-tab sa-bidang-tab {{ ($saBidang ?? '') === 'teknik' ? 'active' : '' }}"
+                data-sa-bidang="teknik"
+                data-sa-section="stockSection"
+                onclick="switchSaBidang('stockSection', this); return false;">
+                <i class="bi bi-tools"></i> Bidang Teknik
+            </a>
+        </div>
+        @endif
+
         <!-- Header Actions Wrapper -->
         <div class="header-action-wrapper d-none">
             <div class="section-header-actions">
                 <form method="GET" action="{{ route('stock.index') }}">
+                    @if(!empty($saBidang))
+                        <input type="hidden" name="sa_bidang" value="{{ $saBidang }}">
+                    @endif
                     <div class="action-row-1 stock-filter-row">
                         <div class="stock-search-row d-flex align-items-center gap-2" style="flex-wrap: nowrap !important;">
                             <div class="position-relative" id="stockSearchWrapper" style="flex: 1 1 auto !important; width: auto !important; min-width: 0 !important;">
@@ -24,7 +47,7 @@
                                     placeholder="Cari barang...">
                                 <div id="stockSearchSuggestions" class="autocomplete-suggestions" style="display:none;"></div>
                             </div>
-                            <a href="{{ route('stock.index') }}" 
+                            <a href="{{ route('stock.index', !empty($saBidang) ? ['sa_bidang' => $saBidang] : []) }}" 
                                 class="btn btn-reset btn-outline-reset" 
                                 style="flex: 0 0 auto !important;"
                                 title="Reset Filter">
@@ -39,9 +62,17 @@
                                     <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
                                 @endforeach
                             </select>
-                            <select name="stock_status" class="form-select form-select-sm" onchange="this.form.submit()">
+                             <select name="stock_status" class="form-select form-select-sm" onchange="this.form.submit()">
                                 <option value="">Semua Status</option>
-                                <option value="low" {{ request('stock_status') == 'low' ? 'selected' : '' }}>Stok Rendah</option>
+                                @if($isTeknik)
+                                    <option value="in_stock" {{ request('stock_status') == 'in_stock' ? 'selected' : '' }}>In Stock</option>
+                                    <option value="low_stock" {{ request('stock_status') == 'low_stock' ? 'selected' : '' }}>Low Stock</option>
+                                    <option value="critical" {{ request('stock_status') == 'critical' ? 'selected' : '' }}>Critical</option>
+                                @else
+                                    <option value="ready" {{ request('stock_status') == 'ready' ? 'selected' : '' }}>Ready</option>
+                                    <option value="request_stock" {{ request('stock_status') == 'request_stock' ? 'selected' : '' }}>Request Stock</option>
+                                    <option value="out_of_stock" {{ request('stock_status') == 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
+                                @endif
                             </select>
                         </div>
                         
@@ -117,36 +148,90 @@
                                     data-category="{{ $item->category ?? '' }}">
                                     <td>{{ $no + $index }}</td>
                                     @if($isTeknik)
-                                        <td class="fw-600">{{ $item->no_normalisasi ?? '-' }}</td>
-                                        <td class="fw-600">{{ $item->name }}</td>
+                                        <td style="font-family: 'Major Mono Display', monospace; font-size:13px;">
+                                            @if($currentStock < $item->min_stock)
+                                                <span class="badge-status badge-rejected position-relative badge-critical-teknik">
+                                                    {{ $item->no_normalisasi ?? '-' }}
+                                                </span>
+                                            @elseif($currentStock == $item->min_stock)
+                                                <span class="badge-status technical-soh-norm norm-out">
+                                                    {{ $item->no_normalisasi ?? '-' }}
+                                                </span>
+                                            @else
+                                                <span class="badge-status badge-approved">
+                                                    {{ $item->no_normalisasi ?? '-' }}
+                                                </span>
+                                            @endif
+                                        </td>
+                                        <td class="fw-600 col-name-wrap">{{ $item->name }}</td>
                                         <td>{{ $item->component ?? '-' }}</td>
                                         <td>{{ $item->category }}</td>
-                                        <td>{{ $item->stock_ship_unloader_label }}</td>
+                                         <td class="text-nowrap align-middle">
+                                             @php
+                                                 $activeShips = collect(explode(',', (string) $item->stock_ship_unloader))->filter()->all();
+                                             @endphp
+                                             <div class="d-flex flex-nowrap align-items-center gap-1">
+                                                 @foreach([1, 2, 3, 4] as $ship)
+                                                     <span class="badge {{ in_array((string) $ship, $activeShips, true) ? 'badge-ship-active' : 'badge-ship-inactive' }}">
+                                                         {{ $ship }}
+                                                     </span>
+                                                 @endforeach
+                                             </div>
+                                         </td>
                                         <td>{{ $item->lokasi ?? '-' }}</td>
                                         <td class="text-center fw-700">{{ $item->volume === null ? '-' : number_format($item->volume) }}</td>
                                         <td>{{ $item->unit }}</td>
                                     @else
-                                        <td class="fw-600">{{ $item->name }}</td>
+                                        <td class="fw-600 col-name-wrap">{{ $item->name }}</td>
                                         <td>{{ $item->category }}</td>
                                         <td>{{ $item->unit }}</td>
                                     @endif
                                     <td class="text-center fw-600 text-success-custom">{{ number_format($totalMasuk) }}</td>
                                     <td class="text-center fw-600 text-danger-custom">{{ number_format($totalKeluar) }}</td>
-                                    <td class="text-center fw-700"
-                                        style="font-size:15px; {{ $currentStock <= 0 ? 'color:var(--danger);' : ($currentStock <= $item->min_stock ? 'color:var(--warning-dark);' : 'color:var(--success);') }}">
-                                        {{ number_format($currentStock) }}
-                                    </td>
+                                    @if($isTeknik)
+                                        <td class="fw-700 text-center {{ $currentStock < $item->min_stock ? 'stock-value-critical' : ($currentStock == $item->min_stock ? 'stock-value-low' : 'stock-value-ready') }}">
+                                            {{ number_format($currentStock) }}
+                                        </td>
+                                    @else
+                                        <td class="text-center fw-700"
+                                            style="font-size:15px; {{ $currentStock <= 0 ? 'color:var(--danger);' : ($currentStock <= $item->min_stock ? 'color:var(--warning-dark);' : 'color:var(--success);') }}">
+                                            {{ number_format($currentStock) }}
+                                        </td>
+                                    @endif
                                     <td class="text-center">{{ $item->min_stock }}</td>
                                     <td>
-                                        @if($currentStock <= 0)
-                                            <span class="badge-status badge-rejected"><i class="bi bi-x-circle-fill"></i>
-                                                Out of Stock</span>
-                                        @elseif($currentStock <= $item->min_stock)
-                                            <span class="badge-status badge-pending">
-                                                <i class="bi bi-exclamation-triangle-fill"></i> Request Order
-                                            </span>
+                                        @if($isTeknik)
+                                            @if($currentStock < $item->min_stock)
+                                                <span class="badge-status badge-rejected position-relative badge-critical-teknik">
+                                                    Critical
+                                                    <span class="ping-container">
+                                                        <span class="ping-dot-pulse"></span>
+                                                        <span class="ping-dot-core"></span>
+                                                    </span>
+                                                </span>
+                                            @elseif($currentStock == $item->min_stock)
+                                                <span class="badge-status technical-soh-norm norm-out">
+                                                    Low Stock
+                                                </span>
+                                            @else
+                                                <span class="badge-status badge-in-stock">
+                                                    In Stock
+                                                </span>
+                                            @endif
                                         @else
-                                            <span class="badge-status badge-approved"><i class="bi bi-check-circle-fill"></i> Ready</span>
+                                            @if($currentStock <= 0)
+                                                <span class="badge-status badge-rejected">
+                                                    <i class="bi bi-x-circle-fill"></i> Out of Stock
+                                                </span>
+                                            @elseif($currentStock <= $item->min_stock)
+                                                <span class="badge-status technical-soh-norm norm-out">
+                                                    <i class="bi bi-exclamation-triangle-fill"></i> Request Order
+                                                </span>
+                                            @else
+                                                <span class="badge-status badge-approved">
+                                                    <i class="bi bi-check-circle-fill"></i> Ready
+                                                </span>
+                                            @endif
                                         @endif
                                     </td>
                                 </tr>
