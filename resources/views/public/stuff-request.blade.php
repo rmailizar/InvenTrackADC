@@ -469,7 +469,7 @@
                             <div class="request-form-card" style="height: 100%;">
                                 <div class="request-form-header">
                                     <h4><i class="bi bi-box-arrow-in-down me-2 text-success"></i>Goods Receipt</h4>
-                                    <p>Input penerimaan barang bidang teknik</p>
+                                    <p>Registrasi Penerimaan Barang</p>
                                 </div>
                                 <div class="request-form-body text-uppercase">
                                     <form method="POST" action="{{ route('transactions.store') }}" id="publicGRForm">
@@ -564,7 +564,7 @@
                         <div class="col-lg-8">
                             <div class="card" style="height: 100%;">
                                 <div class="card-header">
-                                    <span class="fs-5"><i class="bi bi-table text-success me-2"></i>Recent GR Log</span>
+                                    <span class="fs-5 text-uppercase"><i class="bi bi-table text-success me-2"></i>Recent GR Log</span>
                                 </div>
                                 <div class="card-body p-0">
                                     <div class="table-responsive">
@@ -661,7 +661,7 @@
                             <div class="request-form-card" style="height: 100%;">
                                 <div class="request-form-header">
                                     <h4><i class="bi bi-box-arrow-up me-2 text-warning"></i>Goods Issue</h4>
-                                    <p>Input pengeluaran barang bidang teknik</p>
+                                    <p>Registrasi Pengeluaran Barang</p>
                                 </div>
                                 <div class="request-form-body text-uppercase">
                                     <form method="POST" action="{{ route('transactions.store') }}" id="publicGIForm">
@@ -759,7 +759,7 @@
                         <div class="col-lg-8">
                             <div class="card" style="height: 100%;">
                                 <div class="card-header">
-                                    <span class="fs-5"><i class="bi bi-table text-warning me-2"></i>Recent GI Log</span>
+                                    <span class="fs-5 text-uppercase"><i class="bi bi-table text-warning me-2"></i>Recent GI Log</span>
                                 </div>
                                 <div class="card-body p-0">
                                     <div class="table-responsive">
@@ -1188,7 +1188,18 @@
                 const chartGridColor = () => isDark() ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
                 const chartSurfaceColor = () => isDark() ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.95)';
                 const chartCssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
-                const catColors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'];
+                 const catColors = ['#da3e23ff', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b'];
+
+                function getCategoryColor(label, index) {
+                    if (label === 'ALL') return '#da3e23ff'; // Slate gray
+                    if (label === 'SU-1') return '#3b82f6'; // Blue
+                    if (label === 'SU-2') return '#8b5cf6'; // Purple
+                    if (label === 'SU-3') return '#10b981'; // Green
+                    if (label === 'SU-4') return '#f59e0b'; // Orange
+                    
+                    const fallbackColors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#06b6d4', '#ef4444', '#14b8a6', '#ec4899'];
+                    return fallbackColors[index % fallbackColors.length];
+                }
 
                 function lineGradient(ctx, type) {
                     const gradient = ctx.createLinearGradient(0, 0, 0, 320);
@@ -1311,14 +1322,15 @@
 
                 const shipCtx = document.getElementById('publicShipChart')?.getContext('2d');
                 if (shipCtx) {
+                    const initialLabels = {!! json_encode(array_column($publicDashboard['categoryData'], 'category')) !!};
                     publicShipChart = new Chart(shipCtx, {
                         type: 'doughnut',
                         data: {
-                            labels: {!! json_encode(array_column($publicDashboard['categoryData'], 'category')) !!},
+                            labels: initialLabels,
                             datasets: [{
                                 data: {!! json_encode(array_column($publicDashboard['categoryData'], 'stock')) !!},
-                                backgroundColor: catColors.map(color => donutGradient(shipCtx, color)),
-                                borderColor: catColors,
+                                backgroundColor: initialLabels.map((cat, idx) => donutGradient(shipCtx, getCategoryColor(cat, idx))),
+                                borderColor: initialLabels.map((cat, idx) => getCategoryColor(cat, idx)),
                                 borderWidth: 2,
                                 hoverOffset: 6,
                                 spacing: 4
@@ -1336,10 +1348,46 @@
                                         pointStyle: 'circle',
                                         padding: 15,
                                         color: chartMutedColor(),
-                                        font: { family: 'Inter', size: 11, weight: 500 }
+                                        font: { family: 'Inter', size: 11, weight: 500 },
+                                        generateLabels: function(chart) {
+                                            const data = chart.data;
+                                            if (data.labels.length && data.datasets.length) {
+                                                const dataset = data.datasets[0];
+                                                const total = dataset.data.reduce((sum, val) => sum + val, 0);
+                                                return data.labels.map((label, i) => {
+                                                    const value = dataset.data[i] || 0;
+                                                    const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                                    const displayLabel = label === 'ALL' ? 'ALL (Common)' : label;
+                                                    const text = `${displayLabel} (${percentage}%)`;
+                                                    
+                                                    return {
+                                                        text: text,
+                                                        fillStyle: dataset.backgroundColor[i],
+                                                        strokeStyle: dataset.borderColor[i],
+                                                        lineWidth: dataset.borderWidth || 0,
+                                                        hidden: isNaN(dataset.data[i]) || chart.getDatasetMeta(0).data[i].hidden,
+                                                        index: i,
+                                                        fontColor: chartMutedColor()
+                                                    };
+                                                });
+                                            }
+                                            return [];
+                                        }
                                     }
                                 },
-                                tooltip: tooltipOptions()
+                                tooltip: {
+                                    ...tooltipOptions(),
+                                    callbacks: {
+                                        label: function(context) {
+                                            const label = context.label || '';
+                                            const value = context.raw || 0;
+                                            const dataset = context.chart.data.datasets[0].data;
+                                            const total = dataset.reduce((sum, val) => sum + val, 0);
+                                            const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : 0;
+                                            return ` ${label}: ${value.toLocaleString()} (${percentage}%)`;
+                                        }
+                                    }
+                                }
                             }
                         }
                     });
@@ -1370,9 +1418,10 @@
                         publicShipChart.options.plugins.tooltip.titleColor = isDark() ? '#f8fafc' : '#0f172a';
                         publicShipChart.options.plugins.tooltip.bodyColor = chartTextColor();
                         publicShipChart.options.plugins.tooltip.borderColor = isDark() ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.1)';
-                        publicShipChart.data.datasets[0].backgroundColor = catColors
-                            .slice(0, publicShipChart.data.labels.length)
-                            .map(color => donutGradient(shipCtx, color));
+                        publicShipChart.data.datasets[0].backgroundColor = publicShipChart.data.labels
+                            .map((cat, idx) => donutGradient(shipCtx, getCategoryColor(cat, idx)));
+                        publicShipChart.data.datasets[0].borderColor = publicShipChart.data.labels
+                            .map((cat, idx) => getCategoryColor(cat, idx));
                         publicShipChart.update();
                     }
                 };
@@ -1408,10 +1457,8 @@
                         .then(data => {
                             publicShipChart.data.labels = data.map(d => d.category);
                             publicShipChart.data.datasets[0].data = data.map(d => d.stock);
-                            publicShipChart.data.datasets[0].backgroundColor = catColors
-                                .slice(0, data.length)
-                                .map(color => donutGradient(shipCtx, color));
-                            publicShipChart.data.datasets[0].borderColor = catColors.slice(0, data.length);
+                            publicShipChart.data.datasets[0].backgroundColor = data.map((d, idx) => donutGradient(shipCtx, getCategoryColor(d.category, idx)));
+                            publicShipChart.data.datasets[0].borderColor = data.map((d, idx) => getCategoryColor(d.category, idx));
                             publicShipChart.update('active');
                         })
                         .catch(err => console.error(err));

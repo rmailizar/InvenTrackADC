@@ -866,9 +866,10 @@
                 chart.update();
             });
 
-            categoryChartInstance.data.datasets[0].backgroundColor = catColors
-                .slice(0, categoryChartInstance.data.labels.length)
-                .map(color => donutGradient(catCtx, color));
+            categoryChartInstance.data.datasets[0].backgroundColor = categoryChartInstance.data.labels
+                .map((cat, idx) => donutGradient(catCtx, getCategoryColor(cat, idx)));
+            categoryChartInstance.data.datasets[0].borderColor = categoryChartInstance.data.labels
+                .map((cat, idx) => getCategoryColor(cat, idx));
             categoryChartInstance.update();
         }
 
@@ -903,7 +904,18 @@
         // ===== Chart color constants =====
         const masukBorder = '#3b82f6';
         const keluarBorder = '#10b981';
-        const catColors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#06b6d4', '#ef4444', '#14b8a6', '#ec4899'];
+        const catColors = ['#da3e23ff', '#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#06b6d4', '#ef4444', '#14b8a6', '#ec4899'];
+
+        function getCategoryColor(label, index) {
+            if (label === 'ALL') return '#da3e23ff'; // Slate gray
+            if (label === 'SU-1') return '#3b82f6'; // Blue
+            if (label === 'SU-2') return '#8b5cf6'; // Purple
+            if (label === 'SU-3') return '#10b981'; // Green
+            if (label === 'SU-4') return '#f59e0b'; // Orange
+            
+            const fallbackColors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#06b6d4', '#ef4444', '#14b8a6', '#ec4899'];
+            return fallbackColors[index % fallbackColors.length];
+        }
 
         function lineGradient(ctx, type) {
             const gradient = ctx.createLinearGradient(0, 0, 0, 320);
@@ -1068,14 +1080,15 @@
 
         // ===== Category Donut Chart =====
         const catCtx = document.getElementById('categoryChart').getContext('2d');
+        const initialCatLabels = {!! json_encode(array_column($categoryData, 'category')) !!};
         const categoryChartInstance = new Chart(catCtx, {
             type: 'doughnut',
             data: {
-                labels: {!! json_encode(array_column($categoryData, 'category')) !!},
+                labels: initialCatLabels,
                 datasets: [{
                     data: {!! json_encode(array_column($categoryData, 'stock')) !!},
-                    backgroundColor: catColors.slice(0, {{ count($categoryData) }}).map(color => donutGradient(catCtx, color)),
-                    borderColor: catColors.slice(0, {{ count($categoryData) }}),
+                    backgroundColor: initialCatLabels.map((cat, idx) => donutGradient(catCtx, getCategoryColor(cat, idx))),
+                    borderColor: initialCatLabels.map((cat, idx) => getCategoryColor(cat, idx)),
                     borderWidth: 2,
                     hoverOffset: 6,
                     spacing: 4,
@@ -1093,10 +1106,46 @@
                             pointStyle: 'circle',
                             padding: 15,
                             color: chartMutedColor(),
-                            font: { family: 'Inter', size: 11, weight: 500 }
+                            font: { family: 'Inter', size: 11, weight: 500 },
+                            generateLabels: function(chart) {
+                                const data = chart.data;
+                                if (data.labels.length && data.datasets.length) {
+                                    const dataset = data.datasets[0];
+                                    const total = dataset.data.reduce((sum, val) => sum + val, 0);
+                                    return data.labels.map((label, i) => {
+                                        const value = dataset.data[i] || 0;
+                                        const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+                                        const displayLabel = label === 'ALL' ? 'ALL (Common)' : label;
+                                        const text = `${displayLabel} (${percentage}%)`;
+                                        
+                                        return {
+                                            text: text,
+                                            fillStyle: dataset.backgroundColor[i],
+                                            strokeStyle: dataset.borderColor[i],
+                                            lineWidth: dataset.borderWidth || 0,
+                                            hidden: isNaN(dataset.data[i]) || chart.getDatasetMeta(0).data[i].hidden,
+                                            index: i,
+                                            fontColor: chartMutedColor()
+                                        };
+                                    });
+                                }
+                                return [];
+                            }
                         }
                     },
-                    tooltip: tooltipOptions()
+                    tooltip: {
+                        ...tooltipOptions(),
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.raw || 0;
+                                const dataset = context.chart.data.datasets[0].data;
+                                const total = dataset.reduce((sum, val) => sum + val, 0);
+                                const percentage = total > 0 ? ((value / total) * 100).toFixed(2) : 0;
+                                return ` ${label}: ${value.toLocaleString()} (${percentage}%)`;
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -1272,8 +1321,8 @@
                 .then(data => {
                     categoryChartInstance.data.labels = data.map(d => d.category);
                     categoryChartInstance.data.datasets[0].data = data.map(d => d.stock);
-                    categoryChartInstance.data.datasets[0].backgroundColor = catColors.slice(0, data.length).map(color => donutGradient(catCtx, color));
-                    categoryChartInstance.data.datasets[0].borderColor = catColors.slice(0, data.length);
+                    categoryChartInstance.data.datasets[0].backgroundColor = data.map((d, idx) => donutGradient(catCtx, getCategoryColor(d.category, idx)));
+                    categoryChartInstance.data.datasets[0].borderColor = data.map((d, idx) => getCategoryColor(d.category, idx));
                     categoryChartInstance.update('active');
                 });
         });

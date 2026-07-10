@@ -542,6 +542,7 @@ class DashboardController extends Controller
     {
         $stockByShip = collect(['1', '2', '3', '4'])->mapWithKeys(fn($ship) => [$ship => 0])->all();
         $items = Item::visibleFor($user)->where('bidang', 'teknik')->get();
+        $allStock = 0;
 
         foreach ($items as $item) {
             $ships = collect(explode(',', (string) $item->ship_unloader))
@@ -559,18 +560,29 @@ class DashboardController extends Controller
                 : $item->current_stock;
             $stock = max(0, (int) $stock);
 
+            if ($ships->count() === 4) {
+                $allStock += $stock;
+            }
+
             foreach ($ships as $ship) {
                 $stockByShip[$ship] += $stock;
             }
         }
 
-        return collect($stockByShip)
-            ->map(fn($stock, $ship) => [
-                'category' => "Ship {$ship}",
+        $data = collect();
+        $data->push([
+            'category' => 'ALL',
+            'stock' => $allStock,
+        ]);
+
+        foreach ($stockByShip as $ship => $stock) {
+            $data->push([
+                'category' => "SU-{$ship}",
                 'stock' => $stock,
-            ])
-            ->values()
-            ->all();
+            ]);
+        }
+
+        return $data->values()->all();
     }
 
     private function itemStockForYear($user, int $itemId, int $year): int

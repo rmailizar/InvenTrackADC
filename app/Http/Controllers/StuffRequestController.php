@@ -262,6 +262,7 @@ class StuffRequestController extends Controller
     private function publicShipUnloaderStockData($items, ?int $year = null): array
     {
         $stockByShip = collect(['1', '2', '3', '4'])->mapWithKeys(fn($ship) => [$ship => 0])->all();
+        $allStock = 0;
 
         foreach ($items as $item) {
             $ships = collect(explode(',', (string) $item->ship_unloader))
@@ -270,22 +271,38 @@ class StuffRequestController extends Controller
                 ->unique()
                 ->values();
 
+            if ($ships->isEmpty()) {
+                continue;
+            }
+
             $stock = $year
                 ? $this->publicItemStockForYear($item->id, $year)
                 : $item->current_stock;
+            $stock = max(0, (int) $stock);
+
+            if ($ships->count() === 4) {
+                $allStock += $stock;
+            }
 
             foreach ($ships as $ship) {
-                $stockByShip[$ship] += max(0, (int) $stock);
+                $stockByShip[$ship] += $stock;
             }
         }
 
-        return collect($stockByShip)
-            ->map(fn($stock, $ship) => [
-                'category' => "Ship {$ship}",
+        $data = collect();
+        $data->push([
+            'category' => 'ALL',
+            'stock' => $allStock,
+        ]);
+
+        foreach ($stockByShip as $ship => $stock) {
+            $data->push([
+                'category' => "SU-{$ship}",
                 'stock' => $stock,
-            ])
-            ->values()
-            ->all();
+            ]);
+        }
+
+        return $data->values()->all();
     }
 
     private function publicItemStockForYear(int $itemId, int $year): int
