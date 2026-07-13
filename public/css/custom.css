@@ -3402,6 +3402,11 @@ span .badge-ship-inactive {
     box-shadow: none !important;
 }
 
+.modal-body .default-password-note label {
+    margin-bottom: 0 !important;
+}
+
+
 
 /* ---------- Filter Bar ---------- */
 .filter-bar {
