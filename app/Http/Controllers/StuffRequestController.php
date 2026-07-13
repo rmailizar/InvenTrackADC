@@ -464,7 +464,7 @@ class StuffRequestController extends Controller
             'processed_at' => now(),
         ]);
 
-        return back()->with('success', "Stuff Request dari {$stuffRequest->requester_name} telah disetujui.");
+        return back()->with('success', "Permintaan barang dari {$stuffRequest->requester_name} telah disetujui.");
     }
 
     /**
@@ -485,7 +485,7 @@ class StuffRequestController extends Controller
             'processed_at' => now(),
         ]);
 
-        return back()->with('success', "Stuff Request dari {$stuffRequest->requester_name} telah ditolak.");
+        return back()->with('success', "Permintaan barang dari {$stuffRequest->requester_name} telah ditolak.");
     }
 
     /**

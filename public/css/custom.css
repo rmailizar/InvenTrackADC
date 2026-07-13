@@ -3375,6 +3375,34 @@ span .badge-ship-inactive {
     color: #e2e8f0;
 }
 
+/* Modal password field group merging style overrides */
+.modal-body .password-field-group .form-control {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-right: none !important;
+}
+
+.modal-body .password-field-group .password-toggle-btn {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    border-left: none !important;
+}
+
+.modal-body .password-field-group:focus-within {
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12) !important;
+    border-radius: 0.5rem;
+}
+
+.modal-body .password-field-group:focus-within .form-control,
+.modal-body .password-field-group:focus-within .password-toggle-btn {
+    border-color: var(--primary) !important;
+}
+
+.modal-body .password-field-group .form-control:focus {
+    box-shadow: none !important;
+}
+
+
 /* ---------- Filter Bar ---------- */
 .filter-bar {
     background: var(--card-bg);
