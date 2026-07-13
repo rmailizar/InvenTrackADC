@@ -451,19 +451,19 @@ $itemDetailData[$itemRow->id] = [
                     <div class="technical-item-fields">
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">No. Normalisasi</label>
-                                <input type="text" name="no_normalisasi" class="form-control" placeholder="00.000.000.0000" id="itemNoNormalisasi">
+                                <label class="form-label">No. Normalisasi<span class="text-danger">*</span></label>
+                                <input type="text" name="no_normalisasi" class="form-control" placeholder="00.000.000.0000" id="itemNoNormalisasi" required>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Volume</label>
-                                <input type="number" name="volume" class="form-control" min="0" id="itemVolume" value="0">
+                                <label class="form-label">Volume<span class="text-danger">*</span></label>
+                                <input type="number" name="volume" class="form-control" min="0" id="itemVolume" value="0" required>
                             </div>
                         </div>
 
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">Tipe Barang</label>
-                                <input type="text" name="component" list="component-list" class="form-control" placeholder="Pilih atau ketik tipe barang" id="itemComponent">
+                                <label class="form-label">Tipe Barang<span class="text-danger">*</span></label>
+                                <input type="text" name="component" list="component-list" class="form-control" placeholder="Pilih atau ketik tipe barang" id="itemComponent" required>
                                 <datalist id="component-list">
                                     @foreach($components as $component)
                                     <option value="{{ $component }}">
@@ -471,8 +471,8 @@ $itemDetailData[$itemRow->id] = [
                                 </datalist>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label">Store room</label>
-                                <input type="text" name="lokasi" class="form-control" placeholder="Letak penyimpanan" id="itemLokasi">
+                                <label class="form-label">Store room<span class="text-danger">*</span></label>
+                                <input type="text" name="lokasi" class="form-control" placeholder="Letak penyimpanan" id="itemLokasi" required>
                             </div>
                         </div>
                     </div>
