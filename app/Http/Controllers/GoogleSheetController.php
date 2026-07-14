@@ -179,7 +179,10 @@ class GoogleSheetController extends Controller
 
         $this->syncTransactions($transactions);
 
-        return $transactions->count();
+        // Hitung hanya transaksi yang benar-benar disinkronkan (bidang dalam config).
+        $syncedBidang = array_keys($this->departmentSheetConfig());
+
+        return $transactions->whereIn('bidang', $syncedBidang)->count();
     }
 
     private function ensureDepartmentSheets(Sheets $service, string $spreadsheetId): void
@@ -269,53 +272,14 @@ class GoogleSheetController extends Controller
                     'Tanggal Approval',
                 ],
             ],
-            'teknik' => [
-                'title' => 'Teknik',
-                'legacyTitle' => 'Sheet2',
-                'index' => 1,
-                'range' => 'A:N',
-                'headerRange' => 'A1:N1',
-                'headers' => [
-                    'ID',
-                    'Tanggal',
-                    'Jenis',
-                    'No Normalisasi',
-                    'Nama Barang',
-                    'Komponen',
-                    'Ship Unloader',
-                    'Lokasi',
-                    'Volume',
-                    'Jumlah',
-                    'Satuan',
-                    'User',
-                    'Status',
-                    'Tanggal Approval',
-                ],
-            ],
+            // Sheet Teknik sengaja dihapus dari sinkronisasi.
+            // Hanya transaksi bidang Umum yang disinkronkan ke Google Sheets.
         ];
     }
 
     private function mapTransactionRow(Transaction $tx, string $bidang): array
     {
-        if ($bidang === 'teknik') {
-            return [
-                $tx->id,
-                $tx->date->format('d/m/Y'),
-                $tx->type_label,
-                $tx->no_normalisasi ?: ($tx->item->no_normalisasi ?? '-'),
-                $tx->item->name ?? '-',
-                $tx->item->component ?? '-',
-                $tx->ship_unloader_label,
-                $tx->lokasi ?: ($tx->item->lokasi ?? '-'),
-                $tx->volume ?? '-',
-                $tx->quantity,
-                $tx->item->unit ?? '-',
-                $tx->user->name ?? '-',
-                'APPROVED',
-                $tx->approved_at ? $tx->approved_at->format('d/m/Y H:i') : '-',
-            ];
-        }
-
+        // Hanya bidang 'umum' yang didukung; teknik tidak disinkronkan.
         return [
             $tx->id,
             $tx->date->format('d/m/Y'),
