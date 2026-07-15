@@ -60,6 +60,12 @@
     <link href="{{ asset('css/custom.css') }}?v={{ filemtime(public_path('css/custom.css')) }}" rel="stylesheet">
     <!-- Logo  -->
     <link rel="icon" type="image/png" href="{{ asset('images/logo-web-top.png') }}">
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#198754">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="NextLog">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <!-- Icon Teknik -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Prevent flash: apply theme before render -->

@@ -1,0 +1,22 @@
+{
+    "name": "NextLog",
+    "short_name": "NextLog",
+    "description": "Sistem Manajemen Inventaris NextLog",
+    "start_url": "/nextlog/public/",
+    "scope": "/nextlog/public/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#198754",
+    "icons": [
+        {
+            "src": "/nextlog/public/images/logo-web-top.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/nextlog/public/images/logo-web-top.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
