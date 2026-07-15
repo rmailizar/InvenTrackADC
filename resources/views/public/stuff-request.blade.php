@@ -928,7 +928,7 @@
                                                 data-name="{{ strtolower($item->name) }}"
                                                 data-category="{{ strtolower($item->category ?? '') }}"
                                                 data-unit="{{ strtolower($item->unit ?? '') }}">
-                                                <td>{{ $index + 1 }}</td>
+                                                <td>{{ $items->firstItem() + $index }}</td>
                                                 @if($activeBidang === 'teknik')
                                                     <td class="fw-600">{{ $item->no_normalisasi ?? '-' }}</td>
                                                 @endif
@@ -964,9 +964,17 @@
                                 </div>
                             </div>
                         </div>
+
+                        {{-- Pagination GA --}}
+                        @if($activeBidang === 'umum' && $items->hasPages())
+                            <div class="d-flex justify-content-center mt-3">
+                                {{ $items->appends(request()->except('umum_page'))->links('pagination.custom') }}
+                            </div>
+                        @endif
                     </div>
 
                     {{-- Right: Request Form --}}
+
                     <div class="col-lg-4">
                         <div class="section-title">
                             <i class="bi bi-send-fill"></i> Permintaan Barang

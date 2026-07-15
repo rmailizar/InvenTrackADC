@@ -15,6 +15,9 @@ class ItemController extends Controller
         $isSuperAdmin = auth()->user()->isSuperAdmin();
         $viewUser = $saBidang ? $this->createBidangProxy($saBidang) : auth()->user();
 
+        $nameSort = request('name_sort', 'asc') === 'desc' ? 'desc' : 'asc';
+        $nextNameSort = $nameSort === 'asc' ? 'desc' : 'asc';
+
         $query = Item::query()->visibleFor($viewUser);
 
         if ($request->filled('search')) {
@@ -67,17 +70,17 @@ class ItemController extends Controller
                     ]
                 );
             } else {
-                $items = $query->latest()->paginate(15)->withQueryString();
+                $items = $query->orderBy('name', $nameSort)->paginate(15)->withQueryString();
             }
         } else {
-            $items = $query->latest()->paginate(15)->withQueryString();
+            $items = $query->orderBy('name', $nameSort)->paginate(15)->withQueryString();
         }
 
         $categories = Item::visibleFor($viewUser)->select('category')->distinct()->pluck('category');
         $components = Item::visibleFor($viewUser)->select('component')->whereNotNull('component')->distinct()->pluck('component');
         $units = Item::visibleFor($viewUser)->select('unit')->distinct()->pluck('unit');
 
-        return view('items.index', compact('items', 'categories', 'components', 'units', 'stockSummary', 'saBidang', 'isSuperAdmin'));
+        return view('items.index', compact('items', 'categories', 'components', 'units', 'stockSummary', 'saBidang', 'isSuperAdmin', 'nextNameSort', 'nameSort'));
     }
 
     public function create()

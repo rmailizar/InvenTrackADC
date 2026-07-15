@@ -40,7 +40,9 @@ class StuffRequestController extends Controller
             $query->where($activeBidang === 'teknik' ? 'component' : 'category', $request->category);
         }
 
-        $items = $query->orderBy('name')->get();
+        $items = $activeBidang === 'umum'
+            ? $query->orderBy('name')->paginate(20, ['*'], 'umum_page')->withQueryString()
+            : $query->orderBy('name')->get();
         $categoryColumn = $activeBidang === 'teknik' ? 'component' : 'category';
         $categories = Item::where('bidang', $activeBidang)->select($categoryColumn)->whereNotNull($categoryColumn)->distinct()->pluck($categoryColumn);
         $allItems = Item::where('bidang', $activeBidang)->orderBy('name')->get(); // for the select dropdown

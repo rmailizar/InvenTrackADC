@@ -33,6 +33,15 @@ $itemDetailData[$itemRow->id] = [
 }
 @endphp
 <div class="animate-fade-in">
+@php
+    $nameSortUrl = route('items.index', array_merge(
+        request()->except(['name_sort', 'page']),
+        ['name_sort' => $nextNameSort]
+    ));
+    $nameSortTitle = $nameSort === 'asc' ? 'Z-A' : 'A-Z';
+    $nameSortLabel = $nameSort === 'asc' ? 'Z ke A' : 'A ke Z';
+    $nameSortIcon = $nameSort === 'asc' ? 'bi-sort-alpha-down-alt' : 'bi-sort-alpha-down';
+@endphp
     {{-- Super Admin Bidang Tab Switcher --}}
     @if(!empty($isSuperAdmin))
     <div class="report-tabs mb-3 sa-bidang-tabs">
@@ -169,7 +178,17 @@ $itemDetailData[$itemRow->id] = [
                         <tr>
                             <th style="width:50px;">No</th>
                             <th>No. Normalisasi</th>
-                            <th>Nama Spare Part</th>
+                            <th>
+                                <span class="date-sort-header">
+                                    Nama Spare Part
+                                    <a href="{{ $nameSortUrl }}"
+                                        class="btn-date-sort"
+                                        title="Urutkan {{ $nameSortLabel }}"
+                                        aria-label="Urutkan nama {{ $nameSortLabel }}">
+                                        <i class="bi {{ $nameSortIcon }}"></i>
+                                    </a>
+                                </span>
+                            </th>
                             <th>Tipe Barang</th>
                             <th>Komponen</th>                          
                             <th>Store Room</th>
@@ -185,7 +204,17 @@ $itemDetailData[$itemRow->id] = [
                         @else
                         <tr>
                             <th style="width:50px;">No</th>
-                            <th>Nama Barang</th>
+                            <th>
+                                <span class="date-sort-header">
+                                    Nama Barang
+                                    <a href="{{ $nameSortUrl }}"
+                                        class="btn-date-sort"
+                                        title="Urutkan {{ $nameSortLabel }}"
+                                        aria-label="Urutkan nama {{ $nameSortLabel }}">
+                                        <i class="bi {{ $nameSortIcon }}"></i>
+                                    </a>
+                                </span>
+                            </th>
                             <th>Kategori</th>
                             @if(auth()->user()->isSuperAdmin())
                             <th>Bidang</th>
