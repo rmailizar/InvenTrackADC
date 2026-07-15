@@ -42,7 +42,7 @@ class UserController extends Controller
             $query->where('account_status', $request->account_status);
         }
 
-        $users = $query->latest()->paginate(15)->withQueryString();
+        $users = $query->oldest()->paginate(15)->withQueryString();
 
         // Count pending users for badge
         $pendingUsersCount = User::visibleFor(auth()->user())->where('account_status', 'pending')->count();
