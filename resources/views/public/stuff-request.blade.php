@@ -485,7 +485,7 @@
                                         <input type="hidden" name="type" value="in">
 
                                         <div class="mb-3">
-                                            <label class="form-label">Tanggal <span class="text-danger">*</span></label>
+                                            <label class="form-label">Tanggal GI<span class="text-danger">*</span></label>
                                             <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required min="{{ date('Y-m-d') }}">
                                         </div>
 
@@ -677,7 +677,7 @@
                                         <input type="hidden" name="type" value="out">
 
                                         <div class="mb-3">
-                                            <label class="form-label">Tanggal <span class="text-danger">*</span></label>
+                                            <label class="form-label">Tanggal GR<span class="text-danger">*</span></label>
                                             <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required min="{{ date('Y-m-d') }}">
                                         </div>
 

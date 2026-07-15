@@ -28,9 +28,9 @@
 @section('subtitle',
     $isTeknik
         ? ($activeTransactionType === 'out'
-            ? 'Registrasi pengeluaran barang'
-            : 'Registrasi penerimaan barang')
-        : 'Daftar transaksi barang masuk & keluar'
+            ? 'Registrasi Pengeluaran Barang'
+            : 'Registrasi Penerimaan Barang')
+        : 'Daftar Transaksi Barang Masuk & Keluar'
 )
 
 @section('content')
