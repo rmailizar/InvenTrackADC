@@ -2186,11 +2186,15 @@ body.public-layout .public-body {
 .norm-text-in {
     color: #60a5fa !important;
     font-weight: 700;
+    font-family: 'Roboto Mono', 'Major Mono Display', monospace;
+    font-size: 16px;
 }
 
 .norm-text-out {
     color: #fbbf24 !important;
     font-weight: 700;
+    font-family: 'Roboto Mono', 'Major Mono Display', monospace;
+    font-size: 16px;
 }
 
 .technical-soh-table th:nth-child(1),

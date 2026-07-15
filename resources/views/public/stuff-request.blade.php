@@ -224,7 +224,7 @@
                                                      <tr>
                                                          <td class="text-secondary" style="font-size: 13px !important;">{{ $tx->date ? $tx->date->format('Y-m-d') : ($tx->created_at ? $tx->created_at->format('Y-m-d') : '-') }}</td>
                                                          <td>
-                                                             <span class="{{ $tx->type === 'in' ? 'text-in' : 'text-out' }} fw-bold" style="font-family: 'Roboto Mono', monospace; font-size:13px;">
+                                                             <span class="{{ $tx->type === 'in' ? 'text-in' : 'text-out' }} fw-bold" style="font-family: 'Roboto Mono', monospace; font-size:16px;">
                                                                  {{ $tx->item?->no_normalisasi ?: 'NORM-' . str_pad($tx->item_id, 4, '0', STR_PAD_LEFT) }}
                                                              </span>
                                                          </td>
@@ -366,7 +366,7 @@
                                 <table class="table mb-0 align-middle" id="public-teknik-table">
                                     <thead>
                                         <tr>
-                                            <th>No Normalisasi</th>
+                                            <th>No. Normalisasi</th>
                                             <th>Nama Spare Part</th>
                                             <th>Komponen</th>
                                             <th>Tipe Barang</th>
@@ -402,17 +402,17 @@
                                                 data-category="{{ $item->category ?? '' }}"
                                                 data-unit="{{ strtolower($item->unit ?? '') }}"
                                                 data-status="{{ $statusClass }}">
-                                                <td style="font-family: 'Major Mono Display', monospace; font-size:13px;">
+                                                <td style="font-family: 'Major Mono Display', monospace; font-size:16px;">
                                                     @if($item->current_stock < $item->min_stock)
-                                                        <span class="badge-status badge-rejected position-relative badge-critical-teknik">
+                                                        <span class="badge-status badge-rejected position-relative badge-critical-teknik" style="font-size:16px;">
                                                             {{ $item->no_normalisasi ?? '-' }}
                                                         </span>
                                                     @elseif($item->current_stock == $item->min_stock)
-                                                        <span class="badge-status technical-soh-norm norm-out">
+                                                        <span class="badge-status technical-soh-norm norm-out" style="font-size:16px;">
                                                             {{ $item->no_normalisasi ?? '-' }}
                                                         </span>
                                                     @else
-                                                        <span class="badge-status badge-approved">
+                                                        <span class="badge-status badge-approved" style="font-size:16px;">
                                                             {{ $item->no_normalisasi ?? '-' }}
                                                         </span>
                                                     @endif
@@ -490,7 +490,7 @@
                                         </div>
 
                                         <div class="mb-3">
-                                            <label class="form-label">No Normalisasi</label>
+                                            <label class="form-label">No. Normalisasi</label>
                                             <input type="text" class="form-control" id="publicGRNoNormalisasi" readonly placeholder="00.000.000.0000">
                                         </div>
 
@@ -581,7 +581,7 @@
                                                 <tr>
                                                     <th style="width:50px;">No</th>
                                                     <th>Tanggal</th>
-                                                    <th>No Normalisasi</th>
+                                                    <th>No. Normalisasi</th>
                                                     <th class="col-name-wrap">Nama Barang</th>
                                                     <th>Komponen</th>
                                                     <th>Tipe Barang</th>
@@ -682,7 +682,7 @@
                                         </div>
 
                                         <div class="mb-3">
-                                            <label class="form-label">No Normalisasi</label>
+                                            <label class="form-label">No. Normalisasi</label>
                                             <input type="text" class="form-control" id="publicGINoNormalisasi" readonly placeholder="00.000.000.0000">
                                         </div>
 
@@ -776,7 +776,7 @@
                                                 <tr>
                                                     <th style="width:50px;">No</th>
                                                     <th>Tanggal</th>
-                                                    <th>No Normalisasi</th>
+                                                    <th>No. Normalisasi</th>
                                                     <th class="col-name-wrap">Nama Barang</th>
                                                     <th>Komponen</th>
                                                     <th>Tipe Barang</th>
@@ -909,7 +909,7 @@
                                             <tr>
                                                 <th style="width:45px;">No</th>
                                                 @if($activeBidang === 'teknik')
-                                                    <th>No Normalisasi</th>
+                                                    <th>No. Normalisasi</th>
                                                 @endif
                                                 <th class="col-name-wrap">Nama Barang</th>
                                                 <th>{{ $activeBidang === 'teknik' ? 'Tipe Barang' : 'Kategori' }}</th>

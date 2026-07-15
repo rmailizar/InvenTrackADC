@@ -9,16 +9,28 @@
 @endphp
 
 <div id="transactionsTableRegion">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="text-muted" style="font-size:13px;">Total: {{ $transactions->total() }} transaksi</div>
-        @if($showCreateButton)
-            <button type="button" class="btn btn-primary" onclick="openTransactionModal_{{ $jsSuffix }}()">
-                <i class="bi bi-plus-lg"></i> Input Transaksi
-            </button>
-        @endif
-    </div>
-
     <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span class="fs-5 fw-semibold">
+                @if($isTeknik)
+                    @if($activeTransactionType === 'in')
+                        <i class="bi bi-table text-success me-2"></i>Recent GR Log
+                    @else
+                        <i class="bi bi-table text-warning me-2"></i>Recent GI Log
+                    @endif
+                @else
+                    <i class="bi bi-table text-primary-custom me-2"></i>Daftar Transaksi
+                @endif
+            </span>
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-muted" style="font-size:13px;">Total: {{ $transactions->total() }} transaksi</span>
+                @if($showCreateButton)
+                    <button type="button" class="btn btn-primary btn-sm" onclick="openTransactionModal_{{ $jsSuffix }}()">
+                        <i class="bi bi-plus-lg"></i> Input Transaksi
+                    </button>
+                @endif
+            </div>
+        </div>
         <div class="card-body p-0">
             <div class="table-container">
                 <table class="table" id="transactions-table">

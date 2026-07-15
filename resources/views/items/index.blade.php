@@ -244,7 +244,7 @@ $itemDetailData[$itemRow->id] = [
                         >
                             <td>{{ $items->firstItem() + $index }}</td>
                             @if($isTeknik)
-                            <td style="font-family: 'Major Mono Display', monospace; font-size:13px;" >
+                            <td style="font-family: 'Major Mono Display', monospace; font-size:16px;" >
                                 @if($item->current_stock < $item->min_stock)
                                     <span class="badge-status badge-rejected position-relative badge-critical-teknik">
                                         {{ $item->no_normalisasi ?? '-' }}
