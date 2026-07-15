@@ -350,7 +350,7 @@
 
                     <div class="card mb-4" id="public-teknik-table-card">
                         <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <span class="fs-5"><i class="bi bi-table text-primary-custom me-2"></i>Master Stock On Hand (SOH)</span>
+                            <span class="fs-5">Master Stock On Hand (SOH)</span>
                             <div class="d-flex align-items-center gap-2">
                                 <form method="GET" action="{{ route('public.stuff-request') }}" id="publicTeknikSearchForm" class="m-0">
                                     <input type="hidden" name="bidang" value="teknik">
@@ -476,7 +476,7 @@
                         <div class="col-lg-4">
                             <div class="request-form-card" style="height: 100%;">
                                 <div class="request-form-header">
-                                    <h4><i class="bi bi-box-arrow-in-down me-2 text-success"></i>Goods Receipt</h4>
+                                    <h4>Goods Receipt</h4>
                                     <p>Registrasi Penerimaan Barang</p>
                                 </div>
                                 <div class="request-form-body text-uppercase">
@@ -561,7 +561,7 @@
                                             </div>
                                         </div>
 
-                                        <button type="submit" class="btn w-100 btn-receipt-submit">
+                                        <button type="submit" class="btn w-100 btn-receipt-submit fs-6">
                                            Process Goods Receipt
                                         </button>
                                     </form>
@@ -668,7 +668,7 @@
                         <div class="col-lg-4">
                             <div class="request-form-card" style="height: 100%;">
                                 <div class="request-form-header">
-                                    <h4><i class="bi bi-box-arrow-up me-2 text-warning"></i>Goods Issue</h4>
+                                    <h4>Goods Issue</h4>
                                     <p>Registrasi Pengeluaran Barang</p>
                                 </div>
                                 <div class="request-form-body text-uppercase">
@@ -756,7 +756,7 @@
                                             </div>
                                         </div>
 
-                                        <button type="submit" class="btn w-100 btn-issue-submit">
+                                        <button type="submit" class="btn w-100 btn-issue-submit fs-6">
                                           Process Goods Issue
                                         </button>
                                     </form>

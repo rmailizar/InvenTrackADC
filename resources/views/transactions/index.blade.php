@@ -25,7 +25,13 @@
 @endphp
 
 @section('title', $pageTitle)
-@section('subtitle', $isTeknik ? 'Input dan riwayat ' . $pageTitle : 'Daftar transaksi barang masuk & keluar')
+@section('subtitle',
+    $isTeknik
+        ? ($activeTransactionType === 'out'
+            ? 'Registrasi pengeluaran barang'
+            : 'Registrasi penerimaan barang')
+        : 'Daftar transaksi barang masuk & keluar'
+)
 
 @section('content')
     <div class="animate-fade-in {{ $isTeknik ? 'technical-transaction-page' : '' }}">
@@ -112,19 +118,19 @@
             <div class="row g-3 align-items-start">
                 <div class="col-xl-4 col-lg-5">
                     <div class="card position-sticky" style="top: 16px;">
-                        <div class="card-header">
-                            <span>
-                                <i class="bi {{ $activeTransactionType === 'out' ? 'bi-box-arrow-up' : 'bi-box-arrow-in-down' }} text-primary-custom me-2"></i>
-                                Input {{ $pageTitle }}
-                            </span>
-                        </div>
                         <div class="card-body">
                             <form method="POST" action="{{ route('transactions.store') }}" id="txInlineForm" class="text-uppercase">
                                 @csrf
                                 <input type="hidden" name="type" value="{{ $activeTransactionType }}">
 
                                 <div class="mb-3">
-                                    <label class="form-label">Tanggal <span class="text-danger">*</span></label>
+                                    <label class="form-label">
+                                        {{ $isTeknik
+                                            ? ($activeTransactionType === 'out' ? 'Tanggal GI' : 'Tanggal GR')
+                                            : 'Tanggal'
+                                        }}
+                                        <span class="text-danger">*</span>
+                                    </label>
                                     <input type="date" name="date" class="form-control" value="{{ date('Y-m-d') }}" required min="{{ date('Y-m-d') }}">
                                 </div>
 
@@ -207,7 +213,7 @@
                                 </div>
 
                                 <button type="submit"
-                                    class="btn w-100
+                                    class="btn w-100 fs-6
                                     @if($isTeknik && $activeTransactionType === 'in')
                                         btn-receipt-submit
                                     @elseif($isTeknik && $activeTransactionType === 'out')
