@@ -70,10 +70,10 @@ class ItemController extends Controller
                     ]
                 );
             } else {
-                $items = $query->orderBy('name', $nameSort)->paginate(5)->withQueryString();
+                $items = $query->orderBy('name', $nameSort)->paginate(15)->withQueryString();
             }
         } else {
-            $items = $query->orderBy('name', $nameSort)->paginate(5)->withQueryString();
+            $items = $query->orderBy('name', $nameSort)->paginate(15)->withQueryString();
         }
 
         $categories = Item::visibleFor($viewUser)->select('category')->distinct()->pluck('category');
