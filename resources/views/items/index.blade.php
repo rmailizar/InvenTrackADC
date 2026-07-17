@@ -823,60 +823,33 @@ const suggestionsBox = document.getElementById('itemSearchSuggestions');
 const searchWrapper = document.getElementById('itemSearchWrapper');
 
 const isTeknik = @json($isTeknik);
+const autocompleteUrl = @json(route('api.autocomplete.items'));
+const saBidang = @json($saBidang ?? '');
+
+let debounceTimer = null;
 
 searchInput.addEventListener('input', function () {
 
-    const keyword = this.value.trim().toLowerCase();
+    const keyword = this.value.trim();
 
     if (!keyword) {
-        resetTable();
         suggestionsBox.style.display = 'none';
+        suggestionsBox.innerHTML = '';
         return;
     }
 
-    const rows = document.querySelectorAll('#items-table tbody tr');
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        const params = new URLSearchParams({ q: keyword });
+        if (saBidang) params.set('sa_bidang', saBidang);
 
-    let results = [];
-
-    rows.forEach(row => {
-
-        const name = row.dataset.name || '';
-        const category = row.dataset.category || '';
-        const component = row.dataset.component || '';
-        const normalisasi = row.dataset.normalisasi || '';
-
-        let matched = false;
-
-        if (isTeknik) {
-
-            matched =
-                name.includes(keyword) ||
-                component.includes(keyword) ||
-                normalisasi.includes(keyword);
-
-        } else {
-
-            matched =
-                name.includes(keyword) ||
-                category.includes(keyword);
-
-        }
-
-        if (matched) {
-
-            results.push({
-                id: row.dataset.itemId,
-                name: row.dataset.name,
-                category: row.dataset.category,
-                component: row.dataset.component,
-                normalisasi: row.dataset.normalisasi
-            });
-
-        }
-
-    });
-
-    renderSuggestions(results);
+        fetch(`${autocompleteUrl}?${params.toString()}`, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(results => renderSuggestions(results))
+        .catch(() => { suggestionsBox.style.display = 'none'; });
+    }, 200);
 
 });
 
@@ -894,7 +867,7 @@ function renderSuggestions(items) {
     suggestionsBox.innerHTML = items.map(item => `
 
     <div class="autocomplete-item"
-        data-id="${item.id}">
+        data-name="${item.name}">
 
         <div class="autocomplete-icon">
             <i class="bi bi-box-seam"></i>
@@ -926,37 +899,12 @@ function renderSuggestions(items) {
         .forEach(el => {
 
             el.addEventListener('click', function () {
-
-                searchInput.value = this.querySelector('.autocomplete-title').textContent.trim();
-
-                filterTable(this.dataset.id);
-
+                const name = this.dataset.name;
+                searchInput.value = name;
+                suggestionsBox.style.display = 'none';
+                // Submit the form to trigger server-side search
+                searchInput.closest('form').submit();
             });
-
-        });
-}
-
-function filterTable(itemId) {
-
-    document.querySelectorAll('#items-table tbody tr')
-        .forEach(row => {
-
-            row.style.display =
-                row.dataset.itemId === itemId
-                    ? ''
-                    : 'none';
-
-        });
-
-    suggestionsBox.style.display = 'none';
-}
-
-function resetTable() {
-
-    document.querySelectorAll('#items-table tbody tr')
-        .forEach(row => {
-
-            row.style.display = '';
 
         });
 }
@@ -994,6 +942,7 @@ document.addEventListener('click', function (e) {
     // Expose functions globally for inline event handlers
     window.openItemModal = openItemModal;
     window.submitItemForm = submitItemForm;
+
 })();
 </script>
 @endpush

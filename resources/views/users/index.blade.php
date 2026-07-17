@@ -548,46 +548,31 @@
                 const searchInput = document.getElementById('userSearchInput');
                 const suggestionsBox = document.getElementById('userSearchSuggestions');
                 const searchWrapper = document.getElementById('userSearchWrapper');
+                const autocompleteUrl = @json(route('api.autocomplete.users'));
 
                 if (!searchInput || !suggestionsBox || !searchWrapper) return;
 
+                let debounceTimer = null;
+
                 searchInput.addEventListener('input', function() {
-                    const keyword = this.value.trim().toLowerCase();
+                    const keyword = this.value.trim();
                     if (!keyword) {
-                        resetTable();
                         suggestionsBox.style.display = 'none';
+                        suggestionsBox.innerHTML = '';
                         return;
                     }
 
-                    const rows = document.querySelectorAll('#users-table tbody tr:not(.no-data-row)');
-                    let results = [];
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        const params = new URLSearchParams({ q: keyword });
 
-                    rows.forEach(row => {
-                        const name = row.getAttribute('data-name') || '';
-                        const username = row.getAttribute('data-username') || '';
-                        const email = row.getAttribute('data-email') || '';
-                        const role = row.getAttribute('data-role') || '';
-                        const bidang = row.getAttribute('data-bidang') || '';
-
-                        const matched = name.toLowerCase().includes(keyword) || 
-                                        username.toLowerCase().includes(keyword) || 
-                                        email.toLowerCase().includes(keyword) || 
-                                        role.toLowerCase().includes(keyword) || 
-                                        bidang.toLowerCase().includes(keyword);
-
-                        if (matched) {
-                            results.push({
-                                id: row.getAttribute('data-user-id'),
-                                name: row.getAttribute('data-name'),
-                                username: row.getAttribute('data-username'),
-                                email: row.getAttribute('data-email'),
-                                role: row.getAttribute('data-role'),
-                                bidang: row.getAttribute('data-bidang')
-                            });
-                        }
-                    });
-
-                    renderSuggestions(results);
+                        fetch(`${autocompleteUrl}?${params.toString()}`, {
+                            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                        })
+                        .then(res => res.json())
+                        .then(results => renderSuggestions(results))
+                        .catch(() => { suggestionsBox.style.display = 'none'; });
+                    }, 200);
                 });
 
                 function renderSuggestions(items) {
@@ -598,7 +583,7 @@
                     }
 
                     suggestionsBox.innerHTML = items.map(item => `
-                        <div class="autocomplete-item" data-id="${item.id}">
+                        <div class="autocomplete-item" data-name="${item.name}">
                             <div class="autocomplete-icon">
                                 <i class="bi bi-person-fill"></i>
                             </div>
@@ -615,22 +600,10 @@
 
                     suggestionsBox.querySelectorAll('.autocomplete-item').forEach(el => {
                         el.addEventListener('click', function() {
-                            searchInput.value = this.querySelector('.autocomplete-title').textContent.trim();
-                            filterTable(this.getAttribute('data-id'));
+                            searchInput.value = this.dataset.name;
+                            suggestionsBox.style.display = 'none';
+                            searchInput.closest('form').submit();
                         });
-                    });
-                }
-
-                function filterTable(id) {
-                    document.querySelectorAll('#users-table tbody tr:not(.no-data-row)').forEach(row => {
-                        row.style.display = row.getAttribute('data-user-id') === id ? '' : 'none';
-                    });
-                    suggestionsBox.style.display = 'none';
-                }
-
-                function resetTable() {
-                    document.querySelectorAll('#users-table tbody tr:not(.no-data-row)').forEach(row => {
-                        row.style.display = '';
                     });
                 }
 

@@ -83,6 +83,9 @@
                                 <th>Harga Satuan</th>
                                 <th>User</th>
                                 <th>Keterangan</th>
+                                @if(auth()->user()->isSuperAdmin())
+                                    <th>Status</th>
+                                @endif
                                 <th class="text-center" style="width:72px;">Aksi</th>
                             </tr>
                         @endif
@@ -200,17 +203,64 @@
                                     <td style="max-width:220px; font-size:12px; color:var(--text-secondary);">
                                         {{ \Illuminate\Support\Str::limit($tx->description, 60) }}
                                     </td>
+                                    @if(auth()->user()->isSuperAdmin())
+                                        <td>
+                                            @if($tx->status === 'pending')
+                                                <span class="badge-status badge-pending">
+                                                    <i class="bi bi-clock-fill"></i> Pending
+                                                </span>
+                                            @elseif($tx->status === 'approved')
+                                                <span class="badge-status badge-approved">
+                                                    <i class="bi bi-check-circle-fill"></i> Approved
+                                                </span>
+                                            @elseif($tx->status === 'rejected')
+                                                <span class="badge-status badge-rejected">
+                                                    <i class="bi bi-x-circle-fill"></i> Rejected
+                                                </span>
+                                            @else
+                                                <span class="badge-status bg-light text-dark">
+                                                    {{ ucfirst($tx->status) }}
+                                                </span>
+                                            @endif
+                                        </td>
+                                    @endif
                                     <td class="text-center">
-                                        <button type="button" class="btn btn-md btn-transaction-detail-open"
-                                            title="Lihat Detail" data-transaction-id="{{ $tx->id }}">
-                                            <i class="bi bi-info-circle-fill"></i>
-                                        </button>
+                                        @if(auth()->user()->isSuperAdmin())
+                                            <div class="d-flex justify-content-center gap-2">
+                                                <a href="javascript:void(0)"
+                                                    class="action-icon btn-transaction-detail-open"
+                                                    title="Lihat Detail"
+                                                    data-transaction-id="{{ $tx->id }}">
+                                                    <i class="bi bi-info-circle-fill fs-6"></i>
+                                                </a>
+
+                                                <a href="javascript:void(0)"
+                                                    class="action-icon text-danger"
+                                                    title="Hapus"
+                                                    onclick="swalConfirm('Hapus Transaksi', 'Yakin hapus transaksi ini? Data yang sudah dihapus tidak bisa dikembalikan.', 'warning', 'Ya, Hapus', '#deleteTx-{{ $tx->id }}')">
+                                                    <i class="bi bi-trash-fill fs-6"></i>
+                                                </a>
+
+                                                <form action="{{ route('transactions.destroy', $tx) }}"
+                                                    method="POST"
+                                                    id="deleteTx-{{ $tx->id }}"
+                                                    class="d-none">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                </form>
+                                            </div>
+                                        @else
+                                            <button type="button" class="btn btn-md btn-transaction-detail-open"
+                                                title="Lihat Detail" data-transaction-id="{{ $tx->id }}">
+                                                <i class="bi bi-info-circle-fill"></i>
+                                            </button>
+                                        @endif
                                     </td>
                                 @endif
                             </tr>
                         @empty
                             <tr class="no-data-row">
-                                <td colspan="{{ $isTeknik ? 13 : 11 }}">
+                                <td colspan="{{ $isTeknik ? 13 : (auth()->user()->isSuperAdmin() ? 12 : 11) }}">
                                     <i class="bi bi-inbox" style="font-size:40px;display:block;margin-bottom:8px;opacity:0.3;"></i>
                                     Belum ada data transaksi
                                 </td>

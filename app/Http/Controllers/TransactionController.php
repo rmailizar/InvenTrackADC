@@ -83,6 +83,7 @@ class TransactionController extends Controller
                 'html' => view('transactions.partials.table', [
                     'transactions' => $transactions,
                     'showCreateButton' => !$viewUser->isTeknik(),
+                    'saBidang' => $saBidang,
                 ])->render(),
                 'detailData' => $transactionDetailData,
                 'total' => $transactions->total(),
@@ -302,8 +303,13 @@ class TransactionController extends Controller
     {
         abort_unless(auth()->user()->canAccessBidang($transaction->bidang), 403, 'Anda tidak memiliki akses ke transaksi bidang ini.');
 
+        $isSuperAdmin = auth()->user()->isSuperAdmin();
+        $isUmum = $transaction->bidang === 'umum';
+
         if ($transaction->status !== 'pending' && $transaction->bidang !== 'teknik') {
-            return redirect()->route('dashboard')->with('error', 'Hanya transaksi berstatus pending yang bisa dihapus.');
+            if (!($isSuperAdmin && $isUmum)) {
+                return redirect()->route('dashboard')->with('error', 'Hanya transaksi berstatus pending yang bisa dihapus.');
+            }
         }
 
         $type = $transaction->type;

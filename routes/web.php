@@ -49,12 +49,18 @@ Route::middleware(['auth', \App\Http\Middleware\RestrictTeknikAccess::class])->g
     Route::get('/dashboard/api/category-by-year', [DashboardController::class, 'categoryByYear'])->name('dashboard.categoryByYear')->middleware('userAkses:admin,manajer');
     Route::get('/dashboard/api/monthly-data', [DashboardController::class, 'monthlyData'])
         ->name('dashboard.monthlyData');
+    // Autocomplete API endpoints (for search suggestions across all pages)
+    Route::get('/api/autocomplete/items', [ItemController::class, 'autocomplete'])->name('api.autocomplete.items');
+    Route::get('/api/autocomplete/stuff-requests', [StuffRequestController::class, 'autocomplete'])->name('api.autocomplete.stuff-requests')->middleware('userAkses:admin,staf');
+    Route::get('/api/autocomplete/users', [UserController::class, 'autocomplete'])->name('api.autocomplete.users')->middleware('userAkses:admin');
+
     // Items - admin only
     // Lookups routes must come BEFORE resource to avoid matching items/{item}
     Route::get('/items/lookups', [ItemLookupController::class, 'index'])->name('items.lookups.index')->middleware('userAkses:admin');
     Route::post('/items/lookup/replace', [ItemLookupController::class, 'replace'])->name('items.lookup.replace')->middleware('userAkses:admin');
     Route::resource('items', ItemController::class)->middleware('userAkses:admin');
     Route::get('/items/{item}/edit-data', [ItemController::class, 'edit'])->name('items.editData')->middleware('userAkses:admin');
+
 
     // Transactions - admin & staff
     Route::resource('transactions', TransactionController::class)->only(['index', 'create'])->middleware('userAkses:admin,staf');

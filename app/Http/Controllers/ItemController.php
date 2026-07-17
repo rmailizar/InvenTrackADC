@@ -70,10 +70,10 @@ class ItemController extends Controller
                     ]
                 );
             } else {
-                $items = $query->orderBy('name', $nameSort)->paginate(15)->withQueryString();
+                $items = $query->orderBy('name', $nameSort)->paginate(5)->withQueryString();
             }
         } else {
-            $items = $query->orderBy('name', $nameSort)->paginate(15)->withQueryString();
+            $items = $query->orderBy('name', $nameSort)->paginate(5)->withQueryString();
         }
 
         $categories = Item::visibleFor($viewUser)->select('category')->distinct()->pluck('category');
@@ -189,6 +189,52 @@ class ItemController extends Controller
         $item->delete();
 
         return redirect()->route('items.index')->with('success', 'Barang berhasil dihapus.');
+    }
+
+    /**
+     * Autocomplete endpoint: returns items matching the keyword from the database.
+     * Used by search suggestion boxes across multiple pages (items, transactions, stock, reports).
+     */
+    public function autocomplete(Request $request)
+    {
+        $saBidang = $this->superAdminBidangContext($request);
+        $viewUser = $saBidang ? $this->createBidangProxy($saBidang) : auth()->user();
+
+        $keyword = trim($request->input('q', ''));
+
+        if (!$keyword || mb_strlen($keyword) < 1) {
+            return response()->json([]);
+        }
+
+        $isTeknik = $viewUser->isTeknik() || ($saBidang === 'teknik');
+
+        $query = Item::query()->visibleFor($viewUser);
+
+        if ($isTeknik) {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'like', "%{$keyword}%")
+                  ->orWhere('no_normalisasi', 'like', "%{$keyword}%")
+                  ->orWhere('component', 'like', "%{$keyword}%");
+            });
+        } else {
+            $query->where(function ($q) use ($keyword) {
+                $q->where('name', 'like', "%{$keyword}%")
+                  ->orWhere('category', 'like', "%{$keyword}%");
+            });
+        }
+
+        $results = $query->orderBy('name')
+            ->limit(20)
+            ->get(['id', 'name', 'category', 'component', 'no_normalisasi'])
+            ->map(fn($item) => [
+                'id'           => $item->id,
+                'name'         => $item->name,
+                'category'     => $item->category,
+                'component'    => $item->component,
+                'normalisasi'  => $item->no_normalisasi,
+            ]);
+
+        return response()->json($results);
     }
 
     private function authorizeItemDepartment(Item $item): void

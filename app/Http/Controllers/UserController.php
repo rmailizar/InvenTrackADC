@@ -62,6 +62,39 @@ class UserController extends Controller
         return view('users.index', compact('users', 'pendingUsersCount', 'defaultPassword', 'onlineUserIds'));
     }
 
+    /**
+     * Autocomplete endpoint: returns users matching the keyword from the database.
+     * Used by the search suggestion box on the users index page.
+     */
+    public function autocomplete(Request $request)
+    {
+        $keyword = trim($request->input('q', ''));
+
+        if (!$keyword || mb_strlen($keyword) < 1) {
+            return response()->json([]);
+        }
+
+        $results = User::visibleFor(auth()->user())
+            ->where(function ($q) use ($keyword) {
+                $q->where('name', 'like', "%{$keyword}%")
+                  ->orWhere('username', 'like', "%{$keyword}%")
+                  ->orWhere('email', 'like', "%{$keyword}%");
+            })
+            ->orderBy('name')
+            ->limit(20)
+            ->get(['id', 'name', 'username', 'email', 'role', 'bidang'])
+            ->map(fn($user) => [
+                'id'       => $user->id,
+                'name'     => $user->name,
+                'username' => $user->username,
+                'email'    => $user->email,
+                'role'     => $user->role,
+                'bidang'   => $user->bidang,
+            ]);
+
+        return response()->json($results);
+    }
+
     public function create()
     {
         return redirect()->route('users.index');

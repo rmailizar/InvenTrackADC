@@ -473,48 +473,33 @@
             const suggestionsBox = document.getElementById('reportsSearchSuggestions');
             const searchWrapper = document.getElementById('reportsSearchWrapper');
             const isTeknik = @json($isTeknik);
+            const autocompleteUrl = @json(route('api.autocomplete.items'));
+            const saBidang = @json(isset($saBidang) ? $saBidang : '');
 
             if (!searchInput || !suggestionsBox || !searchWrapper) return;
 
+            let debounceTimer = null;
+
             searchInput.addEventListener('input', function() {
-                const keyword = this.value.trim().toLowerCase();
+                const keyword = this.value.trim();
                 if (!keyword) {
-                    resetTable();
                     suggestionsBox.style.display = 'none';
+                    suggestionsBox.innerHTML = '';
                     return;
                 }
 
-                const rows = document.querySelectorAll('#reports-stock-table tbody tr:not(.no-data-row)');
-                let results = [];
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(() => {
+                    const params = new URLSearchParams({ q: keyword });
+                    if (saBidang) params.set('sa_bidang', saBidang);
 
-                rows.forEach(row => {
-                    const name = row.getAttribute('data-name') || '';
-                    const normalisasi = row.getAttribute('data-normalisasi') || '';
-                    const component = row.getAttribute('data-component') || '';
-                    const category = row.getAttribute('data-category') || '';
-
-                    let matched = false;
-                    if (isTeknik) {
-                        matched = name.toLowerCase().includes(keyword) || 
-                                  normalisasi.toLowerCase().includes(keyword) || 
-                                  component.toLowerCase().includes(keyword);
-                    } else {
-                        matched = name.toLowerCase().includes(keyword) || 
-                                  category.toLowerCase().includes(keyword);
-                    }
-
-                    if (matched) {
-                        results.push({
-                            id: row.getAttribute('data-item-id'),
-                            name: row.getAttribute('data-name'),
-                            normalisasi: row.getAttribute('data-normalisasi'),
-                            component: row.getAttribute('data-component'),
-                            category: row.getAttribute('data-category')
-                        });
-                    }
-                });
-
-                renderSuggestions(results);
+                    fetch(`${autocompleteUrl}?${params.toString()}`, {
+                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(res => res.json())
+                    .then(results => renderSuggestions(results))
+                    .catch(() => { suggestionsBox.style.display = 'none'; });
+                }, 200);
             });
 
             function renderSuggestions(items) {
@@ -525,7 +510,7 @@
                 }
 
                 suggestionsBox.innerHTML = items.map(item => `
-                    <div class="autocomplete-item" data-id="${item.id}">
+                    <div class="autocomplete-item" data-name="${item.name}">
                         <div class="autocomplete-icon">
                             <i class="bi bi-box-seam"></i>
                         </div>
@@ -542,22 +527,10 @@
 
                 suggestionsBox.querySelectorAll('.autocomplete-item').forEach(el => {
                     el.addEventListener('click', function() {
-                        searchInput.value = this.querySelector('.autocomplete-title').textContent.trim();
-                        filterTable(this.getAttribute('data-id'));
+                        searchInput.value = this.dataset.name;
+                        suggestionsBox.style.display = 'none';
+                        searchInput.closest('form').submit();
                     });
-                });
-            }
-
-            function filterTable(id) {
-                document.querySelectorAll('#reports-stock-table tbody tr:not(.no-data-row)').forEach(row => {
-                    row.style.display = row.getAttribute('data-item-id') === id ? '' : 'none';
-                });
-                suggestionsBox.style.display = 'none';
-            }
-
-            function resetTable() {
-                document.querySelectorAll('#reports-stock-table tbody tr:not(.no-data-row)').forEach(row => {
-                    row.style.display = '';
                 });
             }
 

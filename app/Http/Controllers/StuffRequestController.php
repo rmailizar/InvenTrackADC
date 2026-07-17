@@ -449,6 +449,44 @@ class StuffRequestController extends Controller
     }
 
     /**
+     * Autocomplete endpoint: returns stuff requests matching the keyword from the database.
+     * Used by the search suggestion box on the stuff-requests index page.
+     */
+    public function autocomplete(Request $request)
+    {
+        $keyword = trim($request->input('q', ''));
+
+        if (!$keyword || mb_strlen($keyword) < 1) {
+            return response()->json([]);
+        }
+
+        $results = StuffRequest::with('lines.item')
+            ->visibleFor(auth()->user())
+            ->where(function ($q) use ($keyword) {
+                $q->where('requester_name', 'like', "%{$keyword}%")
+                  ->orWhere('nip', 'like', "%{$keyword}%")
+                  ->orWhere('jabatan', 'like', "%{$keyword}%")
+                  ->orWhere('bidang', 'like', "%{$keyword}%")
+                  ->orWhereHas('lines.item', function ($q2) use ($keyword) {
+                      $q2->where('name', 'like', "%{$keyword}%");
+                  });
+            })
+            ->latest()
+            ->limit(20)
+            ->get()
+            ->map(fn($req) => [
+                'id'       => $req->id,
+                'name'     => $req->requester_name,
+                'nip'      => $req->nip,
+                'jabatan'  => $req->jabatan,
+                'bidang'   => $req->bidang,
+                'items'    => $req->lines->pluck('item.name')->filter()->join(', '),
+            ]);
+
+        return response()->json($results);
+    }
+
+    /**
      * Approve a stock request.
      */
     public function approve(StuffRequest $stuffRequest)
